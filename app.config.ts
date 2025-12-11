@@ -46,7 +46,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "findr",
-  userInterfaceStyle: "automatic",
+  userInterfaceStyle: "dark",
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
