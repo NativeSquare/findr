@@ -42,10 +42,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   callbacks: {
     async redirect({ redirectTo }) {
       console.log("redirectTo: ", redirectTo);
-      if (
-        redirectTo !== "example://" &&
-        redirectTo !== "http://localhost:3000"
-      ) {
+      if (redirectTo !== "findr://" && redirectTo !== "http://localhost:3000") {
         throw new Error(`Invalid redirectTo URI ${redirectTo}`);
       }
       return redirectTo;

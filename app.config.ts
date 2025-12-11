@@ -5,26 +5,26 @@ const IS_PREVIEW = process.env.APP_VARIANT === "preview";
 
 const getUniqueIdentifier = () => {
   if (IS_DEV) {
-    return "com.example.mobile.dev";
+    return "com.findr.mobile.dev";
   }
 
   if (IS_PREVIEW) {
-    return "com.example.mobile.preview";
+    return "com.findr.mobile.preview";
   }
 
-  return "com.example.mobile";
+  return "com.findr.mobile";
 };
 
 const getAppName = () => {
   if (IS_DEV) {
-    return "Example (Dev)";
+    return "FindR (Dev)";
   }
 
   if (IS_PREVIEW) {
-    return "Example (Preview)";
+    return "FindR (Preview)";
   }
 
-  return "Example";
+  return "FindR";
 };
 
 export const getGoogleServicesJson = () => {
@@ -41,11 +41,11 @@ export const getGoogleServicesJson = () => {
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   name: getAppName(),
-  slug: "Example",
+  slug: "FindR",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
-  scheme: "example",
+  scheme: "findr",
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
   ios: {
@@ -96,8 +96,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   owner: "nativesquare-expo",
   extra: {
     router: {},
+    eas: {
+      projectId: "89896b4e-c988-4370-9739-febb9b531de6",
+    },
   },
   runtimeVersion: {
     policy: "appVersion",
+  },
+  updates: {
+    url: "https://u.expo.dev/89896b4e-c988-4370-9739-febb9b531de6",
   },
 });
