@@ -4,6 +4,7 @@ import Google from "@auth/core/providers/google";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
 import { ConvexError } from "convex/values";
+import { APP_SLUG } from "../constants";
 import { ResendOTP } from "./ResendOTP";
 import { ResendOTPPasswordReset } from "./ResendOTPPasswordReset";
 
@@ -42,7 +43,10 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   callbacks: {
     async redirect({ redirectTo }) {
       console.log("redirectTo: ", redirectTo);
-      if (redirectTo !== "findr://" && redirectTo !== "http://localhost:3000") {
+      if (
+        redirectTo !== `${APP_SLUG}://` &&
+        redirectTo !== "http://localhost:3000"
+      ) {
         throw new Error(`Invalid redirectTo URI ${redirectTo}`);
       }
       return redirectTo;

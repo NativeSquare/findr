@@ -1,30 +1,31 @@
 import { ConfigContext, ExpoConfig } from "expo/config";
+import { APP_NAME, APP_SLUG } from "./constants";
 
 const IS_DEV = process.env.APP_VARIANT === "development";
 const IS_PREVIEW = process.env.APP_VARIANT === "preview";
 
 const getUniqueIdentifier = () => {
   if (IS_DEV) {
-    return "com.findr.mobile.dev";
+    return `com.${APP_SLUG}.mobile.dev`;
   }
 
   if (IS_PREVIEW) {
-    return "com.findr.mobile.preview";
+    return `com.${APP_SLUG}.mobile.preview`;
   }
 
-  return "com.findr.mobile";
+  return `com.${APP_SLUG}.mobile`;
 };
 
 const getAppName = () => {
   if (IS_DEV) {
-    return "FindR (Dev)";
+    return `${APP_NAME} (Dev)`;
   }
 
   if (IS_PREVIEW) {
-    return "FindR (Preview)";
+    return `${APP_NAME} (Preview)`;
   }
 
-  return "FindR";
+  return APP_NAME;
 };
 
 export const getGoogleServicesJson = () => {
@@ -41,11 +42,11 @@ export const getGoogleServicesJson = () => {
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   name: getAppName(),
-  slug: "FindR",
+  slug: APP_NAME,
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
-  scheme: "findr",
+  scheme: APP_SLUG,
   userInterfaceStyle: "dark",
   newArchEnabled: true,
   ios: {
