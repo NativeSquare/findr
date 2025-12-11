@@ -1,4 +1,3 @@
-import { SocialConnections } from "@/components/blocks/social-connections";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,7 +8,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { getConvexErrorMessage } from "@/utils/getConvexErrorMessage";
 import { SignInSchema } from "@/validation/auth";
@@ -178,12 +176,12 @@ export function SignInForm() {
               </Text>
             </Button>
           </View>
-          <View className="flex-row items-center">
+          {/* <View className="flex-row items-center">
             <Separator className="flex-1" />
             <Text className="text-muted-foreground px-4 text-sm">or</Text>
             <Separator className="flex-1" />
           </View>
-          <SocialConnections setError={setFormError} />
+          <SocialConnections setError={setFormError} /> */}
         </CardContent>
       </Card>
     </View>

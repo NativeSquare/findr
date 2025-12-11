@@ -1,4 +1,3 @@
-import { SocialConnections } from "@/components/blocks/social-connections";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,35 +8,41 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { getConvexErrorMessage } from "@/utils/getConvexErrorMessage";
 import { SignUpSchema } from "@/validation/auth";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useConvex } from "convex/react";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { ActivityIndicator, type TextInput, View } from "react-native";
 import z from "zod";
-import { api } from "../../../convex/_generated/api";
 import { PasswordInput } from "../custom/password-input";
+import { Checkbox } from "../ui/checkbox";
 
 export function SignUpForm() {
   const passwordInputRef = React.useRef<TextInput>(null);
+  const confirmPasswordInputRef = React.useRef<TextInput>(null);
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [acceptTerms, setAcceptTerms] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [fieldErrors, setFieldErrors] = React.useState<{
     email?: string;
     password?: string;
+    confirmPassword?: string;
+    acceptTerms?: string;
   }>({});
   const [formError, setFormError] = React.useState<string | null>(null);
   const router = useRouter();
   const { signIn } = useAuthActions();
-  const convex = useConvex();
 
   function onEmailSubmitEditing() {
     passwordInputRef.current?.focus();
+  }
+
+  function onPasswordSubmitEditing() {
+    confirmPasswordInputRef.current?.focus();
   }
 
   async function onSubmit() {
@@ -45,24 +50,22 @@ export function SignUpForm() {
     setFieldErrors({});
 
     // Field Validation
-    const result = SignUpSchema.safeParse({ email, password });
+    const result = SignUpSchema.safeParse({
+      email,
+      password,
+      confirmPassword,
+      acceptTerms,
+    });
     if (!result.success) {
       const tree = z.treeifyError(result.error);
 
       setFieldErrors({
         email: tree.properties?.email?.errors?.[0],
         password: tree.properties?.password?.errors?.[0],
+        confirmPassword: tree.properties?.confirmPassword?.errors?.[0],
+        acceptTerms: tree.properties?.acceptTerms?.errors?.[0],
       });
       setFormError(tree.errors?.[0] ?? null);
-      return;
-    }
-
-    // Check if account exists
-    const user = await convex.query(api.functions.getUserByEmail, {
-      email: email,
-    });
-    if (user) {
-      setFormError("Account already exists with this email");
       return;
     }
 
@@ -129,15 +132,56 @@ export function SignUpForm() {
               </View>
               <PasswordInput
                 ref={passwordInputRef}
+                placeholder="Set a password"
                 id="password"
-                returnKeyType="send"
-                onSubmitEditing={onSubmit}
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={onPasswordSubmitEditing}
                 value={password}
                 onChangeText={setPassword}
               />
               {fieldErrors.password && (
                 <Text className="text-xs text-destructive mt-1">
                   {fieldErrors.password}
+                </Text>
+              )}
+            </View>
+            <View className="gap-1.5">
+              <View className="flex-row items-center">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+              </View>
+              <PasswordInput
+                ref={confirmPasswordInputRef}
+                placeholder="Confirm password"
+                id="confirmPassword"
+                returnKeyType="send"
+                onSubmitEditing={onSubmit}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+              {fieldErrors.confirmPassword && (
+                <Text className="text-xs text-destructive mt-1">
+                  {fieldErrors.confirmPassword}
+                </Text>
+              )}
+            </View>
+            <View className="gap-1.5">
+              <View className="flex flex-row items-center gap-3">
+                <Checkbox
+                  id="terms"
+                  checked={acceptTerms}
+                  onCheckedChange={setAcceptTerms}
+                />
+                <Label
+                  onPress={() => setAcceptTerms(!acceptTerms)}
+                  htmlFor="terms"
+                >
+                  Accept terms and conditions
+                </Label>
+              </View>
+              {fieldErrors.acceptTerms && (
+                <Text className="text-xs text-destructive mt-1">
+                  {fieldErrors.acceptTerms}
                 </Text>
               )}
             </View>
@@ -166,12 +210,12 @@ export function SignUpForm() {
               </Text>
             </Button>
           </View>
-          <View className="flex-row items-center">
+          {/* <View className="flex-row items-center">
             <Separator className="flex-1" />
             <Text className="text-muted-foreground px-4 text-sm">or</Text>
             <Separator className="flex-1" />
           </View>
-          <SocialConnections setError={setFormError} />
+          <SocialConnections setError={setFormError} /> */}
         </CardContent>
       </Card>
     </View>
