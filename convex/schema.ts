@@ -15,5 +15,12 @@ export default defineSchema({
     isAnonymous: v.optional(v.boolean()),
 
     // other "users" fields...
+    bio: v.optional(v.string()),
+    age: v.optional(v.number()),
+    height: v.optional(v.string()),
+    bodyTypes: v.optional(v.array(v.string())),
+    orientation: v.optional(v.string()),
+    lookingFor: v.optional(v.array(v.string())),
+    hasCompletedOnboarding: v.optional(v.boolean()),
   }).index("email", ["email"]),
 });

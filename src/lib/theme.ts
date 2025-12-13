@@ -62,7 +62,7 @@ export const THEME = {
     chart5: "hsl(340 75% 55%)",
     tabbar: "hsl(330 0% 9%)",
     tabbarForeground: "hsl(300 0% 98%)",
-    tabbarPrimary: "hsl(225.35 84% 49%)",
+    tabbarPrimary: "hsl(26 100% 45%)",
     tabbarPrimaryForeground: "hsl(300 0% 98%)",
     tabbarAccent: "hsl(320 0% 15%)",
     tabbarAccentForeground: "hsl(300 0% 98%)",

@@ -74,6 +74,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-camera",
     "expo-image-picker",
     "expo-media-library",
+    "expo-navigation-bar",
     "expo-notifications",
     "expo-router",
     "expo-secure-store",
