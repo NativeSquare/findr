@@ -1,0 +1,132 @@
+---
+description: Component organization and file structure guidelines for React Native/Expo app
+globs: src/**/*.tsx
+alwaysApply: true
+---
+
+# Component Organization Rules
+
+## Screen Files Should Only Export the Default Screen Component
+
+Screen files in `src/app/` should only contain the default exported screen/page component. Any helper components, sub-components, or reusable UI elements should be extracted to their own files.
+
+### File Structure
+
+```
+src/
+├── app/                          # Screen/page components (Expo Router)
+│   └── [screen].tsx              # Only exports: default function [Screen]()
+│
+├── components/
+│   ├── ui/                       # React Native Reusables (RNR) primitives — DO NOT TOUCH
+│   ├── blocks/                   # React Native Reusables imported blocks — DO NOT TOUCH
+│   ├── custom/                   # General-purpose reusable components (e.g., otp-input, bottom-sheet)
+│   ├── shared/                   # App-specific shared components across features
+│   └── app/                      # Feature-specific components
+│       └── [feature]/            # Feature folder (e.g., settings/, onboarding/)
+│           └── [component].tsx   # Feature component (e.g., settings-row.tsx)
+```
+
+### Component Folders Explained
+
+| Folder           | Purpose                                                                              | Touch?                                  |
+| ---------------- | ------------------------------------------------------------------------------------ | --------------------------------------- |
+| `ui/`            | React Native Reusables (RNR) primitive components                                    | ❌ Rarely, only if absolutely necessary |
+| `blocks/`        | React Native Reusables imported blocks                                               | ❌ Never                                |
+| `custom/`        | General-purpose components reusable across many apps (otp-input, bottom-sheet, etc.) | ⚠️ Rarely                               |
+| `shared/`        | App-specific components shared across features within this app                       | ✅ When needed                          |
+| `app/[feature]/` | Feature-specific components for a single feature                                     | ✅ Most common                          |
+
+### Rules
+
+1. **Prefer existing components over creating new ones**: Always check for existing components before creating new ones. The priority order is:
+   1. `ui/` — React Native Reusables primitives (Button, Input, Card, Dialog, etc.)
+   2. `blocks/` — Pre-built RNR blocks for common patterns
+   3. `custom/` — Already created custom components
+   4. `shared/` — Already created shared components
+   5. Only create new components if nothing existing fits the use case
+
+2. **Screen files are thin**: Files in `src/app/` should only contain:
+   - The default exported screen component
+   - Screen-specific state and logic
+
+3. **Avoid useMemo and useCallback**: Prefer simple, readable code over premature optimization. Only use memoization hooks when there's a proven performance issue.
+
+4. **Extract sub-components**: Any reusable or complex sub-component should be moved to:
+   - `src/components/app/[feature]/` for feature-specific components
+   - `src/components/shared/` for app-specific components shared across features
+   - `src/components/custom/` for general-purpose components reusable across apps
+
+5. **Feature folder naming**: Create folders under `src/components/app/` named after the feature (e.g., `settings/`, `onboarding/`, `profile/`)
+
+6. **Component file naming**: Use kebab-case for file names:
+   - `settings-row.tsx` ✓
+   - `SettingsRow.tsx` ✗
+
+7. **Export types alongside components**: If a component has associated types, export them from the same file:
+
+   ```tsx
+   export type ItemProps = { ... };
+   export function ItemRow({ ... }: ItemProps) { ... }
+   ```
+
+### Example
+
+**❌ Bad - Everything in screen file:**
+
+```tsx
+// src/app/[screen].tsx
+function HelperComponent({ ... }: Props) {
+  return <View>...</View>;
+}
+
+export default function Screen() {
+  return <HelperComponent ... />;
+}
+```
+
+**✓ Good - Extracted to feature folder:**
+
+```tsx
+// src/components/app/[feature]/helper-component.tsx
+export type Props = { ... };
+export function HelperComponent({ ... }: Props) { ... }
+
+// src/app/[screen].tsx
+import { HelperComponent } from "@/components/app/[feature]/helper-component";
+export default function Screen() { ... }
+```
+
+### Example: Prefer Existing Components
+
+**❌ Bad - Creating a custom button when RNR Button exists:**
+
+```tsx
+// Don't create a new button component
+function CustomButton({ onPress, children }) {
+  return (
+    <TouchableOpacity onPress={onPress} className="bg-primary p-4 rounded-lg">
+      <Text>{children}</Text>
+    </TouchableOpacity>
+  );
+}
+```
+
+**✓ Good - Use existing RNR Button component:**
+
+```tsx
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+
+<Button onPress={handlePress}>
+  <Text>Click me</Text>
+</Button>;
+```
+
+**Available RNR primitives in `ui/`**: accordion, alert, alert-dialog, avatar, badge, button, card, checkbox, collapsible, dialog, dropdown-menu, input, label, popover, progress, radio-group, select, separator, skeleton, switch, tabs, text, textarea, toggle, toggle-group, tooltip, and more.
+
+**Before creating a new component, always ask:**
+
+1. Does an RNR primitive in `ui/` already handle this?
+2. Can I compose existing primitives to achieve this?
+3. Does a component in `custom/` or `shared/` already exist?
