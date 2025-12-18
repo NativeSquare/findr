@@ -40,10 +40,24 @@ export const updateUserAfterOnboarding = mutation({
       image: v.optional(v.string()),
       bio: v.optional(v.string()),
       age: v.optional(v.number()),
-      height: v.optional(v.string()),
+      height: v.optional(
+        v.object({
+          value: v.number(),
+          unit: v.string(),
+        })
+      ),
       bodyTypes: v.optional(v.array(v.string())),
       orientation: v.optional(v.string()),
       lookingFor: v.optional(v.array(v.string())),
+      privacy: v.optional(
+        v.object({
+          hideDistance: v.optional(v.boolean()),
+          hideAge: v.optional(v.boolean()),
+          hideOnlineStatus: v.optional(v.boolean()),
+          hideProfileFromDiscovery: v.optional(v.boolean()),
+        })
+      ),
+      profilePictures: v.optional(v.array(v.string())),
     }),
   },
   handler: async (ctx, args) => {

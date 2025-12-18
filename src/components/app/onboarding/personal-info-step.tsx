@@ -1,10 +1,18 @@
 import { OnboardingFormData } from "@/app/(onboarding)";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Text } from "@/components/ui/text";
-import { Ionicons } from "@expo/vector-icons";
 import * as React from "react";
 import { View } from "react-native";
+import { OptionButton } from "./option-button";
 
 export function PersonalInfoStep({
   formData,
@@ -25,13 +33,14 @@ export function PersonalInfoStep({
     "Ask Me",
   ];
   const LOOKING_FOR = ["Connections", "Friends", "Dating"];
+
   return (
     <View className="gap-5">
       <View className="gap-2">
         <Text className="text-sm text-muted-foreground">Age</Text>
         <Input
-          keyboardType="number-pad"
-          value={formData.age?.toString()}
+          keyboardType="numeric"
+          value={formData.age ? formData.age.toString() : ""}
           onChangeText={(value) =>
             setFormData({ ...formData, age: Number(value) })
           }
@@ -42,27 +51,49 @@ export function PersonalInfoStep({
 
       <View className="gap-2">
         <Text className="text-sm text-muted-foreground">Height</Text>
-        <View className="relative">
+        <View className="flex flex-row items-center gap-2">
           <Input
-            value={formData.height}
-            onChangeText={(value) =>
-              setFormData({ ...formData, height: value })
+            keyboardType="numeric"
+            value={
+              formData.height?.value ? formData.height?.value.toString() : ""
             }
-            placeholder="7.03 ft"
-            returnKeyType="done"
+            onChangeText={(value) =>
+              setFormData({
+                ...formData,
+                height: {
+                  value: Number(value),
+                  unit: formData.height?.unit || "cm",
+                },
+              })
+            }
+            placeholder="175"
+            maxLength={3}
+            className="flex-1"
           />
-          <Ionicons
-            name="chevron-down"
-            size={16}
-            className="text-muted-foreground"
-            style={{
-              position: "absolute",
-              right: 12,
-              top: 12,
-              opacity: 0.8,
-            }}
-            pointerEvents="none"
-          />
+          <Select
+            defaultValue={{ label: "cm", value: "cm" }}
+            onValueChange={(option) =>
+              setFormData({
+                ...formData,
+                height: {
+                  value: formData.height?.value ?? 0,
+                  unit: option?.value ?? "cm",
+                },
+              })
+            }
+          >
+            <SelectTrigger className="w-[64px]" disabled={true}>
+              <SelectValue placeholder="cm" />
+            </SelectTrigger>
+            <SelectContent className="w-[64px]">
+              <SelectGroup>
+                <SelectLabel>Height Unit</SelectLabel>
+                <SelectItem label="cm" value="cm">
+                  cm
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </View>
       </View>
 
@@ -70,22 +101,19 @@ export function PersonalInfoStep({
         <Text className="text-sm text-muted-foreground">Body Types</Text>
         <View className="flex-row flex-wrap gap-2">
           {BODY_TYPES.map((option, index) => (
-            <Button
+            <OptionButton
               key={index}
-              variant={
-                formData.bodyTypes?.includes(option) ? "default" : "outline"
-              }
+              option={option}
               onPress={() =>
                 setFormData({
                   ...formData,
-                  bodyTypes: formData.bodyTypes?.includes(option)
-                    ? formData.bodyTypes?.filter((type) => type !== option)
-                    : [...(formData.bodyTypes || []), option],
+                  lookingFor: formData.lookingFor?.includes(option)
+                    ? formData.lookingFor?.filter((type) => type !== option)
+                    : [...(formData.lookingFor || []), option],
                 })
               }
-            >
-              <Text>{option}</Text>
-            </Button>
+              isSelected={formData.lookingFor?.includes(option) ?? false}
+            />
           ))}
         </View>
       </View>
@@ -96,18 +124,17 @@ export function PersonalInfoStep({
         </Text>
         <View className="flex-row flex-wrap gap-2">
           {ORIENTATIONS.map((option, index) => (
-            <Button
+            <OptionButton
               key={index}
-              variant={formData.orientation === option ? "default" : "outline"}
+              option={option}
               onPress={() =>
                 setFormData({
                   ...formData,
                   orientation: option,
                 })
               }
-            >
-              <Text>{option}</Text>
-            </Button>
+              isSelected={formData.orientation === option}
+            />
           ))}
         </View>
       </View>
@@ -116,11 +143,9 @@ export function PersonalInfoStep({
         <Text className="text-sm text-muted-foreground">Looking for</Text>
         <View className="flex-row flex-wrap gap-2">
           {LOOKING_FOR.map((option, index) => (
-            <Button
+            <OptionButton
               key={index}
-              variant={
-                formData.lookingFor?.includes(option) ? "default" : "outline"
-              }
+              option={option}
               onPress={() =>
                 setFormData({
                   ...formData,
@@ -129,9 +154,8 @@ export function PersonalInfoStep({
                     : [...(formData.lookingFor || []), option],
                 })
               }
-            >
-              <Text>{option}</Text>
-            </Button>
+              isSelected={formData.lookingFor?.includes(option) ?? false}
+            />
           ))}
         </View>
       </View>

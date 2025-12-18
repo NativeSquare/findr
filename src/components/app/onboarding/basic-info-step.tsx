@@ -29,7 +29,6 @@ export function BasicInfoStep({
         <Text className="text-sm text-muted-foreground">Bio</Text>
         <Textarea
           placeholder="Share a little about yourself"
-          placeholderClassName="text-primary"
           value={formData.bio}
           onChangeText={(value) => setFormData({ ...formData, bio: value })}
           className="min-h-32"

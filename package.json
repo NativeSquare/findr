@@ -79,6 +79,7 @@
     "expo-secure-store": "~15.0.7",
     "expo-splash-screen": "~31.0.11",
     "expo-status-bar": "~3.0.9",
+    "expo-superwall": "^1.0.0",
     "expo-symbols": "~1.0.7",
     "expo-updates": "~29.0.13",
     "expo-web-browser": "~15.0.9",

@@ -5,6 +5,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@convex/_generated/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
+import { useUser } from "expo-superwall";
 import React from "react";
 import { Alert, Pressable, ScrollView, View } from "react-native";
 
@@ -79,6 +80,7 @@ function SettingsGroup({
 
 export default function Profile() {
   const { signOut } = useAuthActions();
+  const { signOut: signOutSuperwall } = useUser();
   const user = useQuery(api.functions.currentUser);
 
   const displayName = user?.name || "Guest";
@@ -179,7 +181,10 @@ export default function Profile() {
             <SettingsRow
               label="Log out"
               icon="log-out-outline"
-              onPress={() => signOut()}
+              onPress={() => {
+                signOut();
+                signOutSuperwall();
+              }}
             />
             <SettingsRow
               label="Delete Account"

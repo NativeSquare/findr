@@ -3,11 +3,13 @@ import { Text } from "@/components/ui/text";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
+import { useUser } from "expo-superwall";
 import { ScrollView, View } from "react-native";
 
 export default function Home() {
   const user = useQuery(api.functions.currentUser);
   const { signOut } = useAuthActions();
+  const { signOut: signOutSuperwall } = useUser();
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"
@@ -16,7 +18,12 @@ export default function Home() {
     >
       <View className="w-full max-w-sm">
         <Text>Hi, {user?.email}</Text>
-        <Button onPress={() => signOut()}>
+        <Button
+          onPress={() => {
+            signOut();
+            signOutSuperwall();
+          }}
+        >
           <Text>Sign Out</Text>
         </Button>
       </View>
