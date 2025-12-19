@@ -75,15 +75,19 @@ function RootStack() {
     <Stack
       screenOptions={{ headerShown: false, animation: "fade_from_bottom" }}
     >
-      <Stack.Protected guard={!isAuthenticated}>
+      <Stack.Protected guard={!user || !isAuthenticated}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
 
-      <Stack.Protected guard={isAuthenticated && !hasCompletedOnboarding}>
+      <Stack.Protected
+        guard={!!user && isAuthenticated && !hasCompletedOnboarding}
+      >
         <Stack.Screen name="(onboarding)" />
       </Stack.Protected>
 
-      <Stack.Protected guard={isAuthenticated && hasCompletedOnboarding}>
+      <Stack.Protected
+        guard={!!user && isAuthenticated && hasCompletedOnboarding}
+      >
         <Stack.Screen name="(app)" />
       </Stack.Protected>
     </Stack>
