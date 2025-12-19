@@ -68,7 +68,7 @@ export function ProfilePhotosSection({
   }, [profilePictures]);
 
   return (
-    <View className="gap-4">
+    <View className="gap-6">
       {/* Main Profile Picture */}
       <View className="items-center">
         <Pressable

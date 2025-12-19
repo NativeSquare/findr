@@ -55,7 +55,10 @@ export default function EditProfile() {
   const renderHeader = () => {
     return (
       <View className="flex-row items-center justify-between px-5 py-6">
-        <Pressable onPress={() => router.back()} className="size-6">
+        <Pressable
+          onPress={() => router.dismissTo("/profile")}
+          className="size-6"
+        >
           <Icon as={ChevronLeft} size={24} className="text-white" />
         </Pressable>
         <Text className="text-xl font-medium text-white">Edit Profile</Text>
