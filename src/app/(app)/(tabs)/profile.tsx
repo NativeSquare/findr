@@ -38,6 +38,8 @@ export default function Profile() {
 
   const handleConfirmDeleteAccount = React.useCallback(() => {
     if (!user?._id) return;
+    signOut();
+    signOutSuperwall();
     deleteUser({ id: user._id });
   }, []);
 

@@ -1,8 +1,30 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { Triggers } from "convex-helpers/server/triggers";
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
+import { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { generateMutations } from "./lib/mutations";
+
+const triggers = new Triggers<DataModel>();
+
+// Cascade deletion
+triggers.register("users", async (ctx, change) => {
+  if (change.operation === "delete") {
+    // authAccounts
+    for await (const account of ctx.db
+      .query("authAccounts")
+      .filter((q) => q.eq(q.field("userId"), change.id))) {
+      await ctx.db.delete(account._id);
+    }
+    // authSessions
+    for await (const session of ctx.db
+      .query("authSessions")
+      .withIndex("userId", (q) => q.eq("userId", change.id))) {
+      await ctx.db.delete(session._id);
+    }
+  }
+});
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Schema Definition ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
@@ -61,7 +83,7 @@ export const {
   insert,
   patch,
   replace,
-} = generateMutations("users", documentSchema);
+} = generateMutations("users", documentSchema, triggers);
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Queries Definition ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
