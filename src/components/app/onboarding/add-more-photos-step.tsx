@@ -96,6 +96,7 @@ export function AddMorePhotosStep({
             profilePictures: [...(formData.profilePictures ?? []), image],
           })
         }
+        options={["camera", "gallery"]}
       />
     </View>
   );

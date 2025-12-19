@@ -1,7 +1,3 @@
-// ================================================================================ //
-// ======================== Default Bottom Sheet Component ======================== //
-// ================================================================================ //
-
 import { THEME } from "@/lib/theme";
 import {
   BottomSheetBackdrop as GorhomBottomSheetBackdrop,
@@ -12,18 +8,10 @@ import { useColorScheme } from "nativewind";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Interface Definition ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-
 interface BottomSheetModalProps {
   ref: React.RefObject<GorhomBottomSheetModal | null>;
   children: React.ReactNode;
 }
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Component Definition ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
 export type BottomSheetModalType = BottomSheetModalProps;
 
@@ -61,7 +49,7 @@ export function BottomSheetModal({ ref, children }: BottomSheetModalProps) {
         />
       )}
     >
-      <GorhomBottomSheetView className={`pb-[${insets.bottom}px]`}>
+      <GorhomBottomSheetView style={{ paddingBottom: insets.bottom }}>
         {children}
       </GorhomBottomSheetView>
     </GorhomBottomSheetModal>

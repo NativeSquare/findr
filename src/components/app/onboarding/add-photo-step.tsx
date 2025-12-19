@@ -41,6 +41,7 @@ export function AddPhotoStep({
       <UploadMediaBottomSheetModal
         bottomSheetModalRef={bottomSheetModalRef}
         onImageSelected={(image) => setFormData({ ...formData, image: image })}
+        options={["camera", "gallery"]}
       />
     </View>
   );
