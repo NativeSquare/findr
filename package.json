@@ -58,6 +58,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "convex": "^1.29.3",
+    "convex-helpers": "^0.1.108",
     "expo": "~54.0.25",
     "expo-auth-session": "~7.0.9",
     "expo-camera": "~17.0.10",

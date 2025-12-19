@@ -122,6 +122,9 @@ importers:
       convex:
         specifier: ^1.29.3
         version: 1.31.0(react@19.1.0)
+      convex-helpers:
+        specifier: ^0.1.108
+        version: 0.1.108(convex@1.31.0(react@19.1.0))(react@19.1.0)(typescript@5.9.3)(zod@4.1.13)
       expo:
         specifier: ~54.0.25
         version: 54.0.28(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.18)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
@@ -3715,6 +3718,28 @@ packages:
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  convex-helpers@0.1.108:
+    resolution: {integrity: sha512-5dHYX4Dy/qnBuvP5CI9ZKEwYtSlyQKK2MiIdGTVV8WUON5mWr/St8IeBxsJTBNh/vuBrlX0XPAZ1arbk4KQUdg==}
+    hasBin: true
+    peerDependencies:
+      '@standard-schema/spec': ^1.0.0
+      convex: ^1.25.4
+      hono: ^4.0.5
+      react: ^17.0.2 || ^18.0.0 || ^19.0.0
+      typescript: ^5.5
+      zod: ^3.25.0 || ^4.0.0
+    peerDependenciesMeta:
+      '@standard-schema/spec':
+        optional: true
+      hono:
+        optional: true
+      react:
+        optional: true
+      typescript:
+        optional: true
+      zod:
+        optional: true
 
   convex@1.31.0:
     resolution: {integrity: sha512-ht3dtpWQmxX62T8PT3p/5PDlRzSW5p2IDTP4exKjQ5dqmvhtn1wLFakJAX4CCeu1s0Ch0dKY5g2dk/wETTRAOw==}
@@ -10710,6 +10735,14 @@ snapshots:
   consola@3.4.2: {}
 
   convert-source-map@2.0.0: {}
+
+  convex-helpers@0.1.108(convex@1.31.0(react@19.1.0))(react@19.1.0)(typescript@5.9.3)(zod@4.1.13):
+    dependencies:
+      convex: 1.31.0(react@19.1.0)
+    optionalDependencies:
+      react: 19.1.0
+      typescript: 5.9.3
+      zod: 4.1.13
 
   convex@1.31.0(react@19.1.0):
     dependencies:

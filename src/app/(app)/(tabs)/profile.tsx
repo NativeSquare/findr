@@ -1,9 +1,13 @@
+import { DeleteAccountBottomSheet } from "@/components/app/settings/delete-account-bottom-sheet";
 import {
   SettingItem,
   SettingsRow,
 } from "@/components/app/settings/settings-row";
 import { Text } from "@/components/ui/text";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { api } from "@convex/_generated/api";
+import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
+import { useMutation } from "convex/react";
 import { router } from "expo-router";
 import { useUser } from "expo-superwall";
 import {
@@ -23,25 +27,16 @@ import { Alert, ScrollView, View } from "react-native";
 export default function Profile() {
   const { signOut } = useAuthActions();
   const { signOut: signOutSuperwall } = useUser();
+  const deleteUser = useMutation(api.functions.deleteUser);
+  const deleteAccountBottomSheetRef =
+    React.useRef<GorhomBottomSheetModal>(null);
 
   const handleDeleteAccount = React.useCallback(() => {
-    Alert.alert(
-      "Delete Account",
-      "Are you sure you want to delete your account? This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              "Delete Account",
-              "This action will be available soon."
-            );
-          },
-        },
-      ]
-    );
+    deleteAccountBottomSheetRef.current?.present();
+  }, []);
+
+  const handleConfirmDeleteAccount = React.useCallback(() => {
+    deleteUser();
   }, []);
 
   const handleLogout = React.useCallback(() => {
@@ -98,7 +93,7 @@ export default function Profile() {
     {
       label: "Permission Page",
       icon: LockOpen,
-      onPress: () => {},
+      onPress: () => router.push("/permissions"),
     },
     {
       label: "Cancel Subscription",
@@ -138,6 +133,11 @@ export default function Profile() {
           ))}
         </View>
       </View>
+
+      <DeleteAccountBottomSheet
+        bottomSheetModalRef={deleteAccountBottomSheetRef}
+        onConfirm={handleConfirmDeleteAccount}
+      />
     </ScrollView>
   );
 }

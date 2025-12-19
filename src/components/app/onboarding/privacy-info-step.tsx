@@ -1,8 +1,8 @@
 import { OnboardingFormData } from "@/app/(onboarding)";
+import { OptionSwitch } from "@/components/shared/option-switch";
 import { Separator } from "@/components/ui/separator";
 import * as React from "react";
 import { View } from "react-native";
-import { OptionSwitch } from "./option-switch";
 
 export function PrivacyInfoStep({
   formData,
