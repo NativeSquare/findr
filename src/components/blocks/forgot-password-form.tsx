@@ -4,7 +4,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,10 +13,12 @@ import { ForgotPasswordSchema } from "@/validation/auth";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvex } from "convex/react";
 import { useRouter } from "expo-router";
+import { ChevronLeft } from "lucide-react-native";
 import * as React from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import z from "zod";
 import { api } from "../../../convex/_generated/api";
+import { Icon } from "../ui/icon";
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = React.useState("");
@@ -77,10 +78,16 @@ export function ForgotPasswordForm() {
   return (
     <View className="gap-6">
       <Card className="bg-background border-border/0 sm:border-border shadow-none sm:shadow-sm sm:shadow-black/5">
-        <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">
-            Forgot password?
-          </CardTitle>
+        <CardHeader className="gap-4">
+          <View className="w-full flex flex-row items-center justify-between">
+            <Pressable onPress={() => router.back()} className="size-6">
+              <Icon as={ChevronLeft} size={24} className="text-white" />
+            </Pressable>
+            <Text className="text-xl font-medium text-white">
+              Forgot password?
+            </Text>
+            <View className="size-6" />
+          </View>
           <CardDescription className="text-center sm:text-left">
             Enter your email to reset your password
           </CardDescription>
