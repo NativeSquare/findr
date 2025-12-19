@@ -23,6 +23,12 @@ export default defineSchema({
         unit: v.string(),
       })
     ),
+    weight: v.optional(
+      v.object({
+        value: v.number(),
+        unit: v.string(),
+      })
+    ),
     bodyTypes: v.optional(v.array(v.string())),
     orientation: v.optional(v.string()),
     lookingFor: v.optional(v.array(v.string())),
@@ -35,6 +41,8 @@ export default defineSchema({
       })
     ),
     profilePictures: v.optional(v.array(v.string())),
+    position: v.optional(v.array(v.string())),
+    ethnicity: v.optional(v.array(v.string())),
     hasCompletedOnboarding: v.optional(v.boolean()),
   }).index("email", ["email"]),
 });

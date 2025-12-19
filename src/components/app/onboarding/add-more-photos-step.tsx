@@ -1,11 +1,12 @@
 import { OnboardingFormData } from "@/app/(onboarding)";
+import { PhotoGridItem } from "@/components/shared/photo-grid-item";
+import { UploadMediaBottomSheetModal } from "@/components/shared/upload-media-bottom-sheet-modal";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
-import { Plus, Rocket, X } from "lucide-react-native";
+import { Rocket } from "lucide-react-native";
 import React from "react";
-import { Image, Pressable, View } from "react-native";
-import { UploadMediaBottomSheetModal } from "../../shared/upload-media-bottom-sheet-modal";
+import { View } from "react-native";
 
 export function AddMorePhotosStep({
   formData,
@@ -74,43 +75,12 @@ export function AddMorePhotosStep({
               {row.map((uri, colIndex) => {
                 const photoIndex = rowIndex * 3 + colIndex;
                 return (
-                  <View key={photoIndex} className="relative flex-1">
-                    <Pressable
-                      onPress={() => handleOpenBottomSheetModal(photoIndex)}
-                      className="aspect-square items-center justify-center overflow-hidden rounded-lg border border-border bg-card/30"
-                    >
-                      {uri ? (
-                        <Image
-                          source={{ uri }}
-                          className="size-full"
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View className="items-center gap-1">
-                          <Icon
-                            as={Plus}
-                            size={20}
-                            className="text-muted-foreground"
-                          />
-                          <Text className="text-xs text-muted-foreground">
-                            Add Photo
-                          </Text>
-                        </View>
-                      )}
-                    </Pressable>
-                    {uri && (
-                      <Pressable
-                        onPress={() => handleRemovePhoto(photoIndex)}
-                        className="absolute -top-2 -right-2 size-7 items-center justify-center rounded-full bg-destructive"
-                      >
-                        <Icon
-                          as={X}
-                          size={16}
-                          className="text-destructive-foreground"
-                        />
-                      </Pressable>
-                    )}
-                  </View>
+                  <PhotoGridItem
+                    key={photoIndex}
+                    uri={uri}
+                    onPress={() => handleOpenBottomSheetModal(photoIndex)}
+                    onRemove={() => handleRemovePhoto(photoIndex)}
+                  />
                 );
               })}
             </View>

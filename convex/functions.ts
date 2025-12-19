@@ -46,6 +46,55 @@ export const updateUserAfterOnboarding = mutation({
           unit: v.string(),
         })
       ),
+      weight: v.optional(
+        v.object({
+          value: v.number(),
+          unit: v.string(),
+        })
+      ),
+      position: v.optional(v.array(v.string())),
+      ethnicity: v.optional(v.array(v.string())),
+      bodyTypes: v.optional(v.array(v.string())),
+      orientation: v.optional(v.string()),
+      lookingFor: v.optional(v.array(v.string())),
+      privacy: v.optional(
+        v.object({
+          hideDistance: v.optional(v.boolean()),
+          hideAge: v.optional(v.boolean()),
+          hideOnlineStatus: v.optional(v.boolean()),
+          hideProfileFromDiscovery: v.optional(v.boolean()),
+        })
+      ),
+      profilePictures: v.optional(v.array(v.string())),
+    }),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.patch(args.userId, args.data);
+  },
+});
+
+export const updateUser = mutation({
+  args: {
+    userId: v.id("users"),
+    data: v.object({
+      name: v.optional(v.string()),
+      image: v.optional(v.string()),
+      bio: v.optional(v.string()),
+      age: v.optional(v.number()),
+      height: v.optional(
+        v.object({
+          value: v.number(),
+          unit: v.string(),
+        })
+      ),
+      weight: v.optional(
+        v.object({
+          value: v.number(),
+          unit: v.string(),
+        })
+      ),
+      position: v.optional(v.array(v.string())),
+      ethnicity: v.optional(v.array(v.string())),
       bodyTypes: v.optional(v.array(v.string())),
       orientation: v.optional(v.string()),
       lookingFor: v.optional(v.array(v.string())),

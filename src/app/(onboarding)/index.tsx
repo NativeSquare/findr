@@ -2,6 +2,7 @@ import { AddMorePhotosStep } from "@/components/app/onboarding/add-more-photos-s
 import { AddPhotoStep } from "@/components/app/onboarding/add-photo-step";
 import { BasicInfoStep } from "@/components/app/onboarding/basic-info-step";
 import { PersonalInfoStep } from "@/components/app/onboarding/personal-info-step";
+import { PreferencesInfoStep } from "@/components/app/onboarding/preferences-info-step";
 import { PrivacyInfoStep } from "@/components/app/onboarding/privacy-info-step";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -24,8 +25,11 @@ export type OnboardingFormData = Partial<
     | "bio"
     | "age"
     | "height"
+    | "weight"
     | "bodyTypes"
     | "orientation"
+    | "position"
+    | "ethnicity"
     | "lookingFor"
     | "privacy"
     | "profilePictures"
@@ -43,8 +47,11 @@ export default function Onboarding() {
     bio: user?.bio,
     age: user?.age,
     height: user?.height,
+    weight: user?.weight,
     bodyTypes: user?.bodyTypes,
     orientation: user?.orientation,
+    position: user?.position,
+    ethnicity: user?.ethnicity,
     lookingFor: user?.lookingFor,
     privacy: user?.privacy,
     profilePictures: user?.profilePictures,
@@ -60,6 +67,7 @@ export default function Onboarding() {
     { component: AddPhotoStep, id: "photos", canSkip: true },
     { component: BasicInfoStep, id: "basic", canSkip: true },
     { component: PersonalInfoStep, id: "personal", canSkip: true },
+    { component: PreferencesInfoStep, id: "preferences", canSkip: true },
     { component: PrivacyInfoStep, id: "privacy", canSkip: true },
     { component: AddMorePhotosStep, id: "more-photos", canSkip: true },
   ];
@@ -76,10 +84,8 @@ export default function Onboarding() {
 
   const goNext = () => {
     if (currentStep === steps.length - 1) {
-      console.log(`Going to complete onboarding`);
       handleComplete();
     } else {
-      console.log(`Going to next step ${currentStep + 1}`);
       setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
     }
   };
@@ -137,19 +143,27 @@ export default function Onboarding() {
   };
 
   return (
-    <ScrollView
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="interactive"
-      contentContainerStyle={{ flexGrow: 1 }}
-      contentContainerClassName="my-safe px-4 pb-4"
-    >
-      <View className="w-full max-w-md self-center flex-1 gap-8">
-        {renderHeader()}
-        <View className="flex-1">
-          <CurrentStepComponent formData={formData} setFormData={setFormData} />
+    <View className="flex-1 mt-safe">
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerClassName="px-4 pb-6"
+      >
+        <View className="w-full max-w-md self-center flex-1 gap-8">
+          {renderHeader()}
+          <View className="flex-1">
+            <CurrentStepComponent
+              formData={formData}
+              setFormData={setFormData}
+            />
+          </View>
         </View>
+      </ScrollView>
+      <View className="w-full max-w-md self-center px-4 pb-4 mb-safe">
         {renderFooter()}
       </View>
-    </ScrollView>
+    </View>
   );
 }

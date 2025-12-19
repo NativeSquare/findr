@@ -59,7 +59,7 @@ export function VerifyEmailForm({ email }: { email: string }) {
 
   return (
     <View className="gap-6">
-      <Card className="border-border/0 sm:border-border pb-4 shadow-none sm:shadow-sm sm:shadow-black/5">
+      <Card className="bg-background border-border/0 sm:border-border pb-4 shadow-none sm:shadow-sm sm:shadow-black/5">
         <CardHeader>
           <CardTitle className="text-center text-xl sm:text-left">
             Verify your email

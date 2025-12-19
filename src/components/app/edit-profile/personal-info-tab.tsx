@@ -1,19 +1,31 @@
-import { OnboardingFormData } from "@/app/(onboarding)";
-import * as React from "react";
+import { EditProfileFormData } from "@/app/(app)/edit-profile";
+import React from "react";
 import { View } from "react-native";
 import { AgeField } from "../profile/age-field";
+import { BioField } from "../profile/bio-field";
 import { HeightField } from "../profile/height-field";
+import { NameField } from "../profile/name-field";
 import { WeightField } from "../profile/weight-field";
 
-export function PersonalInfoStep({
+export function PersonalInfoTab({
   formData,
   setFormData,
 }: {
-  formData: OnboardingFormData;
-  setFormData: (data: OnboardingFormData) => void;
+  formData: EditProfileFormData;
+  setFormData: (data: EditProfileFormData) => void;
 }) {
   return (
     <View className="gap-5">
+      <NameField
+        value={formData.name}
+        onChange={(value) => setFormData({ ...formData, name: value })}
+      />
+
+      <BioField
+        value={formData.bio}
+        onChange={(value) => setFormData({ ...formData, bio: value })}
+      />
+
       <AgeField
         value={formData.age ? formData.age.toString() : ""}
         onChange={(value) => setFormData({ ...formData, age: Number(value) })}

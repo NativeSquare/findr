@@ -4,6 +4,7 @@ import {
 } from "@/components/app/settings/settings-row";
 import { Text } from "@/components/ui/text";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { router } from "expo-router";
 import { useUser } from "expo-superwall";
 import {
   File,
@@ -73,7 +74,7 @@ export default function Profile() {
     {
       label: "Edit Profile",
       icon: Pencil,
-      onPress: () => {},
+      onPress: () => router.push("/edit-profile"),
     },
     {
       label: "Terms & Conditions",
