@@ -1,4 +1,4 @@
-import { OptionButton } from "@/components/app/onboarding/option-button";
+import { OptionButton } from "@/components/shared/option-button";
 import { Text } from "@/components/ui/text";
 import { View } from "react-native";
 

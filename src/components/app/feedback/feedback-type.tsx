@@ -2,33 +2,24 @@ import { OptionButton } from "@/components/shared/option-button";
 import { Text } from "@/components/ui/text";
 import { View } from "react-native";
 
-export type SexualOrientationFieldProps = {
+export type FeedbackTypeFieldProps = {
   label?: string;
   onSelect: (option: string) => void;
   isSelected: (option: string) => boolean;
 };
 
-export function SexualOrientationField({
-  label = "Sexual Orientation",
+export function FeedbackTypeField({
+  label = "Feedback Type",
   onSelect,
   isSelected,
-}: SexualOrientationFieldProps) {
-  const ORIENTATIONS = [
-    "Straight",
-    "Gay",
-    "Bisexual",
-    "Queer",
-    "Pansexual",
-    "Asexual",
-    "Demisexual",
-    "Ask Me",
-  ];
+}: FeedbackTypeFieldProps) {
+  const FEEDBACK_TYPES = ["Bug Report", "Feature Request", "General Feedback"];
 
   return (
     <View className="gap-2">
       <Text className="text-sm text-muted-foreground">{label}</Text>
       <View className="flex-row flex-wrap gap-2">
-        {ORIENTATIONS.map((option, index) => (
+        {FEEDBACK_TYPES.map((option, index) => (
           <OptionButton
             key={index}
             option={option}

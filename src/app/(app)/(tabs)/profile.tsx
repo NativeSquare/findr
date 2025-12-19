@@ -9,7 +9,6 @@ import { useUser } from "expo-superwall";
 import {
   File,
   FileText,
-  Key,
   LockOpen,
   LogOut,
   MessageCircle,
@@ -87,14 +86,9 @@ export default function Profile() {
       onPress: () => {},
     },
     {
-      label: "Reset Password",
-      icon: Key,
-      onPress: () => {},
-    },
-    {
       label: "Send Feedback",
       icon: MessageCircle,
-      onPress: () => {},
+      onPress: () => router.push("/send-feedback"),
     },
     {
       label: "First Sentence Page",
