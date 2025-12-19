@@ -17,10 +17,8 @@ export type PermissionsFormData = {
 };
 
 export default function Permissions() {
-  const user = useQuery(api.functions.currentUser);
-  const updateUserPermissions = useMutation(
-    api.functions.updateUserPermissions
-  );
+  const user = useQuery(api.users.currentUser);
+  const patchUser = useMutation(api.users.patch);
 
   const renderHeader = () => {
     return (
@@ -59,8 +57,8 @@ export default function Permissions() {
                   label="Hide my profile from research"
                   isChecked={user?.privacy?.hideProfileFromDiscovery ?? false}
                   onCheckedChange={(checked) =>
-                    updateUserPermissions({
-                      userId: user?._id,
+                    patchUser({
+                      id: user?._id,
                       data: {
                         privacy: {
                           ...user?.privacy,
@@ -76,8 +74,8 @@ export default function Permissions() {
                   label="Hide age"
                   isChecked={user?.privacy?.hideAge ?? false}
                   onCheckedChange={(checked) =>
-                    updateUserPermissions({
-                      userId: user?._id,
+                    patchUser({
+                      id: user?._id,
                       data: {
                         privacy: {
                           ...user?.privacy,
@@ -93,8 +91,8 @@ export default function Permissions() {
                   label="Hide distance"
                   isChecked={user?.privacy?.hideDistance ?? false}
                   onCheckedChange={(checked) =>
-                    updateUserPermissions({
-                      userId: user?._id,
+                    patchUser({
+                      id: user?._id,
                       data: {
                         privacy: {
                           ...user?.privacy,
@@ -110,8 +108,8 @@ export default function Permissions() {
                   label="Hide online status"
                   isChecked={user?.privacy?.hideOnlineStatus ?? false}
                   onCheckedChange={(checked) =>
-                    updateUserPermissions({
-                      userId: user?._id,
+                    patchUser({
+                      id: user?._id,
                       data: {
                         privacy: {
                           ...user?.privacy,

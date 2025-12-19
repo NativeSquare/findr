@@ -1,48 +1,8 @@
 import { authTables } from "@convex-dev/auth/server";
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema } from "convex/server";
+import { users } from "./users";
 
 export default defineSchema({
   ...authTables,
-  users: defineTable({
-    // DO NOT REMOVE THESE FIELDS : https://labs.convex.dev/auth/setup/schema#customizing-the-users-table
-    name: v.optional(v.string()),
-    image: v.optional(v.string()),
-    email: v.optional(v.string()),
-    emailVerificationTime: v.optional(v.number()),
-    phone: v.optional(v.string()),
-    phoneVerificationTime: v.optional(v.number()),
-    isAnonymous: v.optional(v.boolean()),
-
-    // other "users" fields...
-    bio: v.optional(v.string()),
-    age: v.optional(v.number()),
-    height: v.optional(
-      v.object({
-        value: v.number(),
-        unit: v.string(),
-      })
-    ),
-    weight: v.optional(
-      v.object({
-        value: v.number(),
-        unit: v.string(),
-      })
-    ),
-    bodyTypes: v.optional(v.array(v.string())),
-    orientation: v.optional(v.string()),
-    lookingFor: v.optional(v.array(v.string())),
-    privacy: v.optional(
-      v.object({
-        hideDistance: v.optional(v.boolean()),
-        hideAge: v.optional(v.boolean()),
-        hideOnlineStatus: v.optional(v.boolean()),
-        hideProfileFromDiscovery: v.optional(v.boolean()),
-      })
-    ),
-    profilePictures: v.optional(v.array(v.string())),
-    position: v.optional(v.array(v.string())),
-    ethnicity: v.optional(v.array(v.string())),
-    hasCompletedOnboarding: v.optional(v.boolean()),
-  }).index("email", ["email"]),
+  users,
 });

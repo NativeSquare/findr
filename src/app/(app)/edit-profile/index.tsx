@@ -34,8 +34,8 @@ export type EditProfileFormData = Partial<
 type TabValue = "personal" | "preferences";
 
 export default function EditProfile() {
-  const user = useQuery(api.functions.currentUser);
-  const updateUser = useMutation(api.functions.updateUser);
+  const user = useQuery(api.users.currentUser);
+  const patchUser = useMutation(api.users.patch);
   const [activeTab, setActiveTab] = React.useState<TabValue>("personal");
   const [formData, setFormData] = React.useState<EditProfileFormData>({
     image: user?.image,
@@ -79,7 +79,7 @@ export default function EditProfile() {
 
   const handleSave = async () => {
     if (!user?._id) return;
-    await updateUser({ userId: user._id, data: formData });
+    await patchUser({ id: user._id, data: formData });
     router.back();
   };
 

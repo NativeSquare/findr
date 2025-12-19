@@ -7,7 +7,7 @@ import { Text } from "@/components/ui/text";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@convex/_generated/api";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
 import { useUser } from "expo-superwall";
 import {
@@ -27,7 +27,8 @@ import { Alert, ScrollView, View } from "react-native";
 export default function Profile() {
   const { signOut } = useAuthActions();
   const { signOut: signOutSuperwall } = useUser();
-  const deleteUser = useMutation(api.functions.deleteUser);
+  const deleteUser = useMutation(api.users.del);
+  const user = useQuery(api.users.currentUser);
   const deleteAccountBottomSheetRef =
     React.useRef<GorhomBottomSheetModal>(null);
 
@@ -36,7 +37,8 @@ export default function Profile() {
   }, []);
 
   const handleConfirmDeleteAccount = React.useCallback(() => {
-    deleteUser();
+    if (!user?._id) return;
+    deleteUser({ id: user._id });
   }, []);
 
   const handleLogout = React.useCallback(() => {
