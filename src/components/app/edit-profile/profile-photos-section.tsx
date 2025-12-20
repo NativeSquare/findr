@@ -68,6 +68,7 @@ export function ProfilePhotosSection({
       <UploadMediaBottomSheetModal
         bottomSheetModalRef={mainImageBottomSheetRef}
         onImageSelected={handleMainImageSelected}
+        options={["camera", "gallery"]}
       />
     </View>
   );

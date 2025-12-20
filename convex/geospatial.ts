@@ -30,6 +30,7 @@ export const getNearestUsers = query({
       limit: maxResults,
       maxDistance,
     });
-    return result;
+    // Exclude the current user from the results
+    return result.filter((item) => item.key !== args.id);
   },
 });
