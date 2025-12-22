@@ -19,7 +19,7 @@ export type EditProfileFormData = Partial<
     | "image"
     | "name"
     | "bio"
-    | "age"
+    | "birthDate"
     | "height"
     | "weight"
     | "position"
@@ -41,7 +41,7 @@ export default function EditProfile() {
     image: user?.image,
     name: user?.name,
     bio: user?.bio,
-    age: user?.age,
+    birthDate: user?.birthDate,
     height: user?.height,
     weight: user?.weight,
     position: user?.position,

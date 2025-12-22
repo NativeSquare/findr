@@ -23,7 +23,7 @@ export type OnboardingFormData = Partial<
     | "image"
     | "name"
     | "bio"
-    | "age"
+    | "birthDate"
     | "height"
     | "weight"
     | "bodyTypes"
@@ -45,7 +45,7 @@ export default function Onboarding() {
     image: user?.image,
     name: user?.name,
     bio: user?.bio,
-    age: user?.age,
+    birthDate: user?.birthDate,
     height: user?.height,
     weight: user?.weight,
     bodyTypes: user?.bodyTypes,

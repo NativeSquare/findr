@@ -1,7 +1,7 @@
 import { EditProfileFormData } from "@/app/(app)/edit-profile";
 import React from "react";
 import { View } from "react-native";
-import { AgeField } from "../profile/age-field";
+import { BirthDateField } from "../profile/birth-date-field";
 import { BioField } from "../profile/bio-field";
 import { HeightField } from "../profile/height-field";
 import { NameField } from "../profile/name-field";
@@ -26,9 +26,9 @@ export function PersonalInfoTab({
         onChange={(value) => setFormData({ ...formData, bio: value })}
       />
 
-      <AgeField
-        value={formData.age ? formData.age.toString() : ""}
-        onChange={(value) => setFormData({ ...formData, age: Number(value) })}
+      <BirthDateField
+        value={formData.birthDate}
+        onChange={(value) => setFormData({ ...formData, birthDate: value })}
       />
 
       <HeightField

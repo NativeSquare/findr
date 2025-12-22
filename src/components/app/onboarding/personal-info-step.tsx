@@ -1,7 +1,7 @@
 import { OnboardingFormData } from "@/app/(onboarding)";
 import * as React from "react";
 import { View } from "react-native";
-import { AgeField } from "../profile/age-field";
+import { BirthDateField } from "../profile/birth-date-field";
 import { HeightField } from "../profile/height-field";
 import { WeightField } from "../profile/weight-field";
 
@@ -14,9 +14,9 @@ export function PersonalInfoStep({
 }) {
   return (
     <View className="gap-5">
-      <AgeField
-        value={formData.age ? formData.age.toString() : ""}
-        onChange={(value) => setFormData({ ...formData, age: Number(value) })}
+      <BirthDateField
+        value={formData.birthDate}
+        onChange={(value) => setFormData({ ...formData, birthDate: value })}
       />
 
       <HeightField
