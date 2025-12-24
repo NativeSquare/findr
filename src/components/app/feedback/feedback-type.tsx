@@ -6,12 +6,14 @@ export type FeedbackTypeFieldProps = {
   label?: string;
   onSelect: (option: string) => void;
   isSelected: (option: string) => boolean;
+  error?: string;
 };
 
 export function FeedbackTypeField({
   label = "Feedback Type",
   onSelect,
   isSelected,
+  error,
 }: FeedbackTypeFieldProps) {
   const FEEDBACK_TYPES = ["Bug Report", "Feature Request", "General Feedback"];
 
@@ -28,6 +30,7 @@ export function FeedbackTypeField({
           />
         ))}
       </View>
+      {error && <Text className="text-xs text-destructive mt-1">{error}</Text>}
     </View>
   );
 }

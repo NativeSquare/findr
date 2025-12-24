@@ -11,6 +11,7 @@
 import type * as ResendOTP from "../ResendOTP.js";
 import type * as ResendOTPPasswordReset from "../ResendOTPPasswordReset.js";
 import type * as auth from "../auth.js";
+import type * as feedback from "../feedback.js";
 import type * as geospatial from "../geospatial.js";
 import type * as http from "../http.js";
 import type * as lib_mutations from "../lib/mutations.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   ResendOTP: typeof ResendOTP;
   ResendOTPPasswordReset: typeof ResendOTPPasswordReset;
   auth: typeof auth;
+  feedback: typeof feedback;
   geospatial: typeof geospatial;
   http: typeof http;
   "lib/mutations": typeof lib_mutations;

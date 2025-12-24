@@ -4,11 +4,16 @@ import { PhotoGrid } from "@/components/shared/photo-grid";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { getConvexErrorMessage } from "@/utils/getConvexErrorMessage";
+import { FeedbackSchema } from "@/validation/feedback";
+import { api } from "@convex/_generated/api";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
+import { useAction } from "convex/react";
 import { router } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import React from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import z from "zod";
 
 export type FeedbackFormData = {
   type?: string;
@@ -19,15 +24,50 @@ export type FeedbackFormData = {
 export default function SendFeedback() {
   const bottomSheetModalRef = React.useRef<GorhomBottomSheetModal>(null);
   const [formData, setFormData] = React.useState<FeedbackFormData>();
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = React.useState<{
+    type?: string;
+    feedbackText?: string;
+  }>({});
+  const sendFeedback = useAction(api.feedback.sendFeedback);
 
-  const handleSubmit = () => {
-    // TODO: Implement feedback submission
-    console.log("Feedback submitted:", {
-      type: formData?.type,
-      text: formData?.feedbackText,
-      images: formData?.feedbackImages,
+  const handleSubmit = async () => {
+    setError(null);
+    setFieldErrors({});
+
+    // Field Validation
+    const result = FeedbackSchema.safeParse({
+      type: formData?.type ?? "",
+      feedbackText: formData?.feedbackText ?? "",
+      feedbackImages: formData?.feedbackImages,
     });
-    router.dismissTo("/profile");
+
+    if (!result.success) {
+      const tree = z.treeifyError(result.error);
+
+      setFieldErrors({
+        type: tree.properties?.type?.errors?.[0],
+        feedbackText: tree.properties?.feedbackText?.errors?.[0],
+      });
+      setError(tree.errors?.[0] ?? null);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await sendFeedback({
+        type: formData?.type,
+        feedbackText: formData?.feedbackText,
+        feedbackImages: formData?.feedbackImages,
+      });
+      router.dismissTo("/profile");
+    } catch (err) {
+      setError(getConvexErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFeedbackImagesChange = (images: string[]) => {
@@ -54,11 +94,18 @@ export default function SendFeedback() {
 
   const renderFooter = () => {
     return (
-      <Button className="w-full" onPress={handleSubmit}>
-        <Text className="text-base font-medium text-primary-foreground">
-          Submit
-        </Text>
-      </Button>
+      <View className="gap-2">
+        {error && (
+          <Text className="text-sm text-destructive text-center">{error}</Text>
+        )}
+        <Button className="w-full" onPress={handleSubmit} disabled={isLoading}>
+          {isLoading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text>Submit</Text>
+          )}
+        </Button>
+      </View>
     );
   };
 
@@ -86,6 +133,7 @@ export default function SendFeedback() {
               })
             }
             isSelected={(option) => formData?.type === option}
+            error={fieldErrors.type}
           />
 
           <DescribeFeedbackField
@@ -96,6 +144,7 @@ export default function SendFeedback() {
                 feedbackText: value,
               })
             }
+            error={fieldErrors.feedbackText}
           />
 
           <PhotoGrid

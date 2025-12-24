@@ -7,6 +7,7 @@ export type DescribeFeedbackFieldProps = {
   maxLength?: number;
   value?: string;
   onChange?: (value: string) => void;
+  error?: string;
 };
 
 export function DescribeFeedbackField({
@@ -14,6 +15,7 @@ export function DescribeFeedbackField({
   value,
   onChange,
   maxLength = 500,
+  error,
 }: DescribeFeedbackFieldProps) {
   return (
     <View className="gap-2">
@@ -30,6 +32,7 @@ export function DescribeFeedbackField({
         className="min-h-32"
         maxLength={maxLength}
       />
+      {error && <Text className="text-xs text-destructive mt-1">{error}</Text>}
     </View>
   );
 }
