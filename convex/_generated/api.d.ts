@@ -14,6 +14,7 @@ import type * as auth from "../auth.js";
 import type * as feedback from "../feedback.js";
 import type * as geospatial from "../geospatial.js";
 import type * as http from "../http.js";
+import type * as init from "../init.js";
 import type * as lib_mutations from "../lib/mutations.js";
 import type * as migrations from "../migrations.js";
 import type * as presence from "../presence.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   feedback: typeof feedback;
   geospatial: typeof geospatial;
   http: typeof http;
+  init: typeof init;
   "lib/mutations": typeof lib_mutations;
   migrations: typeof migrations;
   presence: typeof presence;
