@@ -29,16 +29,27 @@ export function FiltersBottomSheet({
   setFilters,
   defaultFilters,
 }: FiltersBottomSheetProps) {
-  const handleClear = React.useCallback(() => {
-    setFilters(defaultFilters);
-    AsyncStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(defaultFilters));
-  }, [setFilters]);
+  // Internal state for filters - only applied when "View Results" is clicked
+  const [internalFilters, setInternalFilters] = React.useState<FilterData>(filters);
 
-  // const handleApply = React.useCallback(() => {
-  //   setFilters(newFilters);
-  //   AsyncStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(newFilters));
-  //   bottomSheetModalRef.current?.dismiss();
-  // }, []);
+  // Sync internal state when modal opens or when filters prop changes
+  React.useEffect(() => {
+    setInternalFilters(filters);
+  }, [filters]);
+
+  const handleClear = React.useCallback(() => {
+    setInternalFilters(defaultFilters);
+  }, [defaultFilters]);
+
+  const handleViewResults = React.useCallback(async () => {
+    setFilters(internalFilters);
+    try {
+      await AsyncStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(internalFilters));
+    } catch (error) {
+      console.error("Error saving filters:", error);
+    }
+    bottomSheetModalRef.current?.dismiss();
+  }, [internalFilters, setFilters, bottomSheetModalRef]);
 
   return (
     <BottomSheetModal ref={bottomSheetModalRef}>
@@ -57,33 +68,33 @@ export function FiltersBottomSheet({
             <View className="gap-6">
               <View className="flex flex-col gap-6">
                 <Text className="text-sm text-muted-foreground">
-                  Max Distance: {Math.round(filters.maxDistance / 1000)}km
+                  Max Distance: {Math.round(internalFilters.maxDistance / 1000)}km
                 </Text>
                 <Slider
                   minimumValue={1000}
                   maximumValue={50000}
                   step={1000}
-                  value={filters.maxDistance}
+                  value={internalFilters.maxDistance}
                   onValueChange={(value) =>
-                    setFilters({ ...filters, maxDistance: value })
+                    setInternalFilters({ ...internalFilters, maxDistance: value })
                   }
                 />
               </View>
 
               <View className="gap-6">
                 <Text className="text-sm text-muted-foreground">
-                  Age Range: {filters.minAge ?? DEFAULT_MIN_AGE} -{" "}
-                  {filters.maxAge ?? DEFAULT_MAX_AGE}
+                  Age Range: {internalFilters.minAge ?? DEFAULT_MIN_AGE} -{" "}
+                  {internalFilters.maxAge ?? DEFAULT_MAX_AGE}
                 </Text>
                 <RangeSlider
                   minimumValue={18}
                   maximumValue={100}
                   step={1}
-                  valueMin={filters.minAge ?? DEFAULT_MIN_AGE}
-                  valueMax={filters.maxAge ?? DEFAULT_MAX_AGE}
+                  valueMin={internalFilters.minAge ?? DEFAULT_MIN_AGE}
+                  valueMax={internalFilters.maxAge ?? DEFAULT_MAX_AGE}
                   onValueChange={(min, max) => {
-                    setFilters({
-                      ...filters,
+                    setInternalFilters({
+                      ...internalFilters,
                       minAge: min,
                       maxAge: max,
                     });
@@ -93,24 +104,24 @@ export function FiltersBottomSheet({
 
               <SexualOrientationField
                 onSelect={(option) =>
-                  setFilters({
-                    ...filters,
-                    orientation: filters.orientation === option ? "" : option,
+                  setInternalFilters({
+                    ...internalFilters,
+                    orientation: internalFilters.orientation === option ? "" : option,
                   })
                 }
-                isSelected={(option) => filters.orientation === option}
+                isSelected={(option) => internalFilters.orientation === option}
               />
 
               <LookingForField
                 onSelect={(option) =>
-                  setFilters({
-                    ...filters,
-                    lookingFor: filters.lookingFor.includes(option)
-                      ? filters.lookingFor.filter((type) => type !== option)
-                      : [...filters.lookingFor, option],
+                  setInternalFilters({
+                    ...internalFilters,
+                    lookingFor: internalFilters.lookingFor.includes(option)
+                      ? internalFilters.lookingFor.filter((type) => type !== option)
+                      : [...internalFilters.lookingFor, option],
                   })
                 }
-                isSelected={(option) => filters.lookingFor.includes(option)}
+                isSelected={(option) => internalFilters.lookingFor.includes(option)}
               />
             </View>
           </View>
@@ -119,11 +130,11 @@ export function FiltersBottomSheet({
           <Button variant="outline" className="flex-1" onPress={handleClear}>
             <Text className="text-base font-medium">Clear</Text>
           </Button>
-          {/* <Button className="flex-1" onPress={handleApply}>
+          <Button className="flex-1" onPress={handleViewResults}>
             <Text className="text-base font-medium text-primary-foreground">
-              Apply
+              View Results
             </Text>
-          </Button> */}
+          </Button>
         </View>
       </View>
     </BottomSheetModal>

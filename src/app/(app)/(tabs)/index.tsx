@@ -1,5 +1,6 @@
 import { FiltersBottomSheet } from "@/components/app/filters/filters-bottom-sheet";
 import { NearestUsersGridItem } from "@/components/app/home/nearest-users-grid-item";
+import { NearestUsersGridItemSkeleton } from "@/components/app/home/nearest-users-grid-item-skeleton";
 import { SearchInput } from "@/components/custom/search-input";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -179,18 +180,29 @@ export default function Home() {
         )}
         <Text className="text-lg font-medium">Who&apos;s nearby ?</Text>
         <View className="gap-1.5">
-          {userRows.map((row, rowIndex) => (
-            <View key={rowIndex} className="flex-row gap-1.5">
-              {row.map((userItem, index) => (
-                <View key={index} style={{ width: itemWidth }}>
-                  <NearestUsersGridItem
-                    userItem={userItem}
-                    presenceState={presenceState}
-                  />
+          {nearestUsers === undefined
+            ? // Show skeleton loading state (3 rows, 2 items per row)
+              Array.from({ length: 3 }).map((_, rowIndex) => (
+                <View key={rowIndex} className="flex-row gap-1.5">
+                  {Array.from({ length: 2 }).map((_, colIndex) => (
+                    <View key={colIndex} style={{ width: itemWidth }}>
+                      <NearestUsersGridItemSkeleton />
+                    </View>
+                  ))}
+                </View>
+              ))
+            : userRows.map((row, rowIndex) => (
+                <View key={rowIndex} className="flex-row gap-1.5">
+                  {row.map((userItem, index) => (
+                    <View key={index} style={{ width: itemWidth }}>
+                      <NearestUsersGridItem
+                        userItem={userItem}
+                        presenceState={presenceState}
+                      />
+                    </View>
+                  ))}
                 </View>
               ))}
-            </View>
-          ))}
         </View>
       </View>
       <FiltersBottomSheet
