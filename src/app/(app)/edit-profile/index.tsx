@@ -69,7 +69,7 @@ export default function EditProfile() {
 
   const renderFooter = () => {
     return (
-      <Button className="w-full rounded-full" onPress={handleSave}>
+      <Button className="w-full" onPress={handleSave}>
         <Text className="text-base font-medium text-primary-foreground">
           Save
         </Text>
