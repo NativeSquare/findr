@@ -7,9 +7,11 @@ import { View } from "react-native";
 export function PrivacyInfoStep({
   formData,
   setFormData,
+  showErrors,
 }: {
   formData: OnboardingFormData;
   setFormData: (data: OnboardingFormData) => void;
+  showErrors?: boolean;
 }) {
   return (
     <View className="gap-5">

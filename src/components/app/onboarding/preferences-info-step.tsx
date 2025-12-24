@@ -10,9 +10,11 @@ import { SexualOrientationField } from "../profile/sexual-orientation-field";
 export function PreferencesInfoStep({
   formData,
   setFormData,
+  showErrors,
 }: {
   formData: OnboardingFormData;
   setFormData: (data: OnboardingFormData) => void;
+  showErrors?: boolean;
 }) {
   return (
     <View className="gap-5">

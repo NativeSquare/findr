@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import { CalendarInput } from "@/components/custom/calendar-input";
 import { Text } from "@/components/ui/text";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as React from "react";
@@ -8,6 +8,8 @@ export type BirthDateFieldProps = {
   label?: string;
   value?: string; // ISO8601 string (e.g., "2000-01-15T00:00:00Z")
   onChange?: (value: string) => void; // Receives ISO8601 string
+  error?: boolean;
+  errorMessage?: string;
 };
 
 function formatDateForDisplay(isoString?: string): string {
@@ -28,6 +30,8 @@ export function BirthDateField({
   label = "Date of Birth",
   value,
   onChange,
+  error = false,
+  errorMessage,
 }: BirthDateFieldProps) {
   const [showPicker, setShowPicker] = React.useState(false);
   const [internalDate, setInternalDate] = React.useState<Date>(() => {
@@ -98,13 +102,18 @@ export function BirthDateField({
     <View className="gap-2">
       <Text className="text-sm text-muted-foreground">{label}</Text>
       <Pressable onPress={handlePress}>
-        <Input
+        <CalendarInput
           value={formatDateForDisplay(value)}
           placeholder="YYYY-MM-DD"
           editable={false}
           pointerEvents="none"
+          className={error ? "border-destructive" : ""}
+          aria-invalid={error}
         />
       </Pressable>
+      {error && errorMessage && (
+        <Text className="text-sm text-destructive">{errorMessage}</Text>
+      )}
       {showPicker && (
         <DateTimePicker
           value={internalDate}

@@ -7,15 +7,21 @@ import { NameField } from "../profile/name-field";
 export function BasicInfoStep({
   formData,
   setFormData,
+  showErrors = false,
 }: {
   formData: OnboardingFormData;
   setFormData: (data: OnboardingFormData) => void;
+  showErrors?: boolean;
 }) {
+  const isNameInvalid = showErrors && !formData.name?.trim();
+  
   return (
     <View className="gap-5">
       <NameField
         value={formData.name}
         onChange={(value) => setFormData({ ...formData, name: value })}
+        error={isNameInvalid}
+        errorMessage={isNameInvalid ? "Name is required" : undefined}
       />
       <BioField
         value={formData.bio}

@@ -13,9 +13,11 @@ import { UploadMediaBottomSheetModal } from "../../shared/upload-media-bottom-sh
 export function AddPhotoStep({
   formData,
   setFormData,
+  showErrors,
 }: {
   formData: OnboardingFormData;
   setFormData: (data: OnboardingFormData) => void;
+  showErrors?: boolean;
 }) {
   const bottomSheetModalRef = React.useRef<GorhomBottomSheetModal>(null);
 

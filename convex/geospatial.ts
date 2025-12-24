@@ -63,8 +63,28 @@ function intersects(
   return filterVals.some((v) => set.has(v));
 }
 
+function calculateAge(birthDate?: string | null): number | null {
+  if (!birthDate) return null;
+  try {
+    const birth = new Date(birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birth.getDate())
+    ) {
+      age--;
+    }
+    return age;
+  } catch {
+    return null;
+  }
+}
+
 function matchesFilters(
   user: {
+    birthDate?: string | null;
     bodyTypes?: string[] | null;
     ethnicity?: string[] | null;
     lookingFor?: string[] | null;
@@ -72,6 +92,8 @@ function matchesFilters(
     orientation?: string | null;
   },
   filters?: {
+    minAge?: number;
+    maxAge?: number;
     bodyTypes?: string[];
     ethnicity?: string[];
     lookingFor?: string[];
@@ -80,6 +102,14 @@ function matchesFilters(
   }
 ) {
   if (!filters) return true;
+
+  // Age filter
+  if (filters.minAge !== undefined || filters.maxAge !== undefined) {
+    const userAge = calculateAge(user.birthDate);
+    if (userAge === null) return false; // No birth date = exclude
+    if (filters.minAge !== undefined && userAge < filters.minAge) return false;
+    if (filters.maxAge !== undefined && userAge > filters.maxAge) return false;
+  }
 
   if (filters.orientation && user.orientation !== filters.orientation)
     return false;
@@ -99,6 +129,8 @@ export const getNearestUsers = query({
     filters: v.optional(
       v.object({
         maxDistance: v.optional(v.number()),
+        minAge: v.optional(v.number()),
+        maxAge: v.optional(v.number()),
         bodyTypes: v.optional(v.array(v.string())),
         ethnicity: v.optional(v.array(v.string())),
         lookingFor: v.optional(v.array(v.string())),

@@ -41,6 +41,7 @@ export default function Onboarding() {
   const { signOut: signOutSuperwall } = useUser();
   const user = useQuery(api.users.currentUser);
   const [currentStep, setCurrentStep] = React.useState(0);
+  const [showErrors, setShowErrors] = React.useState(false);
   const [formData, setFormData] = React.useState<OnboardingFormData>({
     image: user?.image,
     name: user?.name,
@@ -70,6 +71,7 @@ export default function Onboarding() {
 
   const goBack = () => {
     if (currentStep > 0) {
+      setShowErrors(false);
       setCurrentStep((prev) => Math.max(prev - 1, 0));
     } else {
       signOut();
@@ -77,7 +79,31 @@ export default function Onboarding() {
     }
   };
 
+  const validateCurrentStep = (data?: OnboardingFormData): boolean => {
+    const step = steps[currentStep];
+    const dataToValidate = data ?? formData;
+
+    // Validate BasicInfoStep - name is required
+    if (step.id === "basic") {
+      return !!dataToValidate.name?.trim();
+    }
+
+    // Validate PersonalInfoStep - birthDate is required
+    if (step.id === "personal") {
+      return !!dataToValidate.birthDate;
+    }
+
+    // Other steps can be skipped
+    return true;
+  };
+
   const goNext = () => {
+    if (!validateCurrentStep()) {
+      setShowErrors(true);
+      return; // Don't proceed if validation fails
+    }
+
+    setShowErrors(false);
     if (currentStep === steps.length - 1) {
       handleComplete();
     } else {
@@ -130,7 +156,11 @@ export default function Onboarding() {
             <Text className="text-primary">Back</Text>
           </Button>
         )}
-        <Button className="flex-1" onPress={goNext}>
+        <Button
+          className="flex-1"
+          onPress={goNext}
+          disabled={!validateCurrentStep()}
+        >
           <Text className="text-primary-foreground">Continue</Text>
         </Button>
       </View>
@@ -151,7 +181,14 @@ export default function Onboarding() {
           <View className="flex-1">
             <CurrentStepComponent
               formData={formData}
-              setFormData={setFormData}
+              setFormData={(data) => {
+                setFormData(data);
+                // Clear errors when form data changes and validation passes
+                if (showErrors && validateCurrentStep(data)) {
+                  setShowErrors(false);
+                }
+              }}
+              showErrors={showErrors}
             />
           </View>
         </View>

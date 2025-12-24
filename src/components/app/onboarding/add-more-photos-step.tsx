@@ -11,9 +11,11 @@ import { View } from "react-native";
 export function AddMorePhotosStep({
   formData,
   setFormData,
+  showErrors,
 }: {
   formData: OnboardingFormData;
   setFormData: (data: OnboardingFormData) => void;
+  showErrors?: boolean;
 }) {
   const bottomSheetModalRef = React.useRef<GorhomBottomSheetModal>(null);
   const MAX_PHOTOS = 6;

@@ -8,15 +8,23 @@ import { WeightField } from "../profile/weight-field";
 export function PersonalInfoStep({
   formData,
   setFormData,
+  showErrors = false,
 }: {
   formData: OnboardingFormData;
   setFormData: (data: OnboardingFormData) => void;
+  showErrors?: boolean;
 }) {
+  const isBirthDateInvalid = showErrors && !formData.birthDate;
+  
   return (
     <View className="gap-5">
       <BirthDateField
         value={formData.birthDate}
         onChange={(value) => setFormData({ ...formData, birthDate: value })}
+        error={isBirthDateInvalid}
+        errorMessage={
+          isBirthDateInvalid ? "Date of birth is required" : undefined
+        }
       />
 
       <HeightField

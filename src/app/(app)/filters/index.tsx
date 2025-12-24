@@ -1,13 +1,11 @@
-import { BodyTypesField } from "@/components/app/profile/body-types-field";
-import { EthnicityField } from "@/components/app/profile/ethnicity-field";
 import { LookingForField } from "@/components/app/profile/looking-for-field";
-import { PositionField } from "@/components/app/profile/position-field";
 import { SexualOrientationField } from "@/components/app/profile/sexual-orientation-field";
+import { RangeSlider } from "@/components/custom/range-slider";
+import { Slider } from "@/components/custom/slider";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Slider from "@react-native-community/slider";
 import { router } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import React from "react";
@@ -15,25 +13,32 @@ import { Pressable, ScrollView, View } from "react-native";
 
 export type FilterData = {
   maxDistance: number;
-  bodyTypes: string[];
-  ethnicity: string[];
+  minAge?: number;
+  maxAge?: number;
+  // bodyTypes: string[];
+  // ethnicity: string[];
   lookingFor: string[];
-  position: string[];
+  // position: string[];
   orientation: string;
 };
 
 const FILTERS_STORAGE_KEY = "filters";
 const DEFAULT_MAX_DISTANCE = 10000; // meters (10km)
+const DEFAULT_MIN_AGE = 25;
+const DEFAULT_MAX_AGE = 70;
 
 export default function Filters() {
-  const [filters, setFilters] = React.useState<FilterData>({
+  const defaultFilters = {
     maxDistance: DEFAULT_MAX_DISTANCE,
-    bodyTypes: [],
-    ethnicity: [],
+    minAge: DEFAULT_MIN_AGE,
+    maxAge: DEFAULT_MAX_AGE,
+    // bodyTypes: [],
+    // ethnicity: [],
     lookingFor: [],
-    position: [],
+    // position: [],
     orientation: "",
-  });
+  };
+  const [filters, setFilters] = React.useState<FilterData>(defaultFilters);
 
   React.useEffect(() => {
     // Load saved filters on mount
@@ -44,10 +49,12 @@ export default function Filters() {
           const parsed = JSON.parse(savedFilters);
           setFilters({
             maxDistance: parsed.maxDistance ?? DEFAULT_MAX_DISTANCE,
-            bodyTypes: parsed.bodyTypes ?? [],
-            ethnicity: parsed.ethnicity ?? [],
+            minAge: parsed.minAge ?? DEFAULT_MIN_AGE,
+            maxAge: parsed.maxAge ?? DEFAULT_MAX_AGE,
+            // bodyTypes: parsed.bodyTypes ?? [],
+            // ethnicity: parsed.ethnicity ?? [],
             lookingFor: parsed.lookingFor ?? [],
-            position: parsed.position ?? [],
+            // position: parsed.position ?? [],
             orientation: parsed.orientation ?? "",
           });
         }
@@ -71,16 +78,8 @@ export default function Filters() {
   };
 
   const handleClear = () => {
-    const clearedFilters = {
-      maxDistance: DEFAULT_MAX_DISTANCE,
-      bodyTypes: [],
-      ethnicity: [],
-      lookingFor: [],
-      position: [],
-      orientation: "",
-    };
-    setFilters(clearedFilters);
-    AsyncStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(clearedFilters));
+    setFilters(defaultFilters);
+    AsyncStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(defaultFilters));
   };
 
   const handleApply = async () => {
@@ -105,12 +104,11 @@ export default function Filters() {
           {renderHeader()}
 
           <View className="gap-6">
-            <View className="gap-2">
+            <View className="flex flex-col gap-6">
               <Text className="text-sm text-muted-foreground">
                 Max Distance: {Math.round(filters.maxDistance / 1000)}km
               </Text>
               <Slider
-                style={{ width: "100%", height: 40 }}
                 minimumValue={1000}
                 maximumValue={50000}
                 step={1000}
@@ -118,13 +116,31 @@ export default function Filters() {
                 onValueChange={(value) =>
                   setFilters({ ...filters, maxDistance: value })
                 }
-                minimumTrackTintColor="#ffffff"
-                maximumTrackTintColor="#666666"
-                thumbTintColor="#ffffff"
               />
             </View>
 
-            <BodyTypesField
+            <View className="gap-6">
+              <Text className="text-sm text-muted-foreground">
+                Age Range: {filters.minAge ?? DEFAULT_MIN_AGE} -{" "}
+                {filters.maxAge ?? DEFAULT_MAX_AGE}
+              </Text>
+              <RangeSlider
+                minimumValue={18}
+                maximumValue={100}
+                step={1}
+                valueMin={filters.minAge ?? DEFAULT_MIN_AGE}
+                valueMax={filters.maxAge ?? DEFAULT_MAX_AGE}
+                onValueChange={(min, max) => {
+                  setFilters({
+                    ...filters,
+                    minAge: min,
+                    maxAge: max,
+                  });
+                }}
+              />
+            </View>
+
+            {/* <BodyTypesField
               onSelect={(option) =>
                 setFilters({
                   ...filters,
@@ -134,7 +150,7 @@ export default function Filters() {
                 })
               }
               isSelected={(option) => filters.bodyTypes.includes(option)}
-            />
+            /> */}
 
             <SexualOrientationField
               onSelect={(option) =>
@@ -146,7 +162,7 @@ export default function Filters() {
               isSelected={(option) => filters.orientation === option}
             />
 
-            <PositionField
+            {/* <PositionField
               onSelect={(option) =>
                 setFilters({
                   ...filters,
@@ -156,9 +172,9 @@ export default function Filters() {
                 })
               }
               isSelected={(option) => filters.position.includes(option)}
-            />
+            /> */}
 
-            <EthnicityField
+            {/* <EthnicityField
               onSelect={(option) =>
                 setFilters({
                   ...filters,
@@ -168,7 +184,7 @@ export default function Filters() {
                 })
               }
               isSelected={(option) => filters.ethnicity.includes(option)}
-            />
+            /> */}
 
             <LookingForField
               onSelect={(option) =>

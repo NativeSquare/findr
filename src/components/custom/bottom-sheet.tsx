@@ -19,24 +19,22 @@ export function BottomSheetModal({ ref, children }: BottomSheetModalProps) {
   const { colorScheme } = useColorScheme();
   const insets = useSafeAreaInsets();
 
-  const input = THEME[colorScheme ?? "light"].input;
+  const theme = THEME[colorScheme ?? "light"];
 
   return (
     <GorhomBottomSheetModal
       ref={ref}
       backgroundStyle={{
         backgroundColor:
-          colorScheme === "dark"
-            ? "#121212"
-            : THEME[colorScheme ?? "light"].background,
+          colorScheme === "dark" ? theme.input30 : theme.background,
       }}
       handleIndicatorStyle={{
-        backgroundColor: THEME[colorScheme ?? "light"].secondary,
+        backgroundColor: theme.secondary,
         width: 40,
         height: 5,
       }}
       handleStyle={{
-        backgroundColor: colorScheme === "dark" ? "#121212" : input,
+        backgroundColor: colorScheme === "dark" ? theme.input30 : theme.input,
         borderTopLeftRadius: 12,
         borderTopRightRadius: 12,
       }}
