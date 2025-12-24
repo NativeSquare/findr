@@ -3,6 +3,7 @@ import { Text } from "@/components/ui/text";
 import { PresenceState } from "@convex-dev/presence/react-native";
 import { Doc } from "@convex/_generated/dataModel";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { View } from "react-native";
 
 interface NearestUsersGridItemProps {
@@ -36,6 +37,11 @@ export function NearestUsersGridItem({
           <Ionicons name="person" size={48} className="text-muted-foreground" />
         </AvatarFallback>
       </Avatar>
+      <LinearGradient
+        colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.9)"]}
+        locations={[0, 0.5, 1]}
+        className="absolute bottom-0 left-0 right-0 h-24 rounded-b-xl"
+      />
       <View className="absolute bottom-3 left-3 right-3 flex-col">
         <View className="flex-row items-center gap-2">
           <View
