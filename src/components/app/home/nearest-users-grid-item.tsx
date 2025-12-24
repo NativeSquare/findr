@@ -20,7 +20,11 @@ export function NearestUsersGridItem({
     (state) => state.userId === userItem._id
   );
   const distance = (userItem.distance / 1000).toFixed(1);
-  const isOnline = userPresenceState?.online ?? false;
+  // If user has hidden their online status, always show as offline (gray)
+  const isOnline =
+    userItem.privacy?.hideOnlineStatus === true
+      ? false
+      : (userPresenceState?.online ?? false);
   return (
     <View className="relative aspect-square">
       <Avatar

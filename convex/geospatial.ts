@@ -160,6 +160,8 @@ export const getNearestUsers = query({
         .map(async (item) => {
           const user = await ctx.db.get(item.key);
           if (!user) return null;
+          // Exclude users who have hidden their profile from discovery
+          if (user.privacy?.hideProfileFromDiscovery === true) return null;
           if (!matchesFilters(user, args.filters)) return null;
           return {
             ...user,
