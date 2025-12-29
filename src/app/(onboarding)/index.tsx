@@ -1,5 +1,4 @@
 import { AddMorePhotosStep } from "@/components/app/onboarding/add-more-photos-step";
-import { AddPhotoStep } from "@/components/app/onboarding/add-photo-step";
 import { BasicInfoStep } from "@/components/app/onboarding/basic-info-step";
 import { PersonalInfoStep } from "@/components/app/onboarding/personal-info-step";
 import { PreferencesInfoStep } from "@/components/app/onboarding/preferences-info-step";
@@ -20,7 +19,6 @@ import { ScrollView, View } from "react-native";
 export type OnboardingFormData = Partial<
   Pick<
     Doc<"users">,
-    | "image"
     | "name"
     | "bio"
     | "birthDate"
@@ -43,7 +41,6 @@ export default function Onboarding() {
   const [currentStep, setCurrentStep] = React.useState(0);
   const [showErrors, setShowErrors] = React.useState(false);
   const [formData, setFormData] = React.useState<OnboardingFormData>({
-    image: user?.image,
     name: user?.name,
     bio: user?.bio,
     birthDate: user?.birthDate,
@@ -60,7 +57,6 @@ export default function Onboarding() {
   const patchUser = useMutation(api.users.patch);
 
   const steps = [
-    { component: AddPhotoStep, id: "photos", canSkip: true },
     { component: BasicInfoStep, id: "basic", canSkip: true },
     { component: PersonalInfoStep, id: "personal", canSkip: true },
     { component: PreferencesInfoStep, id: "preferences", canSkip: true },

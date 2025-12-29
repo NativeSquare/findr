@@ -4,7 +4,8 @@ import { PresenceState } from "@convex-dev/presence/react-native";
 import { Doc } from "@convex/_generated/dataModel";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, View } from "react-native";
 
 interface NearestUsersGridItemProps {
   userItem: Doc<"users"> & {
@@ -26,13 +27,20 @@ export function NearestUsersGridItem({
     userItem.privacy?.hideOnlineStatus === true
       ? false
       : (userPresenceState?.online ?? false);
+
+  const handlePress = () => {
+    router.push(`/user/${userItem._id}`);
+  };
+
   return (
-    <View className="relative aspect-square">
+    <Pressable onPress={handlePress} className="relative aspect-square">
       <Avatar
         alt="User's Avatar"
         className="size-full items-center justify-center rounded-xl border border-border/60 bg-secondary/60"
       >
-        <AvatarImage source={{ uri: userItem?.image }} />
+        <AvatarImage
+          source={{ uri: userItem?.profilePictures?.[0] ?? undefined }}
+        />
         <AvatarFallback className="bg-secondary/60 rounded-xl">
           <Ionicons name="person" size={48} className="text-muted-foreground" />
         </AvatarFallback>
@@ -62,6 +70,6 @@ export function NearestUsersGridItem({
           {distance} km away
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }

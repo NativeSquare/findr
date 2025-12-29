@@ -1,7 +1,7 @@
 import { Icon } from "@/components/ui/icon";
 import { THEME } from "@/lib/theme";
 import { Tabs } from "expo-router";
-import { House, User } from "lucide-react-native";
+import { Flame, House, User } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -31,6 +31,15 @@ export default function TabsLayout() {
         },
       }}
     >
+      <Tabs.Screen
+        name="taps"
+        options={{
+          title: "Taps",
+          tabBarIcon: ({ color }) => (
+            <Icon as={Flame} color={color} size={28} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="index"
         options={{

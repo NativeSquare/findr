@@ -16,7 +16,6 @@ import { Pressable, ScrollView, View } from "react-native";
 export type EditProfileFormData = Partial<
   Pick<
     Doc<"users">,
-    | "image"
     | "name"
     | "bio"
     | "birthDate"
@@ -38,7 +37,6 @@ export default function EditProfile() {
   const patchUser = useMutation(api.users.patch);
   const [activeTab, setActiveTab] = React.useState<TabValue>("personal");
   const [formData, setFormData] = React.useState<EditProfileFormData>({
-    image: user?.image,
     name: user?.name,
     bio: user?.bio,
     birthDate: user?.birthDate,

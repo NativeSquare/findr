@@ -18,7 +18,9 @@ import type * as init from "../init.js";
 import type * as lib_mutations from "../lib/mutations.js";
 import type * as migrations from "../migrations.js";
 import type * as presence from "../presence.js";
+import type * as taps from "../taps.js";
 import type * as users from "../users.js";
+import type * as views from "../views.js";
 
 import type {
   ApiFromModules,
@@ -37,7 +39,9 @@ declare const fullApi: ApiFromModules<{
   "lib/mutations": typeof lib_mutations;
   migrations: typeof migrations;
   presence: typeof presence;
+  taps: typeof taps;
   users: typeof users;
+  views: typeof views;
 }>;
 
 /**

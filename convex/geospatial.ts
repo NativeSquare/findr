@@ -123,6 +123,54 @@ function matchesFilters(
   return true;
 }
 
+// Calculate distance between two points using Haversine formula
+// Returns distance in meters
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371000; // Earth's radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+export const getDistanceBetweenUsers = query({
+  args: {
+    currentUserId: v.id("users"),
+    targetUserId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // Get both users' geospatial data
+    const currentUserGeo = await geospatial.get(ctx, args.currentUserId);
+    const targetUserGeo = await geospatial.get(ctx, args.targetUserId);
+
+    // If either user doesn't have location data, return null
+    if (!currentUserGeo || !targetUserGeo) {
+      return null;
+    }
+
+    // Calculate distance using Haversine formula
+    const distance = calculateDistance(
+      currentUserGeo.coordinates.latitude,
+      currentUserGeo.coordinates.longitude,
+      targetUserGeo.coordinates.latitude,
+      targetUserGeo.coordinates.longitude
+    );
+
+    return distance;
+  },
+});
+
 export const getNearestUsers = query({
   args: {
     id: v.id("users"),

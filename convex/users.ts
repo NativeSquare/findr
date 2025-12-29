@@ -3,7 +3,7 @@ import { Triggers } from "convex-helpers/server/triggers";
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import { DataModel } from "./_generated/dataModel";
-import { query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { generateMutations } from "./lib/mutations";
 
 const triggers = new Triggers<DataModel>();
@@ -70,6 +70,7 @@ const documentSchema = {
   position: v.optional(v.array(v.string())),
   ethnicity: v.optional(v.array(v.string())),
   hasCompletedOnboarding: v.optional(v.boolean()),
+  favorites: v.optional(v.array(v.id("users"))),
 };
 
 export const users = defineTable(documentSchema).index("email", ["email"]);
@@ -114,5 +115,92 @@ export const get = query({
   args: { id: v.id("users") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
+  },
+});
+
+export const toggleFavorite = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) {
+      throw new Error("Not authenticated");
+    }
+
+    if (currentUserId === args.userId) {
+      throw new Error("Cannot favorite yourself");
+    }
+
+    const currentUser = await ctx.db.get(currentUserId);
+    if (!currentUser) {
+      throw new Error("User not found");
+    }
+
+    const favorites = currentUser.favorites ?? [];
+    const isFavorite = favorites.includes(args.userId);
+
+    if (isFavorite) {
+      // Remove from favorites
+      await ctx.db.patch(currentUserId, {
+        favorites: favorites.filter((id) => id !== args.userId),
+      });
+    } else {
+      // Add to favorites
+      await ctx.db.patch(currentUserId, {
+        favorites: [...favorites, args.userId],
+      });
+    }
+
+    return !isFavorite;
+  },
+});
+
+export const isFavorite = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) return false;
+
+    const currentUser = await ctx.db.get(currentUserId);
+    if (!currentUser) return false;
+
+    const favorites = currentUser.favorites ?? [];
+    return favorites.includes(args.userId);
+  },
+});
+
+export const getFavorites = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const currentUser = await ctx.db.get(userId);
+    if (!currentUser) return [];
+
+    const favoriteIds = currentUser.favorites ?? [];
+    if (favoriteIds.length === 0) return [];
+
+    // Get user info for each favorite
+    const favoritesWithUsers = await Promise.all(
+      favoriteIds.map(async (favoriteId) => {
+        const favoriteUser = await ctx.db.get(favoriteId);
+        return favoriteUser
+          ? {
+              _id: favoriteUser._id,
+              name: favoriteUser.name,
+              image: favoriteUser.profilePictures?.[0],
+            }
+          : null;
+      })
+    );
+
+    // Filter out nulls (in case a favorite user was deleted)
+    return favoritesWithUsers.filter(
+      (user): user is NonNullable<typeof user> => user !== null
+    );
   },
 });
