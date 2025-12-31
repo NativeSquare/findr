@@ -1,7 +1,6 @@
 import { FiltersBottomSheet } from "@/components/app/filters/filters-bottom-sheet";
 import { NearestUsersGridItem } from "@/components/app/home/nearest-users-grid-item";
 import { NearestUsersGridItemSkeleton } from "@/components/app/home/nearest-users-grid-item-skeleton";
-import { SearchInput } from "@/components/custom/search-input";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -11,7 +10,8 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "convex/react";
-import { Filter } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { ChevronDown, Crosshair, Filter, MapPin } from "lucide-react-native";
 import React, { useMemo } from "react";
 import { Dimensions, ScrollView, View } from "react-native";
 import { FilterData } from "../filters";
@@ -22,6 +22,7 @@ const DEFAULT_MIN_AGE = 25;
 const DEFAULT_MAX_AGE = 70;
 
 export default function Home() {
+  const router = useRouter();
   const user = useQuery(api.users.currentUser);
   const filtersBottomSheetRef = React.useRef<BottomSheetModal>(null);
   const defaultFilters = {
@@ -146,9 +147,28 @@ export default function Home() {
     >
       <View className="w-full max-w-sm gap-4">
         <View className="flex-row gap-2">
-          <View className="flex-1">
-            <SearchInput placeholder="Browse location" />
-          </View>
+          <Button
+            variant="outline"
+            className="flex-1 flex-row items-center gap-2"
+            onPress={() => {
+              router.push("/location-search");
+            }}
+          >
+            <Icon as={MapPin} size={20} />
+            <View className="flex-1">
+              <Text numberOfLines={1}>San Francisco</Text>
+            </View>
+            <Icon as={ChevronDown} size={16} />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onPress={() => {
+              // TODO: Implement return to current location
+            }}
+          >
+            <Icon as={Crosshair} size={20} />
+          </Button>
           <Button
             variant={hasActiveFilters ? "default" : "outline"}
             size="icon"
