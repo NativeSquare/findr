@@ -11,12 +11,14 @@ import { Alert, Dimensions, View } from "react-native";
 interface UploadMediaBottomSheetModalProps {
   bottomSheetModalRef: React.RefObject<GorhomBottomSheetModal | null>;
   onImageSelected: (image: string) => void;
+  onAlbumPress?: () => void;
   options?: ("camera" | "gallery" | "album")[];
 }
 
 export function UploadMediaBottomSheetModal({
   bottomSheetModalRef,
   onImageSelected,
+  onAlbumPress,
   options = ["camera", "gallery", "album"],
 }: UploadMediaBottomSheetModalProps) {
   const pickImage = async () => {
@@ -80,7 +82,10 @@ export function UploadMediaBottomSheetModal({
     album: {
       icon: Images,
       label: "Album",
-      onPress: () => {},
+      onPress: () => {
+        bottomSheetModalRef.current?.dismiss();
+        onAlbumPress?.();
+      },
     },
   };
 

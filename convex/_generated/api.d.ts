@@ -10,12 +10,15 @@
 
 import type * as ResendOTP from "../ResendOTP.js";
 import type * as ResendOTPPasswordReset from "../ResendOTPPasswordReset.js";
+import type * as albums from "../albums.js";
 import type * as auth from "../auth.js";
+import type * as conversations from "../conversations.js";
 import type * as feedback from "../feedback.js";
 import type * as geospatial from "../geospatial.js";
 import type * as http from "../http.js";
 import type * as init from "../init.js";
 import type * as lib_mutations from "../lib/mutations.js";
+import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as presence from "../presence.js";
 import type * as taps from "../taps.js";
@@ -31,12 +34,15 @@ import type {
 declare const fullApi: ApiFromModules<{
   ResendOTP: typeof ResendOTP;
   ResendOTPPasswordReset: typeof ResendOTPPasswordReset;
+  albums: typeof albums;
   auth: typeof auth;
+  conversations: typeof conversations;
   feedback: typeof feedback;
   geospatial: typeof geospatial;
   http: typeof http;
   init: typeof init;
   "lib/mutations": typeof lib_mutations;
+  messages: typeof messages;
   migrations: typeof migrations;
   presence: typeof presence;
   taps: typeof taps;

@@ -129,7 +129,12 @@ export default function UserProfile() {
   };
 
   const handleMessagePress = () => {
-    // TODO: Implement messaging logic
+    if (!currentUser?._id || !id) return;
+    if (currentUser._id === id) {
+      console.error("Cannot message yourself");
+      return;
+    }
+    router.push(`/chat/${id}`);
   };
 
   const handleFavoritePress = async () => {

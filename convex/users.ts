@@ -71,6 +71,7 @@ const documentSchema = {
   ethnicity: v.optional(v.array(v.string())),
   hasCompletedOnboarding: v.optional(v.boolean()),
   favorites: v.optional(v.array(v.id("users"))),
+  firstSentences: v.optional(v.array(v.string())),
 };
 
 export const users = defineTable(documentSchema).index("email", ["email"]);

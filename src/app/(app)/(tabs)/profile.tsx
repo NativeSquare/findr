@@ -90,7 +90,7 @@ export default function Profile() {
     {
       label: "First Sentence Page",
       icon: File,
-      onPress: () => {},
+      onPress: () => router.push("/first-sentences"),
     },
     {
       label: "Permission Page",
