@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Progress } from "@/components/ui/progress";
 import { Text } from "@/components/ui/text";
+import { calculateAge } from "@/utils/calculateAge";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@convex/_generated/api";
 import { Doc } from "@convex/_generated/dataModel";
@@ -15,6 +16,8 @@ import { useUser } from "expo-superwall";
 import { ChevronLeft } from "lucide-react-native";
 import React from "react";
 import { ScrollView, View } from "react-native";
+
+const MIN_AGE = 16;
 
 export type OnboardingFormData = Partial<
   Pick<
@@ -84,9 +87,11 @@ export default function Onboarding() {
       return !!dataToValidate.name?.trim();
     }
 
-    // Validate PersonalInfoStep - birthDate is required
+    // Validate PersonalInfoStep - birthDate is required and user must be at least 16
     if (step.id === "personal") {
-      return !!dataToValidate.birthDate;
+      if (!dataToValidate.birthDate) return false;
+      const age = calculateAge(dataToValidate.birthDate);
+      return age !== null && age >= MIN_AGE;
     }
 
     // Other steps can be skipped
@@ -107,11 +112,6 @@ export default function Onboarding() {
     }
   };
 
-  const handleSkip = () => {
-    if (!user?._id) return;
-    patchUser({ id: user._id, data: { hasCompletedOnboarding: true } });
-  };
-
   const handleComplete = () => {
     if (!user?._id) return;
     patchUser({ id: user._id, data: formData });
@@ -122,13 +122,9 @@ export default function Onboarding() {
     const progress = ((currentStep + 1) / steps.length) * 100;
     return (
       <View className="gap-3 pt-2">
-        <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center">
           <Button variant="ghost" onPress={goBack}>
             <Icon as={ChevronLeft} size={24} />
-          </Button>
-
-          <Button variant="ghost" onPress={handleSkip}>
-            <Text className="text-sm font-medium text-foreground">Skip</Text>
           </Button>
         </View>
         <Progress

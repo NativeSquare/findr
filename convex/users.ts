@@ -55,7 +55,7 @@ const documentSchema = {
       unit: v.string(),
     })
   ),
-  bodyTypes: v.optional(v.array(v.string())),
+  bodyTypes: v.optional(v.string()),
   orientation: v.optional(v.string()),
   lookingFor: v.optional(v.array(v.string())),
   privacy: v.optional(
@@ -67,8 +67,8 @@ const documentSchema = {
     })
   ),
   profilePictures: v.optional(v.array(v.string())),
-  position: v.optional(v.array(v.string())),
-  ethnicity: v.optional(v.array(v.string())),
+  position: v.optional(v.string()),
+  ethnicity: v.optional(v.string()),
   hasCompletedOnboarding: v.optional(v.boolean()),
   favorites: v.optional(v.array(v.id("users"))),
   firstSentences: v.optional(v.array(v.string())),

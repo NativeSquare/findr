@@ -85,19 +85,19 @@ function calculateAge(birthDate?: string | null): number | null {
 function matchesFilters(
   user: {
     birthDate?: string | null;
-    bodyTypes?: string[] | null;
-    ethnicity?: string[] | null;
+    bodyTypes?: string | null;
+    ethnicity?: string | null;
     lookingFor?: string[] | null;
-    position?: string[] | null;
+    position?: string | null;
     orientation?: string | null;
   },
   filters?: {
     minAge?: number;
     maxAge?: number;
-    bodyTypes?: string[];
-    ethnicity?: string[];
+    bodyTypes?: string;
+    ethnicity?: string;
     lookingFor?: string[];
-    position?: string[];
+    position?: string;
     orientation?: string;
   }
 ) {
@@ -114,11 +114,11 @@ function matchesFilters(
   if (filters.orientation && user.orientation !== filters.orientation)
     return false;
 
-  if (!intersects(user.bodyTypes ?? undefined, filters.bodyTypes)) return false;
-  if (!intersects(user.ethnicity ?? undefined, filters.ethnicity)) return false;
+  if (filters.bodyTypes && user.bodyTypes !== filters.bodyTypes) return false;
+  if (filters.ethnicity && user.ethnicity !== filters.ethnicity) return false;
   if (!intersects(user.lookingFor ?? undefined, filters.lookingFor))
     return false;
-  if (!intersects(user.position ?? undefined, filters.position)) return false;
+  if (filters.position && user.position !== filters.position) return false;
 
   return true;
 }
@@ -179,17 +179,17 @@ export const getNearestUsers = query({
         maxDistance: v.optional(v.number()),
         minAge: v.optional(v.number()),
         maxAge: v.optional(v.number()),
-        bodyTypes: v.optional(v.array(v.string())),
-        ethnicity: v.optional(v.array(v.string())),
+        bodyTypes: v.optional(v.string()),
+        ethnicity: v.optional(v.string()),
         lookingFor: v.optional(v.array(v.string())),
-        position: v.optional(v.array(v.string())),
+        position: v.optional(v.string()),
         orientation: v.optional(v.string()),
       })
     ),
   },
   handler: async (ctx, args) => {
     const maxResults = 10000;
-    const maxDistance = args.filters?.maxDistance ?? 10000;
+    const FIXED_MAX_DISTANCE = 50000; // Fixed 50km limit (not shown in UI, but used to limit data fetching)
 
     const geo = await geospatial.get(ctx, args.id);
     if (!geo) return [];
@@ -197,7 +197,7 @@ export const getNearestUsers = query({
     const result = await geospatial.nearest(ctx, {
       point: geo.coordinates,
       limit: maxResults + 1, // +1 so we can exclude self and still return maxResults
-      maxDistance,
+      maxDistance: FIXED_MAX_DISTANCE, // Fixed 50km limit to reduce data fetching
       // We tried the filterKeys method, but it doesn't allow multiple in() statements as we speak (12/2025). We needed them for making filters like : "position IN […] and ethnicity IN […] and lookingFor IN […]". Sequencing eq() statements is not possible either because doing so results in AND statements instead of OR statements. For example : q.eq("position", "top").eq("position", "bottom") means getting users with : "position is top AND position is bottom", which is not what we want.
     });
 

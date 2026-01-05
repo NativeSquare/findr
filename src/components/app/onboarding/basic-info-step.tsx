@@ -14,7 +14,7 @@ export function BasicInfoStep({
   showErrors?: boolean;
 }) {
   const isNameInvalid = showErrors && !formData.name?.trim();
-  
+
   return (
     <View className="gap-5">
       <NameField
@@ -22,6 +22,7 @@ export function BasicInfoStep({
         onChange={(value) => setFormData({ ...formData, name: value })}
         error={isNameInvalid}
         errorMessage={isNameInvalid ? "Name is required" : undefined}
+        required
       />
       <BioField
         value={formData.bio}

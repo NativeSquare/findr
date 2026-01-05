@@ -17,7 +17,7 @@ import { Dimensions, ScrollView, View } from "react-native";
 import { FilterData } from "../filters";
 
 const FILTERS_STORAGE_KEY = "filters";
-const DEFAULT_MAX_DISTANCE = 10000; // meters (10km)
+// const DEFAULT_MAX_DISTANCE = 10000; // meters (10km) // Commented out - distance filter removed
 const DEFAULT_MIN_AGE = 25;
 const DEFAULT_MAX_AGE = 70;
 
@@ -26,7 +26,7 @@ export default function Home() {
   const user = useQuery(api.users.currentUser);
   const filtersBottomSheetRef = React.useRef<BottomSheetModal>(null);
   const defaultFilters = {
-    maxDistance: DEFAULT_MAX_DISTANCE,
+    // maxDistance: DEFAULT_MAX_DISTANCE, // Commented out - distance filter removed
     minAge: DEFAULT_MIN_AGE,
     maxAge: DEFAULT_MAX_AGE,
     lookingFor: [],
@@ -40,7 +40,7 @@ export default function Home() {
       if (savedFilters) {
         const parsed = JSON.parse(savedFilters);
         setFilters({
-          maxDistance: parsed.maxDistance ?? DEFAULT_MAX_DISTANCE,
+          // maxDistance: parsed.maxDistance ?? DEFAULT_MAX_DISTANCE, // Commented out - distance filter removed
           minAge: parsed.minAge ?? DEFAULT_MIN_AGE,
           maxAge: parsed.maxAge ?? DEFAULT_MAX_AGE,
           lookingFor: parsed.lookingFor ?? [],
@@ -66,7 +66,7 @@ export default function Home() {
   // Check if filters are active (non-default)
   const hasActiveFilters = useMemo(() => {
     return (
-      filters.maxDistance !== DEFAULT_MAX_DISTANCE ||
+      // filters.maxDistance !== DEFAULT_MAX_DISTANCE || // Commented out - distance filter removed
       filters.minAge !== DEFAULT_MIN_AGE ||
       filters.maxAge !== DEFAULT_MAX_AGE ||
       filters.lookingFor.length > 0 ||
@@ -78,9 +78,10 @@ export default function Home() {
   const activeFilterLabels = useMemo(() => {
     const labels: string[] = [];
 
-    if (filters.maxDistance !== DEFAULT_MAX_DISTANCE) {
-      labels.push(`${Math.round(filters.maxDistance / 1000)}km`);
-    }
+    // Distance filter removed
+    // if (filters.maxDistance !== DEFAULT_MAX_DISTANCE) {
+    //   labels.push(`${Math.round(filters.maxDistance / 1000)}km`);
+    // }
 
     if (
       filters.minAge !== DEFAULT_MIN_AGE ||
@@ -124,7 +125,7 @@ export default function Home() {
   const userRows = useMemo(() => {
     if (!nearestUsers) return [];
     const rows: (typeof nearestUsers)[] = [];
-    const columnsPerRow = 2;
+    const columnsPerRow = 3;
     for (let i = 0; i < nearestUsers.length; i += columnsPerRow) {
       rows.push(nearestUsers.slice(i, i + columnsPerRow));
     }
@@ -136,8 +137,8 @@ export default function Home() {
   const containerWidth = Math.min(screenWidth, maxWidth);
   const padding = 32; // px-4 on each side (16px * 2)
   const gap = 6; // gap-1.5 (6px)
-  const gapsTotal = (2 - 1) * gap; // 1 gap for 2 items
-  const itemWidth = (containerWidth - padding - gapsTotal) / 2;
+  const gapsTotal = (3 - 1) * gap; // 2 gaps for 3 items
+  const itemWidth = (containerWidth - padding - gapsTotal) / 3;
 
   return (
     <ScrollView
@@ -201,10 +202,10 @@ export default function Home() {
         <Text className="text-lg font-medium">Who&apos;s nearby ?</Text>
         <View className="gap-1.5">
           {nearestUsers === undefined
-            ? // Show skeleton loading state (3 rows, 2 items per row)
+            ? // Show skeleton loading state (3 rows, 3 items per row)
               Array.from({ length: 3 }).map((_, rowIndex) => (
                 <View key={rowIndex} className="flex-row gap-1.5">
-                  {Array.from({ length: 2 }).map((_, colIndex) => (
+                  {Array.from({ length: 3 }).map((_, colIndex) => (
                     <View key={colIndex} style={{ width: itemWidth }}>
                       <NearestUsersGridItemSkeleton />
                     </View>

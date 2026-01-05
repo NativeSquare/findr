@@ -1,8 +1,8 @@
 import { FilterData } from "@/app/(app)/filters";
 import { LookingForField } from "@/components/app/profile/looking-for-field";
 import { SexualOrientationField } from "@/components/app/profile/sexual-orientation-field";
+import { AgePicker } from "@/components/app/filters/age-picker";
 import { BottomSheetModal } from "@/components/custom/bottom-sheet";
-import { RangeSlider } from "@/components/custom/range-slider";
 import { Slider } from "@/components/custom/slider";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -12,7 +12,7 @@ import * as React from "react";
 import { ScrollView, View } from "react-native";
 
 const FILTERS_STORAGE_KEY = "filters";
-const DEFAULT_MAX_DISTANCE = 10000; // meters (10km)
+// const DEFAULT_MAX_DISTANCE = 10000; // meters (10km) // Commented out - distance filter removed
 const DEFAULT_MIN_AGE = 25;
 const DEFAULT_MAX_AGE = 70;
 
@@ -66,7 +66,8 @@ export function FiltersBottomSheet({
             </Text>
 
             <View className="gap-6">
-              <View className="flex flex-col gap-6">
+              {/* Distance filter - commented out */}
+              {/* <View className="flex flex-col gap-6">
                 <Text className="text-sm text-muted-foreground">
                   Max Distance: {Math.round(internalFilters.maxDistance / 1000)}km
                 </Text>
@@ -79,28 +80,24 @@ export function FiltersBottomSheet({
                     setInternalFilters({ ...internalFilters, maxDistance: value })
                   }
                 />
-              </View>
+              </View> */}
 
-              <View className="gap-6">
-                <Text className="text-sm text-muted-foreground">
-                  Age Range: {internalFilters.minAge ?? DEFAULT_MIN_AGE} -{" "}
-                  {internalFilters.maxAge ?? DEFAULT_MAX_AGE}
-                </Text>
-                <RangeSlider
-                  minimumValue={18}
-                  maximumValue={100}
-                  step={1}
-                  valueMin={internalFilters.minAge ?? DEFAULT_MIN_AGE}
-                  valueMax={internalFilters.maxAge ?? DEFAULT_MAX_AGE}
-                  onValueChange={(min, max) => {
-                    setInternalFilters({
-                      ...internalFilters,
-                      minAge: min,
-                      maxAge: max,
-                    });
-                  }}
-                />
-              </View>
+              <AgePicker
+                minAge={internalFilters.minAge ?? DEFAULT_MIN_AGE}
+                maxAge={internalFilters.maxAge ?? DEFAULT_MAX_AGE}
+                onMinAgeChange={(age) =>
+                  setInternalFilters({
+                    ...internalFilters,
+                    minAge: age,
+                  })
+                }
+                onMaxAgeChange={(age) =>
+                  setInternalFilters({
+                    ...internalFilters,
+                    maxAge: age,
+                  })
+                }
+              />
 
               <SexualOrientationField
                 onSelect={(option) =>

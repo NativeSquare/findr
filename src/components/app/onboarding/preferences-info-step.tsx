@@ -22,12 +22,10 @@ export function PreferencesInfoStep({
         onSelect={(option) =>
           setFormData({
             ...formData,
-            bodyTypes: formData.bodyTypes?.includes(option)
-              ? formData.bodyTypes?.filter((type) => type !== option)
-              : [...(formData.bodyTypes || []), option],
+            bodyTypes: formData.bodyTypes === option ? undefined : option,
           })
         }
-        isSelected={(option) => formData.bodyTypes?.includes(option) ?? false}
+        isSelected={(option) => formData.bodyTypes === option}
       />
 
       <SexualOrientationField
@@ -44,24 +42,20 @@ export function PreferencesInfoStep({
         onSelect={(option) =>
           setFormData({
             ...formData,
-            position: formData.position?.includes(option)
-              ? formData.position?.filter((type) => type !== option)
-              : [...(formData.position || []), option],
+            position: formData.position === option ? undefined : option,
           })
         }
-        isSelected={(option) => formData.position?.includes(option) ?? false}
+        isSelected={(option) => formData.position === option}
       />
 
       <EthnicityField
         onSelect={(option) =>
           setFormData({
             ...formData,
-            ethnicity: formData.ethnicity?.includes(option)
-              ? formData.ethnicity?.filter((type) => type !== option)
-              : [...(formData.ethnicity || []), option],
+            ethnicity: formData.ethnicity === option ? undefined : option,
           })
         }
-        isSelected={(option) => formData.ethnicity?.includes(option) ?? false}
+        isSelected={(option) => formData.ethnicity === option}
       />
 
       <LookingForField

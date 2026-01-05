@@ -9,18 +9,23 @@ export type NameFieldProps = {
   onChange?: (value: string) => void;
   error?: boolean;
   errorMessage?: string;
+  required?: boolean;
 };
 
-export function NameField({ 
-  label = "Name", 
-  value, 
+export function NameField({
+  label = "Name",
+  value,
   onChange,
   error = false,
   errorMessage,
+  required = false,
 }: NameFieldProps) {
   return (
     <View className="gap-2">
-      <Text className="text-sm text-muted-foreground">{label}</Text>
+      <Text className="text-sm text-muted-foreground">
+        {label}
+        {required && <Text className="text-destructive"> *</Text>}
+      </Text>
       <Input
         placeholder="John"
         value={value}

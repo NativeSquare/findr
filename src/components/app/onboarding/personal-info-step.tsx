@@ -1,9 +1,12 @@
 import { OnboardingFormData } from "@/app/(onboarding)";
+import { calculateAge } from "@/utils/calculateAge";
 import * as React from "react";
 import { View } from "react-native";
 import { BirthDateField } from "../profile/birth-date-field";
 import { HeightField } from "../profile/height-field";
 import { WeightField } from "../profile/weight-field";
+
+const MIN_AGE = 16;
 
 export function PersonalInfoStep({
   formData,
@@ -14,17 +17,28 @@ export function PersonalInfoStep({
   setFormData: (data: OnboardingFormData) => void;
   showErrors?: boolean;
 }) {
-  const isBirthDateInvalid = showErrors && !formData.birthDate;
-  
+  const age = formData.birthDate ? calculateAge(formData.birthDate) : null;
+  const isBirthDateMissing = showErrors && !formData.birthDate;
+  const isUnderAge =
+    showErrors && formData.birthDate && (age === null || age < MIN_AGE);
+  const isBirthDateInvalid = !!(isBirthDateMissing || isUnderAge);
+
+  let errorMessage: string | undefined;
+  if (isBirthDateMissing) {
+    errorMessage = "Date of birth is required";
+  } else if (isUnderAge) {
+    errorMessage = `You must be at least ${MIN_AGE} years old to use this app`;
+  }
+
   return (
     <View className="gap-5">
       <BirthDateField
         value={formData.birthDate}
         onChange={(value) => setFormData({ ...formData, birthDate: value })}
         error={isBirthDateInvalid}
-        errorMessage={
-          isBirthDateInvalid ? "Date of birth is required" : undefined
-        }
+        errorMessage={errorMessage}
+        minAge={MIN_AGE}
+        required
       />
 
       <HeightField

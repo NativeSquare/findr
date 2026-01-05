@@ -1,7 +1,6 @@
+// import { AgePicker } from "@/components/app/filters/age-picker";
 import { LookingForField } from "@/components/app/profile/looking-for-field";
 import { SexualOrientationField } from "@/components/app/profile/sexual-orientation-field";
-import { RangeSlider } from "@/components/custom/range-slider";
-import { Slider } from "@/components/custom/slider";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -12,7 +11,7 @@ import React from "react";
 import { Pressable, ScrollView, View } from "react-native";
 
 export type FilterData = {
-  maxDistance: number;
+  maxDistance?: number; // Optional - distance filter removed from UI, but kept for backward compatibility
   minAge?: number;
   maxAge?: number;
   // bodyTypes: string[];
@@ -23,13 +22,13 @@ export type FilterData = {
 };
 
 const FILTERS_STORAGE_KEY = "filters";
-const DEFAULT_MAX_DISTANCE = 10000; // meters (10km)
+// const DEFAULT_MAX_DISTANCE = 10000; // meters (10km) // Commented out - distance filter removed
 const DEFAULT_MIN_AGE = 25;
 const DEFAULT_MAX_AGE = 70;
 
 export default function Filters() {
   const defaultFilters = {
-    maxDistance: DEFAULT_MAX_DISTANCE,
+    // maxDistance: DEFAULT_MAX_DISTANCE, // Commented out - distance filter removed
     minAge: DEFAULT_MIN_AGE,
     maxAge: DEFAULT_MAX_AGE,
     // bodyTypes: [],
@@ -48,7 +47,7 @@ export default function Filters() {
         if (savedFilters) {
           const parsed = JSON.parse(savedFilters);
           setFilters({
-            maxDistance: parsed.maxDistance ?? DEFAULT_MAX_DISTANCE,
+            // maxDistance: parsed.maxDistance ?? DEFAULT_MAX_DISTANCE, // Commented out - distance filter removed
             minAge: parsed.minAge ?? DEFAULT_MIN_AGE,
             maxAge: parsed.maxAge ?? DEFAULT_MAX_AGE,
             // bodyTypes: parsed.bodyTypes ?? [],
@@ -104,7 +103,8 @@ export default function Filters() {
           {renderHeader()}
 
           <View className="gap-6">
-            <View className="flex flex-col gap-6">
+            {/* Distance filter - commented out */}
+            {/* <View className="flex flex-col gap-6">
               <Text className="text-sm text-muted-foreground">
                 Max Distance: {Math.round(filters.maxDistance / 1000)}km
               </Text>
@@ -117,28 +117,15 @@ export default function Filters() {
                   setFilters({ ...filters, maxDistance: value })
                 }
               />
-            </View>
+            </View> */}
 
-            <View className="gap-6">
-              <Text className="text-sm text-muted-foreground">
-                Age Range: {filters.minAge ?? DEFAULT_MIN_AGE} -{" "}
-                {filters.maxAge ?? DEFAULT_MAX_AGE}
-              </Text>
-              <RangeSlider
-                minimumValue={18}
-                maximumValue={100}
-                step={1}
-                valueMin={filters.minAge ?? DEFAULT_MIN_AGE}
-                valueMax={filters.maxAge ?? DEFAULT_MAX_AGE}
-                onValueChange={(min, max) => {
-                  setFilters({
-                    ...filters,
-                    minAge: min,
-                    maxAge: max,
-                  });
-                }}
-              />
-            </View>
+            {/* Age Range filter - commented out */}
+            {/* <AgePicker
+              minAge={filters.minAge ?? DEFAULT_MIN_AGE}
+              maxAge={filters.maxAge ?? DEFAULT_MAX_AGE}
+              onMinAgeChange={(age) => setFilters({ ...filters, minAge: age })}
+              onMaxAgeChange={(age) => setFilters({ ...filters, maxAge: age })}
+            /> */}
 
             {/* <BodyTypesField
               onSelect={(option) =>
