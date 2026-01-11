@@ -1,9 +1,8 @@
 import { FilterData } from "@/app/(app)/filters";
+import { AgePicker } from "@/components/app/filters/age-picker";
 import { LookingForField } from "@/components/app/profile/looking-for-field";
 import { SexualOrientationField } from "@/components/app/profile/sexual-orientation-field";
-import { AgePicker } from "@/components/app/filters/age-picker";
 import { BottomSheetModal } from "@/components/custom/bottom-sheet";
-import { Slider } from "@/components/custom/slider";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
@@ -30,7 +29,8 @@ export function FiltersBottomSheet({
   defaultFilters,
 }: FiltersBottomSheetProps) {
   // Internal state for filters - only applied when "View Results" is clicked
-  const [internalFilters, setInternalFilters] = React.useState<FilterData>(filters);
+  const [internalFilters, setInternalFilters] =
+    React.useState<FilterData>(filters);
 
   // Sync internal state when modal opens or when filters prop changes
   React.useEffect(() => {
@@ -44,7 +44,10 @@ export function FiltersBottomSheet({
   const handleViewResults = React.useCallback(async () => {
     setFilters(internalFilters);
     try {
-      await AsyncStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(internalFilters));
+      await AsyncStorage.setItem(
+        FILTERS_STORAGE_KEY,
+        JSON.stringify(internalFilters)
+      );
     } catch (error) {
       console.error("Error saving filters:", error);
     }
@@ -103,7 +106,8 @@ export function FiltersBottomSheet({
                 onSelect={(option) =>
                   setInternalFilters({
                     ...internalFilters,
-                    orientation: internalFilters.orientation === option ? "" : option,
+                    orientation:
+                      internalFilters.orientation === option ? "" : option,
                   })
                 }
                 isSelected={(option) => internalFilters.orientation === option}
@@ -114,11 +118,15 @@ export function FiltersBottomSheet({
                   setInternalFilters({
                     ...internalFilters,
                     lookingFor: internalFilters.lookingFor.includes(option)
-                      ? internalFilters.lookingFor.filter((type) => type !== option)
+                      ? internalFilters.lookingFor.filter(
+                          (type) => type !== option
+                        )
                       : [...internalFilters.lookingFor, option],
                   })
                 }
-                isSelected={(option) => internalFilters.lookingFor.includes(option)}
+                isSelected={(option) =>
+                  internalFilters.lookingFor.includes(option)
+                }
               />
             </View>
           </View>
