@@ -6,13 +6,15 @@ import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet
 import * as ImagePicker from "expo-image-picker";
 import { Camera, Image, Images, LucideIcon } from "lucide-react-native";
 import * as React from "react";
-import { Alert, Dimensions, View } from "react-native";
+import { Alert, Dimensions, Linking, View } from "react-native";
 
 interface UploadMediaBottomSheetModalProps {
   bottomSheetModalRef: React.RefObject<GorhomBottomSheetModal | null>;
   onImageSelected: (image: string) => void;
   onAlbumPress?: () => void;
   options?: ("camera" | "gallery" | "album")[];
+  allowsEditing?: boolean;
+  aspect?: [number, number];
 }
 
 export function UploadMediaBottomSheetModal({
@@ -20,44 +22,63 @@ export function UploadMediaBottomSheetModal({
   onImageSelected,
   onAlbumPress,
   options = ["camera", "gallery", "album"],
+  allowsEditing = false,
+  aspect,
 }: UploadMediaBottomSheetModalProps) {
-  const pickImage = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const handleTakePicture = async () => {
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        allowsMultipleSelection: false,
+        allowsEditing: false,
+        quality: 1.0,
+      });
 
-    if (!permissionResult.granted) {
-      Alert.alert(
-        "Permission required",
-        "Permission to access the media library is required."
-      );
-      return;
-    }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images", "videos"],
-      allowsMultipleSelection: false,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      onImageSelected(result.assets[0].uri);
-      bottomSheetModalRef.current?.dismiss();
+      if (!result.canceled && result.assets[0]) {
+        onImageSelected(result.assets[0].uri);
+        bottomSheetModalRef.current?.dismiss();
+      }
+    } catch (error) {
+      console.error("Error taking photo:", error);
+      Alert.alert("Error", "Failed to take photo. Please try again.");
     }
   };
 
-  const openCamera = async () => {
-    let result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsMultipleSelection: false,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      onImageSelected(result.assets[0].uri);
-      bottomSheetModalRef.current?.dismiss();
+  const handlePickFromGallery = async () => {
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "Please grant access to your photo library to select images.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: () => {
+                Linking.openSettings();
+              },
+            },
+          ]
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsMultipleSelection: false,
+        allowsEditing: false,
+        quality: 1.0,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        onImageSelected(result.assets[0].uri);
+        bottomSheetModalRef.current?.dismiss();
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to pick image from gallery.");
     }
   };
 
@@ -72,12 +93,12 @@ export function UploadMediaBottomSheetModal({
     camera: {
       icon: Camera,
       label: "Camera",
-      onPress: openCamera,
+      onPress: handleTakePicture,
     },
     gallery: {
       icon: Image,
       label: "Gallery",
-      onPress: pickImage,
+      onPress: handlePickFromGallery,
     },
     album: {
       icon: Images,

@@ -11,16 +11,11 @@ import { usePresence } from "@convex-dev/presence/react-native";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import {
-  ChevronLeft,
-  Heart,
-  MapPin,
-  MessageCircle,
-  Smile,
-} from "lucide-react-native";
-import React, { useEffect } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { ChevronLeft, Heart, MessageCircle, Smile } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function calculateAge(birthDate?: string | null): number | null {
@@ -42,9 +37,13 @@ function calculateAge(birthDate?: string | null): number | null {
   }
 }
 
+const EMOJI_OPTIONS = ["🍸", "❤️‍🔥", "❌", "😈", "⚡"];
+
 export default function UserProfile() {
   const { id } = useLocalSearchParams<{ id: Id<"users"> }>();
   const insets = useSafeAreaInsets();
+  const [showInfo, setShowInfo] = useState(true);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const currentUser = useQuery(api.users.currentUser);
   const user = useQuery(api.users.get, { id });
   const distanceInMeters = useQuery(
@@ -78,21 +77,19 @@ export default function UserProfile() {
         ? (distanceInMeters / 1000).toFixed(1)
         : null;
 
-  const sendTap = useMutation(api.taps.sendTap);
-  const sentTap = useQuery(
-    api.taps.getTap,
-    currentUser?._id && id
-      ? { fromUserId: currentUser._id, toUserId: id }
-      : "skip"
-  );
   const toggleFavorite = useMutation(api.users.toggleFavorite);
   const isFavorite = useQuery(
     api.users.isFavorite,
     currentUser?._id && id ? { userId: id } : "skip"
   );
   const recordView = useMutation(api.views.recordView);
-
-  const emojis = ["🍸", "❤️‍🔥", "❌", "😈", "⚡"];
+  const sendTap = useMutation(api.taps.sendTap);
+  const existingTap = useQuery(
+    api.taps.getTap,
+    currentUser?._id && id
+      ? { fromUserId: currentUser._id, toUserId: id }
+      : "skip"
+  );
 
   // Record view when profile is viewed
   useEffect(() => {
@@ -110,23 +107,6 @@ export default function UserProfile() {
       </View>
     );
   }
-
-  const handleEmojiSelect = async (emoji: string) => {
-    if (!currentUser?._id) return;
-    if (currentUser._id === id) {
-      console.error("Cannot send tap to yourself");
-      return;
-    }
-
-    try {
-      await sendTap({
-        toUserId: id,
-        emoji,
-      });
-    } catch (error) {
-      console.error("Error sending tap:", error);
-    }
-  };
 
   const handleMessagePress = () => {
     if (!currentUser?._id || !id) return;
@@ -151,130 +131,165 @@ export default function UserProfile() {
     }
   };
 
+  const handleTapPress = async (emoji: string) => {
+    if (!currentUser?._id || !id) return;
+    if (currentUser._id === id) {
+      console.error("Cannot send tap to yourself");
+      return;
+    }
+
+    try {
+      await sendTap({ toUserId: id, emoji });
+      setPopoverOpen(false);
+    } catch (error) {
+      console.error("Error sending tap:", error);
+    }
+  };
+
   return (
     <View className="flex-1 bg-background">
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
-        showsVerticalScrollIndicator={false}
+      {/* Full-screen Image Section */}
+      <Pressable
+        className="relative w-full h-full"
+        onPress={() => setShowInfo((prev) => !prev)}
       >
-        {/* Image Section */}
-        <View className="relative">
-          <ProfilePictureCarousel images={user.profilePictures ?? []} />
-          {/* Top Navigation */}
+        {/* Profile Picture Carousel - Full Screen */}
+        <ProfilePictureCarousel images={user.profilePictures ?? []} />
+
+        {/* Top Navigation */}
+        {showInfo && (
           <View
-            className="absolute left-0 right-0 top-0 flex-row items-center justify-between px-4"
+            className="absolute left-0 right-0 top-0 z-20 flex-row items-center justify-between px-4"
             style={{ paddingTop: insets.top + 16 }}
+          >
+            <View className="flex-row items-center gap-2">
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-10 w-10 rounded-full bg-black/50"
+                onPress={() => router.back()}
+              >
+                <Icon as={ChevronLeft} size={20} className="text-white" />
+              </Button>
+            </View>
+          </View>
+        )}
+
+        {/* Right Side Action Buttons */}
+        {showInfo && (
+          <View
+            className="absolute right-4 z-20 flex-col gap-3"
+            style={{ bottom: insets.bottom + 140 }}
           >
             <Button
               variant="secondary"
               size="icon"
-              className="h-10 w-10 rounded-full bg-black/50"
-              onPress={() => router.back()}
+              className="h-12 w-12 rounded-full bg-black/50"
+              onPress={handleFavoritePress}
             >
-              <Icon as={ChevronLeft} size={20} className="text-white" />
-            </Button>
-            <View className="flex-row gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="h-10 w-10 rounded-full bg-black/50"
-                  >
-                    {sentTap?.emoji ? (
-                      <Text className="text-xl">{sentTap.emoji}</Text>
-                    ) : (
-                      <Icon as={Smile} size={20} className="text-white" />
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  align="end"
-                  className="w-auto p-1.5"
-                >
-                  <View className="flex-row gap-2">
-                    {emojis.map((emoji) => (
-                      <Pressable
-                        key={emoji}
-                        onPress={() => handleEmojiSelect(emoji)}
-                        className="h-10 w-10 items-center justify-center rounded-lg active:bg-muted"
-                      >
-                        <Text className="text-xl">{emoji}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </PopoverContent>
-              </Popover>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-10 w-10 rounded-full bg-black/50"
-                onPress={handleMessagePress}
-              >
-                <Icon as={MessageCircle} size={20} className="text-white" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-10 w-10 rounded-full bg-black/50"
-                onPress={handleFavoritePress}
-              >
-                <Icon
-                  as={Heart}
-                  size={20}
-                  className={
-                    isFavorite === true ? "text-red-500" : "text-white"
-                  }
-                  fill={isFavorite === true ? "currentColor" : "none"}
-                />
-              </Button>
-            </View>
-          </View>
-        </View>
-
-        {/* Content Section */}
-        <View className="px-4 pt-4">
-          {/* User General Info */}
-          <View className="mb-4 gap-2">
-            <View className="flex-row items-center gap-2">
-              <View
-                className={
-                  isOnline
-                    ? "size-2 shrink-0 rounded-full bg-green-500"
-                    : "size-2 shrink-0 rounded-full bg-gray-500"
-                }
+              <Icon
+                as={Heart}
+                size={22}
+                className={isFavorite === true ? "text-red-500" : "text-white"}
+                fill={isFavorite === true ? "currentColor" : "none"}
               />
-              <Text className="text-2xl font-semibold text-white">
-                {user.name ?? "Unknown"}
-                {age !== null && `, ${age}`}
-              </Text>
-            </View>
-            {distance !== null && (
-              <View className="flex-row items-center gap-1">
-                <Icon as={MapPin} size={14} className="text-muted-foreground" />
-                <Text className="text-sm text-muted-foreground">
-                  {distance} km away
+            </Button>
+            <Popover onOpenChange={setPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-12 w-12 rounded-full bg-black/50"
+                >
+                  {existingTap?.emoji ? (
+                    <Text className="text-2xl">{existingTap.emoji}</Text>
+                  ) : (
+                    <Icon as={Smile} size={22} className="text-white" />
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="center" className="w-auto p-3">
+                <View className="flex-row flex-wrap gap-2">
+                  {EMOJI_OPTIONS.map((emoji) => (
+                    <Pressable
+                      key={emoji}
+                      onPress={() => handleTapPress(emoji)}
+                      className="w-12 h-12 items-center justify-center rounded-lg active:opacity-70"
+                    >
+                      <Text className="text-3xl">{emoji}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-12 w-12 rounded-full bg-black/50"
+              onPress={handleMessagePress}
+            >
+              <Icon as={MessageCircle} size={22} className="text-white" />
+            </Button>
+          </View>
+        )}
+
+        {/* Bottom Overlay with User Info */}
+        {showInfo && (
+          <View
+            className="absolute bottom-0 left-0 right-0 z-10"
+            style={{ height: 250 }}
+            pointerEvents="box-none"
+          >
+            <LinearGradient
+              colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.95)"]}
+              locations={[0, 0.3, 1]}
+              style={{
+                flex: 1,
+                paddingBottom: insets.bottom + 20,
+                paddingTop: 60,
+                paddingHorizontal: 20,
+                justifyContent: "flex-end",
+              }}
+            >
+              {/* Distance */}
+              {distance !== null && (
+                <Text className="text-sm text-white mb-2">
+                  {distance} Km Away
+                </Text>
+              )}
+
+              {/* Name, Age, and Verified Badge */}
+              <View className="flex-row items-center gap-2 mb-3">
+                <View
+                  className={
+                    isOnline
+                      ? "size-3 shrink-0 rounded-full bg-green-500"
+                      : "size-3 shrink-0 rounded-full bg-gray-500"
+                  }
+                />
+                <Text className="text-3xl font-bold text-white">
+                  {user.name ?? "Unknown"}
+                  {age !== null && `, ${age}`}
                 </Text>
               </View>
-            )}
-          </View>
 
-          {/* Bio Section */}
-          <View className="mb-6 gap-2">
-            <Text className="text-xs uppercase tracking-wide text-muted-foreground">
-              ABOUT ME
-            </Text>
-            <Text
-              className={`text-base leading-6 ${
-                user.bio ? "text-white" : "text-muted-foreground"
-              }`}
-            >
-              {user.bio || "No bio available"}
-            </Text>
+              {/* Bio */}
+              {user.bio ? (
+                <Text
+                  className="text-base leading-6 text-white"
+                  numberOfLines={3}
+                >
+                  {user.bio}
+                </Text>
+              ) : (
+                <Text className="text-base leading-6 text-white/70">
+                  No bio available
+                </Text>
+              )}
+            </LinearGradient>
           </View>
-        </View>
-      </ScrollView>
+        )}
+      </Pressable>
     </View>
   );
 }
