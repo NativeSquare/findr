@@ -55,6 +55,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier: getUniqueIdentifier(),
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      UIUserInterfaceStyle: "Dark",
     },
   },
   android: {
