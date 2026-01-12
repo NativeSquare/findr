@@ -1,15 +1,26 @@
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { api } from "@convex/_generated/api";
+import { Id } from "@convex/_generated/dataModel";
+import { useQuery } from "convex/react";
 import { Plus, X } from "lucide-react-native";
 import { Image, Pressable, View } from "react-native";
 
 export type PhotoGridItemProps = {
-  uri: string;
+  storageId: Id<"_storage"> | null | undefined;
   onPress: () => void;
   onRemove?: () => void;
 };
 
-export function PhotoGridItem({ uri, onPress, onRemove }: PhotoGridItemProps) {
+export function PhotoGridItem({
+  storageId,
+  onPress,
+  onRemove,
+}: PhotoGridItemProps) {
+  const imageUrl = useQuery(
+    api.storage.getImageUrl,
+    storageId ? { storageId } : "skip"
+  );
   return (
     <View className="relative flex-1">
       <Pressable
@@ -18,8 +29,12 @@ export function PhotoGridItem({ uri, onPress, onRemove }: PhotoGridItemProps) {
           "aspect-square items-center justify-center overflow-hidden rounded-lg border border-border bg-card/30"
         }
       >
-        {uri ? (
-          <Image source={{ uri }} className="size-full" resizeMode="cover" />
+        {imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            className="size-full"
+            resizeMode="cover"
+          />
         ) : (
           <View className="items-center gap-1">
             <Icon as={Plus} size={20} className="text-muted-foreground" />
@@ -27,7 +42,7 @@ export function PhotoGridItem({ uri, onPress, onRemove }: PhotoGridItemProps) {
           </View>
         )}
       </Pressable>
-      {uri && onRemove && (
+      {imageUrl && onRemove && (
         <Pressable
           onPress={onRemove}
           className={

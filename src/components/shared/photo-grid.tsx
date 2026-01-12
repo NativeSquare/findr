@@ -1,13 +1,17 @@
 import { PhotoGridItem } from "@/components/shared/photo-grid-item";
 import { UploadMediaBottomSheetModal } from "@/components/shared/upload-media-bottom-sheet-modal";
 import { Text } from "@/components/ui/text";
+import { api } from "@convex/_generated/api";
+import { Id } from "@convex/_generated/dataModel";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
+import { useMutation } from "convex/react";
+import * as ImagePicker from "expo-image-picker";
 import React from "react";
 import { View } from "react-native";
 
 export type PhotoGridProps = {
-  photos: string[];
-  onPhotosChange: (photos: string[]) => void;
+  photos: Id<"_storage">[];
+  onPhotosChange: (photos: Id<"_storage">[]) => void;
   maxPhotos?: number;
   columnsPerRow?: number;
   label?: string;
@@ -25,20 +29,39 @@ export function PhotoGrid({
   uploadOptions,
 }: PhotoGridProps) {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = React.useState<number>(0);
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
 
   const handleOpenPhotoModal = (index: number) => {
     setSelectedPhotoIndex(index);
     bottomSheetModalRef.current?.present();
   };
 
-  const handleImageSelected = (image: string) => {
-    const updated = [...photos];
-    if (selectedPhotoIndex < photos.length) {
-      updated[selectedPhotoIndex] = image;
-    } else {
-      updated.push(image);
+  const handleImageSelected = async (image: ImagePicker.ImagePickerAsset) => {
+    try {
+      // Read the image file
+      const response = await fetch(image.uri);
+      const blob = await response.blob();
+
+      // Upload to Convex storage
+      const uploadUrl = await generateUploadUrl();
+      const uploadResult = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": "image/jpeg" },
+        body: blob,
+      });
+      const { storageId } = await uploadResult.json();
+
+      const updated = [...photos];
+      if (selectedPhotoIndex < photos.length) {
+        updated[selectedPhotoIndex] = storageId;
+      } else {
+        updated.push(storageId);
+      }
+      onPhotosChange(updated);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      // You might want to show an error to the user here
     }
-    onPhotosChange(updated);
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -48,11 +71,11 @@ export function PhotoGrid({
   };
 
   const photoRows = React.useMemo(() => {
-    const padded = [...photos];
+    const padded: (Id<"_storage"> | null)[] = [...photos];
     while (padded.length < maxPhotos) {
-      padded.push("");
+      padded.push(null);
     }
-    const rows: string[][] = [];
+    const rows: (Id<"_storage"> | null)[][] = [];
     for (let i = 0; i < maxPhotos; i += columnsPerRow) {
       rows.push(padded.slice(i, i + columnsPerRow));
     }
@@ -65,15 +88,15 @@ export function PhotoGrid({
       <View className="gap-1.5">
         {photoRows.map((row, rowIndex) => (
           <View key={rowIndex} className="flex-row gap-1.5">
-            {row.map((uri, colIndex) => {
+            {row.map((storageId, colIndex) => {
               const photoIndex = rowIndex * columnsPerRow + colIndex;
               return (
                 <PhotoGridItem
                   key={photoIndex}
-                  uri={uri}
+                  storageId={storageId}
                   onPress={() => handleOpenPhotoModal(photoIndex)}
                   onRemove={
-                    uri && photoIndex < photos.length
+                    storageId && photoIndex < photos.length
                       ? () => handleRemovePhoto(photoIndex)
                       : undefined
                   }

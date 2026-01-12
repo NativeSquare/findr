@@ -1,5 +1,4 @@
 import { AlbumPhotoItem } from "@/components/app/album/album-photo-item";
-import { UploadMediaBottomSheetModal } from "@/components/shared/upload-media-bottom-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -253,11 +252,11 @@ export default function AlbumDetail() {
         </View>
       )}
 
-      <UploadMediaBottomSheetModal
+      {/* <UploadMediaBottomSheetModal
         bottomSheetModalRef={uploadMediaBottomSheetRef}
         onImageSelected={handleImageSelected}
         options={["camera", "gallery"]}
-      />
+      /> */}
     </View>
   );
 }

@@ -66,7 +66,7 @@ const documentSchema = {
       hideProfileFromDiscovery: v.optional(v.boolean()),
     })
   ),
-  profilePictures: v.optional(v.array(v.string())),
+  profilePictures: v.optional(v.array(v.id("_storage"))),
   position: v.optional(v.string()),
   ethnicity: v.optional(v.string()),
   hasCompletedOnboarding: v.optional(v.boolean()),

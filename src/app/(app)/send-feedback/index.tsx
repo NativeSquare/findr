@@ -7,6 +7,7 @@ import { Text } from "@/components/ui/text";
 import { getConvexErrorMessage } from "@/utils/getConvexErrorMessage";
 import { FeedbackSchema } from "@/validation/feedback";
 import { api } from "@convex/_generated/api";
+import { Id } from "@convex/_generated/dataModel";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import { useAction } from "convex/react";
 import { router } from "expo-router";
@@ -18,7 +19,7 @@ import z from "zod";
 export type FeedbackFormData = {
   type?: string;
   feedbackText?: string;
-  feedbackImages?: string[];
+  feedbackImages?: Id<"_storage">[];
 };
 
 export default function SendFeedback() {
@@ -70,7 +71,7 @@ export default function SendFeedback() {
     }
   };
 
-  const handleFeedbackImagesChange = (images: string[]) => {
+  const handleFeedbackImagesChange = (images: Id<"_storage">[]) => {
     setFormData({
       ...formData,
       feedbackImages: images,

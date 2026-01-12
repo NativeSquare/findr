@@ -10,7 +10,7 @@ import { Alert, Dimensions, Linking, View } from "react-native";
 
 interface UploadMediaBottomSheetModalProps {
   bottomSheetModalRef: React.RefObject<GorhomBottomSheetModal | null>;
-  onImageSelected: (image: string) => void;
+  onImageSelected: (image: ImagePicker.ImagePickerAsset) => void;
   onAlbumPress?: () => void;
   options?: ("camera" | "gallery" | "album")[];
   allowsEditing?: boolean;
@@ -35,7 +35,7 @@ export function UploadMediaBottomSheetModal({
       });
 
       if (!result.canceled && result.assets[0]) {
-        onImageSelected(result.assets[0].uri);
+        onImageSelected(result.assets[0]);
         bottomSheetModalRef.current?.dismiss();
       }
     } catch (error) {
@@ -73,7 +73,7 @@ export function UploadMediaBottomSheetModal({
       });
 
       if (!result.canceled && result.assets[0]) {
-        onImageSelected(result.assets[0].uri);
+        onImageSelected(result.assets[0]);
         bottomSheetModalRef.current?.dismiss();
       }
     } catch (error) {

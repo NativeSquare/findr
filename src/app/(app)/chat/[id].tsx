@@ -5,7 +5,6 @@ import {
   SelectAlbumModal,
   type AppAlbum,
 } from "@/components/app/chat/select-album-modal";
-import { UploadMediaBottomSheetModal } from "@/components/shared/upload-media-bottom-sheet-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -300,12 +299,12 @@ export default function ChatDetail() {
         </View>
       </KeyboardAvoidingView>
 
-      <UploadMediaBottomSheetModal
+      {/* <UploadMediaBottomSheetModal
         bottomSheetModalRef={uploadMediaBottomSheetRef}
         onImageSelected={handleImageSelected}
         onAlbumPress={handleAlbumPress}
         options={["camera", "gallery", "album"]}
-      />
+      /> */}
 
       <SelectAlbumModal
         bottomSheetModalRef={selectAlbumModalRef}
