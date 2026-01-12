@@ -1,4 +1,5 @@
 import "@/lib/nativewind-interop";
+import { fetchUpdatesAsync } from "@/utils/fetch-updates-async";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { api } from "@convex/_generated/api";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -28,6 +29,11 @@ export default function RootLayout() {
   const { setColorScheme } = useColorScheme();
   useEffect(() => {
     setColorScheme("dark");
+  }, []);
+  useEffect(() => {
+    if (!__DEV__) {
+      fetchUpdatesAsync();
+    }
   }, []);
   return (
     <KeyboardProvider>
