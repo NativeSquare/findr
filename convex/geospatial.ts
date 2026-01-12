@@ -189,7 +189,7 @@ export const getNearestUsers = query({
   },
   handler: async (ctx, args) => {
     const maxResults = 10000;
-    const FIXED_MAX_DISTANCE = 50000; // Fixed 50km limit (not shown in UI, but used to limit data fetching)
+    const FIXED_MAX_DISTANCE = 5000000; // Fixed 5000km limit (not shown in UI, but used to limit data fetching)
 
     const geo = await geospatial.get(ctx, args.id);
     if (!geo) return [];
