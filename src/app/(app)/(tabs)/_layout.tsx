@@ -1,13 +1,10 @@
-import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
-import { Text } from "@/components/ui/text";
 import { THEME } from "@/lib/theme";
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Tabs } from "expo-router";
-import { Flame, House, MessageCircle, User } from "lucide-react-native";
+import { Flame, House, User } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
-import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabsLayout() {
@@ -53,35 +50,6 @@ export default function TabsLayout() {
           title: "Home",
           tabBarIcon: ({ color }) => (
             <Icon as={House} color={color} size={28} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: "Chat",
-          tabBarIcon: ({ color }) => (
-            <View style={{ position: "relative" }}>
-              <Icon as={MessageCircle} color={color} size={28} />
-              {totalUnreadCount > 0 && (
-                <View
-                  style={{
-                    position: "absolute",
-                    top: -4,
-                    right: -4,
-                  }}
-                >
-                  <Badge
-                    variant="destructive"
-                    className="min-w-[18px] h-[18px] px-1 rounded-full items-center justify-center border-0"
-                  >
-                    <Text className="text-[10px] font-semibold text-white leading-none">
-                      {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
-                    </Text>
-                  </Badge>
-                </View>
-              )}
-            </View>
           ),
         }}
       />

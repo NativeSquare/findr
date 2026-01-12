@@ -152,7 +152,7 @@ export default function Home() {
             variant="outline"
             className="flex-1 flex-row items-center gap-2"
             onPress={() => {
-              router.push("/location-search");
+              // TODO: Implement location search
             }}
           >
             <Icon as={MapPin} size={20} />
