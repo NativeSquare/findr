@@ -27,6 +27,23 @@ export function UploadMediaBottomSheetModal({
 }: UploadMediaBottomSheetModalProps) {
   const handleTakePicture = async () => {
     try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "Please grant access to your camera to take photos.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: () => {
+                Linking.openSettings();
+              },
+            },
+          ]
+        );
+        return;
+      }
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ["images"],
         allowsMultipleSelection: false,

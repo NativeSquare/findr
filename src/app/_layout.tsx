@@ -6,7 +6,9 @@ import { PortalHost } from "@rn-primitives/portal";
 import { ConvexReactClient, useConvexAuth, useQuery } from "convex/react";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { useColorScheme } from "nativewind";
 import * as React from "react";
+import { useEffect } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -23,6 +25,10 @@ const secureStorage = {
 };
 
 export default function RootLayout() {
+  const { setColorScheme } = useColorScheme();
+  useEffect(() => {
+    setColorScheme("dark");
+  }, []);
   return (
     <KeyboardProvider>
       <ConvexAuthProvider
