@@ -5,6 +5,7 @@ import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation } from "convex/react";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import React from "react";
 import { View } from "react-native";
@@ -29,6 +30,9 @@ export function PhotoGrid({
   uploadOptions,
 }: PhotoGridProps) {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = React.useState<number>(0);
+  const [uploadingPhotoIndex, setUploadingPhotoIndex] = React.useState<
+    number | null
+  >(null);
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
 
   const handleOpenPhotoModal = (index: number) => {
@@ -37,9 +41,49 @@ export function PhotoGrid({
   };
 
   const handleImageSelected = async (image: ImagePicker.ImagePickerAsset) => {
+    const targetIndex = selectedPhotoIndex;
+    setUploadingPhotoIndex(targetIndex);
     try {
-      // Read the image file
-      const response = await fetch(image.uri);
+      // Compress and resize image before upload (maintaining aspect ratio)
+      // Calculate dimensions maintaining aspect ratio (max 1024px on the larger side)
+      const maxDimension = 1024;
+      const originalWidth = image.width || maxDimension;
+      const originalHeight = image.height || maxDimension;
+      let resizeWidth: number | undefined;
+      let resizeHeight: number | undefined;
+
+      if (originalWidth > maxDimension || originalHeight > maxDimension) {
+        if (originalWidth > originalHeight) {
+          // Landscape: constrain width
+          resizeWidth = maxDimension;
+          resizeHeight = undefined; // Let ImageManipulator maintain aspect ratio
+        } else {
+          // Portrait or square: constrain height
+          resizeWidth = undefined; // Let ImageManipulator maintain aspect ratio
+          resizeHeight = maxDimension;
+        }
+      }
+
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        image.uri,
+        resizeWidth || resizeHeight
+          ? [
+              {
+                resize: {
+                  ...(resizeWidth && { width: resizeWidth }),
+                  ...(resizeHeight && { height: resizeHeight }),
+                },
+              },
+            ]
+          : [], // No resize needed if already smaller than maxDimension
+        {
+          compress: 0.8, // 80% quality - good balance between quality and size
+          format: ImageManipulator.SaveFormat.JPEG,
+        }
+      );
+
+      // Read the compressed image file
+      const response = await fetch(manipulatedImage.uri);
       const blob = await response.blob();
 
       // Upload to Convex storage
@@ -61,6 +105,8 @@ export function PhotoGrid({
     } catch (error) {
       console.error("Error uploading image:", error);
       // You might want to show an error to the user here
+    } finally {
+      setUploadingPhotoIndex(null);
     }
   };
 
@@ -100,6 +146,7 @@ export function PhotoGrid({
                       ? () => handleRemovePhoto(photoIndex)
                       : undefined
                   }
+                  isLoading={uploadingPhotoIndex === photoIndex}
                 />
               );
             })}

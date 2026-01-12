@@ -4,18 +4,20 @@ import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { Plus, X } from "lucide-react-native";
-import { Image, Pressable, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, View } from "react-native";
 
 export type PhotoGridItemProps = {
   storageId: Id<"_storage"> | null | undefined;
   onPress: () => void;
   onRemove?: () => void;
+  isLoading?: boolean;
 };
 
 export function PhotoGridItem({
   storageId,
   onPress,
   onRemove,
+  isLoading = false,
 }: PhotoGridItemProps) {
   const imageUrl = useQuery(
     api.storage.getImageUrl,
@@ -25,6 +27,7 @@ export function PhotoGridItem({
     <View className="relative flex-1">
       <Pressable
         onPress={onPress}
+        disabled={isLoading}
         className={
           "aspect-square items-center justify-center overflow-hidden rounded-lg border border-border bg-card/30"
         }
@@ -41,8 +44,13 @@ export function PhotoGridItem({
             <Text className="text-xs text-muted-foreground">Add Photo</Text>
           </View>
         )}
+        {isLoading && (
+          <View className="absolute inset-0 items-center justify-center bg-black/50 rounded-lg">
+            <ActivityIndicator size="small" color="#ffffff" />
+          </View>
+        )}
       </Pressable>
-      {imageUrl && onRemove && (
+      {imageUrl && onRemove && !isLoading && (
         <Pressable
           onPress={onRemove}
           className={
