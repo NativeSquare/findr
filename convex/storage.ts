@@ -16,3 +16,17 @@ export const getImageUrl = query({
     return await ctx.storage.getUrl(args.storageId);
   },
 });
+
+export const getImageUrls = query({
+  args: {
+    storageIds: v.array(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    const imageUrls = await Promise.all(
+      args.storageIds.map(async (storageId) => {
+        return await ctx.storage.getUrl(storageId);
+      })
+    );
+    return imageUrls.filter((url) => url !== null);
+  },
+});

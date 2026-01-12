@@ -1,8 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Text } from "@/components/ui/text";
 import { PresenceState } from "@convex-dev/presence/react-native";
+import { api } from "@convex/_generated/api";
 import { Doc } from "@convex/_generated/dataModel";
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Pressable, View } from "react-native";
@@ -18,6 +20,14 @@ export function NearestUsersGridItem({
   userItem,
   presenceState,
 }: NearestUsersGridItemProps) {
+  const imageUrl = useQuery(
+    api.storage.getImageUrl,
+    userItem.profilePictures?.[0]
+      ? {
+          storageId: userItem.profilePictures?.[0],
+        }
+      : "skip"
+  );
   const userPresenceState = (presenceState || []).find(
     (state) => state.userId === userItem._id
   );
@@ -32,15 +42,16 @@ export function NearestUsersGridItem({
     router.push(`/user/${userItem._id}`);
   };
 
+  console.log("userItem.profilePictures: ", userItem.profilePictures);
+  console.log("imageUrl: ", imageUrl);
+
   return (
     <Pressable onPress={handlePress} className="relative aspect-square">
       <Avatar
         alt="User's Avatar"
         className="size-full items-center justify-center rounded-xl border border-border/60 bg-secondary/60"
       >
-        <AvatarImage
-          source={{ uri: userItem?.profilePictures?.[0] ?? undefined }}
-        />
+        <AvatarImage source={{ uri: imageUrl ?? undefined }} />
         <AvatarFallback className="bg-secondary/60 rounded-xl">
           <Ionicons name="person" size={48} className="text-muted-foreground" />
         </AvatarFallback>
@@ -48,7 +59,15 @@ export function NearestUsersGridItem({
       <LinearGradient
         colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.9)"]}
         locations={[0, 0.5, 1]}
-        className="absolute bottom-0 left-0 right-0 h-24 rounded-b-xl"
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 96, // h-24 = 24 * 4 = 96px
+          borderBottomLeftRadius: 12, // rounded-b-xl
+          borderBottomRightRadius: 12,
+        }}
       />
       <View className="absolute bottom-3 left-3 right-3 flex-col">
         <View className="flex-row items-center gap-2">

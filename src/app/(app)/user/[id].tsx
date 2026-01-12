@@ -46,6 +46,9 @@ export default function UserProfile() {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const currentUser = useQuery(api.users.currentUser);
   const user = useQuery(api.users.get, { id });
+  const imageUrls = useQuery(api.storage.getImageUrls, {
+    storageIds: user?.profilePictures ?? [],
+  });
   const distanceInMeters = useQuery(
     api.geospatial.getDistanceBetweenUsers,
     currentUser?._id && id
@@ -149,7 +152,7 @@ export default function UserProfile() {
         onPress={() => setShowInfo((prev) => !prev)}
       >
         {/* Profile Picture Carousel - Full Screen */}
-        <ProfilePictureCarousel images={user.profilePictures ?? []} />
+        <ProfilePictureCarousel images={imageUrls ?? []} />
 
         {/* Top Navigation */}
         {showInfo && (
