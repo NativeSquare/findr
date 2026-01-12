@@ -9,7 +9,6 @@ import { api } from "@convex/_generated/api";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
-import { useUser } from "expo-superwall";
 import {
   File,
   FileText,
@@ -26,7 +25,6 @@ import { Alert, ScrollView, View } from "react-native";
 
 export default function Profile() {
   const { signOut } = useAuthActions();
-  const { signOut: signOutSuperwall } = useUser();
   const deleteUser = useMutation(api.users.del);
   const user = useQuery(api.users.currentUser);
   const deleteAccountBottomSheetRef =
@@ -43,8 +41,7 @@ export default function Profile() {
 
   const handleLogout = React.useCallback(() => {
     signOut();
-    signOutSuperwall();
-  }, [signOut, signOutSuperwall]);
+  }, [signOut]);
 
   const handleCancelSubscription = React.useCallback(() => {
     Alert.alert(

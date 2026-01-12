@@ -6,7 +6,6 @@ import { PortalHost } from "@rn-primitives/portal";
 import { ConvexReactClient, useConvexAuth, useQuery } from "convex/react";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { SuperwallProvider, useUser } from "expo-superwall";
 import * as React from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -34,19 +33,12 @@ export default function RootLayout() {
             : undefined
         }
       >
-        <SuperwallProvider
-          apiKeys={{
-            ios: process.env.EXPO_PUBLIC_SUPERWALL_IOS_API_KEY,
-            android: process.env.EXPO_PUBLIC_SUPERWALL_ANDROID_API_KEY,
-          }}
-        >
-          <GestureHandlerRootView>
-            <BottomSheetModalProvider>
-              <RootStack />
-              <PortalHost />
-            </BottomSheetModalProvider>
-          </GestureHandlerRootView>
-        </SuperwallProvider>
+        <GestureHandlerRootView>
+          <BottomSheetModalProvider>
+            <RootStack />
+            <PortalHost />
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
       </ConvexAuthProvider>
     </KeyboardProvider>
   );
@@ -56,13 +48,6 @@ function RootStack() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const user = useQuery(api.users.currentUser);
   const hasCompletedOnboarding = user?.hasCompletedOnboarding ?? false;
-  const { identify } = useUser();
-
-  React.useEffect(() => {
-    if (user?._id) {
-      identify(user._id);
-    }
-  }, [user?._id]);
 
   if (isLoading) {
     return (

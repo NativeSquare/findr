@@ -12,7 +12,6 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@convex/_generated/api";
 import { Doc } from "@convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useUser } from "expo-superwall";
 import { ChevronLeft } from "lucide-react-native";
 import React from "react";
 import { ScrollView, View } from "react-native";
@@ -39,7 +38,6 @@ export type OnboardingFormData = Partial<
 
 export default function Onboarding() {
   const { signOut } = useAuthActions();
-  const { signOut: signOutSuperwall } = useUser();
   const user = useQuery(api.users.currentUser);
   const [currentStep, setCurrentStep] = React.useState(0);
   const [showErrors, setShowErrors] = React.useState(false);
@@ -74,7 +72,6 @@ export default function Onboarding() {
       setCurrentStep((prev) => Math.max(prev - 1, 0));
     } else {
       signOut();
-      signOutSuperwall();
     }
   };
 
