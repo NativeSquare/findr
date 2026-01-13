@@ -98,15 +98,25 @@ export const getTapsForUser = query({
     const tapsWithUsers = await Promise.all(
       tapsList.map(async (tap) => {
         const fromUser = await ctx.db.get(tap.fromUserId);
+        if (!fromUser) {
+          return {
+            ...tap,
+            fromUser: null,
+          };
+        }
+
+        const firstProfilePictureId = fromUser.profilePictures?.[0];
+        const imageUrl = firstProfilePictureId
+          ? await ctx.storage.getUrl(firstProfilePictureId)
+          : null;
+
         return {
           ...tap,
-          fromUser: fromUser
-            ? {
-                _id: fromUser._id,
-                name: fromUser.name,
-                image: fromUser.profilePictures?.[0],
-              }
-            : null,
+          fromUser: {
+            _id: fromUser._id,
+            name: fromUser.name,
+            image: imageUrl,
+          },
         };
       })
     );

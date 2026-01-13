@@ -293,7 +293,9 @@ export default function Taps() {
                         className="size-10 rounded-full shrink-0"
                         alt={favorite.name ?? "Unknown User"}
                       >
-                        <AvatarImage source={{ uri: favorite.image }} />
+                        <AvatarImage
+                          source={{ uri: favorite.image ?? undefined }}
+                        />
                         <AvatarFallback className="bg-secondary rounded-full">
                           <Text className="text-muted-foreground">
                             {favorite.name?.[0]?.toUpperCase() ?? "?"}

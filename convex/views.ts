@@ -96,15 +96,25 @@ export const getViewsForUser = query({
     const viewsWithUsers = await Promise.all(
       viewsList.map(async (view) => {
         const fromUser = await ctx.db.get(view.fromUserId);
+        if (!fromUser) {
+          return {
+            ...view,
+            fromUser: null,
+          };
+        }
+
+        const firstProfilePictureId = fromUser.profilePictures?.[0];
+        const imageUrl = firstProfilePictureId
+          ? await ctx.storage.getUrl(firstProfilePictureId)
+          : null;
+
         return {
           ...view,
-          fromUser: fromUser
-            ? {
-                _id: fromUser._id,
-                name: fromUser.name,
-                image: fromUser.profilePictures?.[0],
-              }
-            : null,
+          fromUser: {
+            _id: fromUser._id,
+            name: fromUser.name,
+            image: imageUrl,
+          },
         };
       })
     );

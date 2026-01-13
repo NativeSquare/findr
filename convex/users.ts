@@ -189,13 +189,18 @@ export const getFavorites = query({
     const favoritesWithUsers = await Promise.all(
       favoriteIds.map(async (favoriteId) => {
         const favoriteUser = await ctx.db.get(favoriteId);
-        return favoriteUser
-          ? {
-              _id: favoriteUser._id,
-              name: favoriteUser.name,
-              image: favoriteUser.profilePictures?.[0],
-            }
+        if (!favoriteUser) return null;
+
+        const firstProfilePictureId = favoriteUser.profilePictures?.[0];
+        const imageUrl = firstProfilePictureId
+          ? await ctx.storage.getUrl(firstProfilePictureId)
           : null;
+
+        return {
+          _id: favoriteUser._id,
+          name: favoriteUser.name,
+          image: imageUrl,
+        };
       })
     );
 
