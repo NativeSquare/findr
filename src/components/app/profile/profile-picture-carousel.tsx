@@ -1,5 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import React from "react";
 import { Dimensions, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
@@ -46,22 +47,25 @@ export function ProfilePictureCarousel({
           onProgressChange={progress}
           renderItem={({ item: image, index }) => (
             <View className="h-full w-full" collapsable={false}>
-              <Avatar
-                alt="User's Profile Picture"
-                className="h-full w-full items-center justify-center rounded-none bg-secondary/60"
-              >
-                <AvatarImage
+              {image ? (
+                <Image
                   source={{ uri: image }}
-                  className="h-full w-full"
+                  contentFit="contain"
+                  style={{
+                    width: screenWidth,
+                    height: screenHeight,
+                    backgroundColor: "rgba(0,0,0,0.1)",
+                  }}
                 />
-                <AvatarFallback className="h-full w-full bg-secondary/60 rounded-none">
+              ) : (
+                <View className="h-full w-full items-center justify-center bg-secondary/60">
                   <Ionicons
                     name="person"
                     size={80}
                     className="text-muted-foreground"
                   />
-                </AvatarFallback>
-              </Avatar>
+                </View>
+              )}
             </View>
           )}
         />
