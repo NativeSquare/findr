@@ -139,6 +139,7 @@ export default function UserProfile() {
       console.error("Cannot message yourself");
       return;
     }
+    bottomSheetRef.current?.dismiss();
     router.push(`/chat/${id}`);
   };
 
