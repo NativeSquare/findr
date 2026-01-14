@@ -41,6 +41,7 @@ export default function ChatDetail() {
     null
   );
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [attachedImageUri, setAttachedImageUri] = useState<string | null>(null);
   const uploadMediaBottomSheetRef = useRef<BottomSheetModal>(null);
   const selectAlbumModalRef = useRef<BottomSheetModal>(null);
 
@@ -115,17 +116,18 @@ export default function ChatDetail() {
   // Use the other user's first sentences, or fallback to empty array
   const quickReplies = currentUser?.firstSentences ?? [];
 
-  const handleSend = async (imageUrl?: string) => {
-    if ((!message.trim() && !imageUrl) || !otherUserId) return;
+  const handleSend = async () => {
+    if ((!message.trim() && !attachedImageUri) || !otherUserId) return;
 
     setError(null);
     try {
       await sendMessage({
         otherUserId,
         text: message,
-        imageUrl,
+        imageUrl: attachedImageUri ?? undefined,
       });
       setMessage("");
+      setAttachedImageUri(null);
     } catch (error) {
       setError(getConvexErrorMessage(error));
       console.error("Error sending message:", error);
@@ -133,7 +135,11 @@ export default function ChatDetail() {
   };
 
   const handleImageSelected = (image: ImagePickerAsset) => {
-    handleSend(image.uri);
+    setAttachedImageUri(image.uri);
+  };
+
+  const handleRemoveImage = () => {
+    setAttachedImageUri(null);
   };
 
   const handleCameraPress = () => {
@@ -305,11 +311,13 @@ export default function ChatDetail() {
           <MessageInput
             value={message}
             onChangeText={setMessage}
-            onSend={() => handleSend()}
+            onSend={handleSend}
             onCameraPress={handleCameraPress}
             autoFocus
             onFocus={() => setIsInputFocused(true)}
             onBlur={() => setIsInputFocused(false)}
+            attachedImageUri={attachedImageUri}
+            onRemoveImage={handleRemoveImage}
           />
         </View>
       </KeyboardAvoidingView>
