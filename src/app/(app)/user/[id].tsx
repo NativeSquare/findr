@@ -13,6 +13,7 @@ import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
+import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   Cake,
@@ -149,6 +150,7 @@ export default function UserProfile() {
     }
 
     try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       await toggleFavorite({ userId: id });
     } catch (error) {
       console.error("Error toggling favorite:", error);
@@ -163,6 +165,7 @@ export default function UserProfile() {
     }
 
     try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await sendTap({ toUserId: id, emoji });
     } catch (error) {
       console.error("Error sending tap:", error);
