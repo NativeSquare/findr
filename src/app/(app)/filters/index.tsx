@@ -1,60 +1,136 @@
-// import { AgePicker } from "@/components/app/filters/age-picker";
-import { LookingForField } from "@/components/app/profile/looking-for-field";
-import { SexualOrientationField } from "@/components/app/profile/sexual-orientation-field";
+import { PreferenceRow } from "@/components/app/edit-profile/preference-row";
+import { PreferenceSectionHeader } from "@/components/app/edit-profile/preference-section-header";
+import { PreferenceSelectionSheet } from "@/components/app/edit-profile/preference-selection-sheet";
+import { AgePicker } from "@/components/app/filters/age-picker";
+import { HeightPicker } from "@/components/app/filters/height-picker";
+import { WeightPicker } from "@/components/app/filters/weight-picker";
+import { BottomSheetModal } from "@/components/custom/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { ChevronLeft } from "lucide-react-native";
+import {
+  ChevronLeft,
+  Heart,
+  Ruler,
+  Sparkles,
+  User,
+  Weight,
+} from "lucide-react-native";
 import React from "react";
 import { Pressable, ScrollView, View } from "react-native";
 
 export type FilterData = {
-  maxDistance?: number; // Optional - distance filter removed from UI, but kept for backward compatibility
   minAge?: number;
   maxAge?: number;
-  // bodyTypes: string[];
-  // ethnicity: string[];
+  minHeight?: number;
+  maxHeight?: number;
+  minWeight?: number;
+  maxWeight?: number;
   lookingFor: string[];
-  // position: string[];
   orientation: string;
+  position: string;
+  bodyType: string;
+  ethnicity: string;
 };
 
 const FILTERS_STORAGE_KEY = "filters";
-// const DEFAULT_MAX_DISTANCE = 10000; // meters (10km) // Commented out - distance filter removed
-const DEFAULT_MIN_AGE = 25;
-const DEFAULT_MAX_AGE = 70;
+const DEFAULT_MIN_AGE = 18;
+const DEFAULT_MAX_AGE = 99;
+const DEFAULT_MIN_HEIGHT = 120;
+const DEFAULT_MAX_HEIGHT = 220;
+const DEFAULT_MIN_WEIGHT = 40;
+const DEFAULT_MAX_WEIGHT = 150;
+
+const BODY_TYPES = ["Slim", "Average", "Athletic", "Muscular", "Stocky"];
+const ORIENTATIONS = [
+  "Straight",
+  "Gay",
+  "Bisexual",
+  "Queer",
+  "Pansexual",
+  "Asexual",
+  "Demisexual",
+  "Ask Me",
+];
+const POSITIONS = [
+  "Top",
+  "Bottom",
+  "Versatile",
+  "Vers Top",
+  "Vers Bottom",
+  "Side",
+  "Ask Me",
+  "Not Specified",
+];
+const ETHNICITIES = [
+  "Asian",
+  "Black",
+  "Latino/Hispanic",
+  "Middle Eastern",
+  "Mixed",
+  "Native American",
+  "Pacific Islander",
+  "South Asian",
+  "White",
+  "Other",
+];
+const LOOKING_FOR = [
+  "Chat",
+  "Dates",
+  "Friends",
+  "Networking",
+  "Relationship",
+  "Hookups",
+  "Not Specified",
+];
 
 export default function Filters() {
-  const defaultFilters = {
-    // maxDistance: DEFAULT_MAX_DISTANCE, // Commented out - distance filter removed
+  const defaultFilters: FilterData = {
     minAge: DEFAULT_MIN_AGE,
     maxAge: DEFAULT_MAX_AGE,
-    // bodyTypes: [],
-    // ethnicity: [],
+    minHeight: DEFAULT_MIN_HEIGHT,
+    maxHeight: DEFAULT_MAX_HEIGHT,
+    minWeight: DEFAULT_MIN_WEIGHT,
+    maxWeight: DEFAULT_MAX_WEIGHT,
     lookingFor: [],
-    // position: [],
     orientation: "",
+    position: "",
+    bodyType: "",
+    ethnicity: "",
   };
   const [filters, setFilters] = React.useState<FilterData>(defaultFilters);
 
+  // Bottom sheet refs
+  const ageRangeSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const heightRangeSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const weightRangeSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const lookingForSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const positionSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const bodyTypeSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const ethnicitySheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const orientationSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+
   React.useEffect(() => {
-    // Load saved filters on mount
     const loadFilters = async () => {
       try {
         const savedFilters = await AsyncStorage.getItem(FILTERS_STORAGE_KEY);
         if (savedFilters) {
           const parsed = JSON.parse(savedFilters);
           setFilters({
-            // maxDistance: parsed.maxDistance ?? DEFAULT_MAX_DISTANCE, // Commented out - distance filter removed
             minAge: parsed.minAge ?? DEFAULT_MIN_AGE,
             maxAge: parsed.maxAge ?? DEFAULT_MAX_AGE,
-            // bodyTypes: parsed.bodyTypes ?? [],
-            // ethnicity: parsed.ethnicity ?? [],
+            minHeight: parsed.minHeight ?? DEFAULT_MIN_HEIGHT,
+            maxHeight: parsed.maxHeight ?? DEFAULT_MAX_HEIGHT,
+            minWeight: parsed.minWeight ?? DEFAULT_MIN_WEIGHT,
+            maxWeight: parsed.maxWeight ?? DEFAULT_MAX_WEIGHT,
             lookingFor: parsed.lookingFor ?? [],
-            // position: parsed.position ?? [],
             orientation: parsed.orientation ?? "",
+            position: parsed.position ?? "",
+            bodyType: parsed.bodyType ?? "",
+            ethnicity: parsed.ethnicity ?? "",
           });
         }
       } catch (error) {
@@ -63,18 +139,6 @@ export default function Filters() {
     };
     loadFilters();
   }, []);
-
-  const renderHeader = () => {
-    return (
-      <View className="flex-row items-center justify-between px-5 py-6">
-        <Pressable onPress={() => router.back()} className="size-6">
-          <Icon as={ChevronLeft} size={24} className="text-white" />
-        </Pressable>
-        <Text className="text-xl font-medium text-white">Filters</Text>
-        <View className="size-6" />
-      </View>
-    );
-  };
 
   const handleClear = () => {
     setFilters(defaultFilters);
@@ -90,6 +154,29 @@ export default function Filters() {
     router.back();
   };
 
+  const formatAgeRange = () => {
+    const min = filters.minAge ?? DEFAULT_MIN_AGE;
+    const max = filters.maxAge ?? DEFAULT_MAX_AGE;
+    if (min === DEFAULT_MIN_AGE && max === DEFAULT_MAX_AGE) return undefined;
+    return `${min} - ${max}`;
+  };
+
+  const formatHeightRange = () => {
+    const min = filters.minHeight ?? DEFAULT_MIN_HEIGHT;
+    const max = filters.maxHeight ?? DEFAULT_MAX_HEIGHT;
+    if (min === DEFAULT_MIN_HEIGHT && max === DEFAULT_MAX_HEIGHT)
+      return undefined;
+    return `${min}cm - ${max}cm`;
+  };
+
+  const formatWeightRange = () => {
+    const min = filters.minWeight ?? DEFAULT_MIN_WEIGHT;
+    const max = filters.maxWeight ?? DEFAULT_MAX_WEIGHT;
+    if (min === DEFAULT_MIN_WEIGHT && max === DEFAULT_MAX_WEIGHT)
+      return undefined;
+    return `${min}kg - ${max}kg`;
+  };
+
   return (
     <View className="flex-1 mt-safe">
       <ScrollView
@@ -100,94 +187,97 @@ export default function Filters() {
         contentContainerClassName="px-4 pb-6"
       >
         <View className="w-full max-w-md self-center flex-1">
-          {renderHeader()}
+          {/* Header */}
+          <View className="flex-row items-center justify-between px-1 py-6">
+            <Pressable onPress={() => router.back()} className="size-6">
+              <Icon as={ChevronLeft} size={24} className="text-white" />
+            </Pressable>
+            <Text className="text-xl font-medium text-white">Filters</Text>
+            <View className="size-6" />
+          </View>
 
-          <View className="gap-6">
-            {/* Distance filter - commented out */}
-            {/* <View className="flex flex-col gap-6">
-              <Text className="text-sm text-muted-foreground">
-                Max Distance: {Math.round(filters.maxDistance / 1000)}km
-              </Text>
-              <Slider
-                minimumValue={1000}
-                maximumValue={50000}
-                step={1000}
-                value={filters.maxDistance}
-                onValueChange={(value) =>
-                  setFilters({ ...filters, maxDistance: value })
-                }
-              />
-            </View> */}
+          <View className="gap-4">
+            {/* Measurements Section */}
+            <View>
+              <PreferenceSectionHeader icon={Ruler} title="Measurements" />
+              <View className="rounded-xl overflow-hidden">
+                <PreferenceRow
+                  label="Age Range"
+                  values={formatAgeRange()}
+                  onPress={() => ageRangeSheetRef.current?.present()}
+                />
+                <PreferenceRow
+                  label="Height Range"
+                  values={formatHeightRange()}
+                  onPress={() => heightRangeSheetRef.current?.present()}
+                />
+                <PreferenceRow
+                  label="Weight Range"
+                  values={formatWeightRange()}
+                  onPress={() => weightRangeSheetRef.current?.present()}
+                  isLast
+                />
+              </View>
+            </View>
 
-            {/* Age Range filter - commented out */}
-            {/* <AgePicker
-              minAge={filters.minAge ?? DEFAULT_MIN_AGE}
-              maxAge={filters.maxAge ?? DEFAULT_MAX_AGE}
-              onMinAgeChange={(age) => setFilters({ ...filters, minAge: age })}
-              onMaxAgeChange={(age) => setFilters({ ...filters, maxAge: age })}
-            /> */}
+            {/* Expectations Section */}
+            <View>
+              <PreferenceSectionHeader icon={Heart} title="Expectations" />
+              <View className="rounded-xl overflow-hidden">
+                <PreferenceRow
+                  label="Looking For"
+                  values={
+                    filters.lookingFor.length > 0
+                      ? filters.lookingFor
+                      : undefined
+                  }
+                  onPress={() => lookingForSheetRef.current?.present()}
+                />
+                <PreferenceRow
+                  label="Position"
+                  values={filters.position || undefined}
+                  onPress={() => positionSheetRef.current?.present()}
+                  isLast
+                />
+              </View>
+            </View>
 
-            {/* <BodyTypesField
-              onSelect={(option) =>
-                setFilters({
-                  ...filters,
-                  bodyTypes: filters.bodyTypes.includes(option)
-                    ? filters.bodyTypes.filter((type) => type !== option)
-                    : [...filters.bodyTypes, option],
-                })
-              }
-              isSelected={(option) => filters.bodyTypes.includes(option)}
-            /> */}
+            {/* Physical Section */}
+            <View>
+              <PreferenceSectionHeader icon={Sparkles} title="Physical" />
+              <View className="rounded-xl overflow-hidden">
+                <PreferenceRow
+                  label="Body Type"
+                  values={filters.bodyType || undefined}
+                  onPress={() => bodyTypeSheetRef.current?.present()}
+                />
+                <PreferenceRow
+                  label="Ethnicity"
+                  values={filters.ethnicity || undefined}
+                  onPress={() => ethnicitySheetRef.current?.present()}
+                  isLast
+                />
+              </View>
+            </View>
 
-            <SexualOrientationField
-              onSelect={(option) =>
-                setFilters({
-                  ...filters,
-                  orientation: filters.orientation === option ? "" : option,
-                })
-              }
-              isSelected={(option) => filters.orientation === option}
-            />
-
-            {/* <PositionField
-              onSelect={(option) =>
-                setFilters({
-                  ...filters,
-                  position: filters.position.includes(option)
-                    ? filters.position.filter((type) => type !== option)
-                    : [...filters.position, option],
-                })
-              }
-              isSelected={(option) => filters.position.includes(option)}
-            /> */}
-
-            {/* <EthnicityField
-              onSelect={(option) =>
-                setFilters({
-                  ...filters,
-                  ethnicity: filters.ethnicity.includes(option)
-                    ? filters.ethnicity.filter((type) => type !== option)
-                    : [...filters.ethnicity, option],
-                })
-              }
-              isSelected={(option) => filters.ethnicity.includes(option)}
-            /> */}
-
-            <LookingForField
-              onSelect={(option) =>
-                setFilters({
-                  ...filters,
-                  lookingFor: filters.lookingFor.includes(option)
-                    ? filters.lookingFor.filter((type) => type !== option)
-                    : [...filters.lookingFor, option],
-                })
-              }
-              isSelected={(option) => filters.lookingFor.includes(option)}
-            />
+            {/* Identity Section */}
+            <View>
+              <PreferenceSectionHeader icon={User} title="Identity" />
+              <View className="rounded-xl overflow-hidden">
+                <PreferenceRow
+                  label="Sexual Orientation"
+                  values={filters.orientation || undefined}
+                  onPress={() => orientationSheetRef.current?.present()}
+                  isLast
+                />
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>
-      <View className="w-full flex-row gap-2 mb-safe">
+
+      {/* Footer Buttons */}
+      <View className="w-full max-w-md self-center flex-row gap-2 px-4 pb-4 mb-safe">
         <Button variant="outline" className="flex-1" onPress={handleClear}>
           <Text className="text-base font-medium">Clear</Text>
         </Button>
@@ -197,6 +287,141 @@ export default function Filters() {
           </Text>
         </Button>
       </View>
+
+      {/* Selection Sheets */}
+      <PreferenceSelectionSheet
+        bottomSheetRef={lookingForSheetRef}
+        title="Looking For"
+        options={LOOKING_FOR}
+        selectedValues={filters.lookingFor}
+        multiSelect
+        onSelect={(option) =>
+          setFilters({
+            ...filters,
+            lookingFor: filters.lookingFor.includes(option)
+              ? filters.lookingFor.filter((type) => type !== option)
+              : [...filters.lookingFor, option],
+          })
+        }
+      />
+
+      <PreferenceSelectionSheet
+        bottomSheetRef={positionSheetRef}
+        title="Position"
+        options={POSITIONS}
+        selectedValues={filters.position || undefined}
+        onSelect={(option) =>
+          setFilters({
+            ...filters,
+            position: filters.position === option ? "" : option,
+          })
+        }
+      />
+
+      <PreferenceSelectionSheet
+        bottomSheetRef={bodyTypeSheetRef}
+        title="Body Type"
+        options={BODY_TYPES}
+        selectedValues={filters.bodyType || undefined}
+        onSelect={(option) =>
+          setFilters({
+            ...filters,
+            bodyType: filters.bodyType === option ? "" : option,
+          })
+        }
+      />
+
+      <PreferenceSelectionSheet
+        bottomSheetRef={ethnicitySheetRef}
+        title="Ethnicity"
+        options={ETHNICITIES}
+        selectedValues={filters.ethnicity || undefined}
+        onSelect={(option) =>
+          setFilters({
+            ...filters,
+            ethnicity: filters.ethnicity === option ? "" : option,
+          })
+        }
+      />
+
+      <PreferenceSelectionSheet
+        bottomSheetRef={orientationSheetRef}
+        title="Sexual Orientation"
+        options={ORIENTATIONS}
+        selectedValues={filters.orientation || undefined}
+        onSelect={(option) =>
+          setFilters({
+            ...filters,
+            orientation: filters.orientation === option ? "" : option,
+          })
+        }
+      />
+
+      {/* Range Picker Sheets */}
+      <BottomSheetModal ref={ageRangeSheetRef}>
+        <View className="px-4 pb-6 gap-6">
+          <Text className="text-xl font-semibold text-foreground">
+            Age Range
+          </Text>
+          <AgePicker
+            minAge={filters.minAge ?? DEFAULT_MIN_AGE}
+            maxAge={filters.maxAge ?? DEFAULT_MAX_AGE}
+            onMinAgeChange={(age) => setFilters({ ...filters, minAge: age })}
+            onMaxAgeChange={(age) => setFilters({ ...filters, maxAge: age })}
+          />
+          <Button onPress={() => ageRangeSheetRef.current?.dismiss()}>
+            <Text className="text-base font-medium text-primary-foreground">
+              Done
+            </Text>
+          </Button>
+        </View>
+      </BottomSheetModal>
+
+      <BottomSheetModal ref={heightRangeSheetRef}>
+        <View className="px-4 pb-6 gap-6">
+          <Text className="text-xl font-semibold text-foreground">
+            Height Range
+          </Text>
+          <HeightPicker
+            minHeight={filters.minHeight ?? DEFAULT_MIN_HEIGHT}
+            maxHeight={filters.maxHeight ?? DEFAULT_MAX_HEIGHT}
+            onMinHeightChange={(height) =>
+              setFilters({ ...filters, minHeight: height })
+            }
+            onMaxHeightChange={(height) =>
+              setFilters({ ...filters, maxHeight: height })
+            }
+          />
+          <Button onPress={() => heightRangeSheetRef.current?.dismiss()}>
+            <Text className="text-base font-medium text-primary-foreground">
+              Done
+            </Text>
+          </Button>
+        </View>
+      </BottomSheetModal>
+
+      <BottomSheetModal ref={weightRangeSheetRef}>
+        <View className="px-4 pb-6 gap-6">
+          <Text className="text-xl font-semibold text-foreground">
+            Weight Range
+          </Text>
+          <WeightPicker
+            minWeight={filters.minWeight ?? DEFAULT_MIN_WEIGHT}
+            maxWeight={filters.maxWeight ?? DEFAULT_MAX_WEIGHT}
+            onMinWeightChange={(weight) =>
+              setFilters({ ...filters, minWeight: weight })
+            }
+            onMaxWeightChange={(weight) =>
+              setFilters({ ...filters, maxWeight: weight })
+            }
+          />
+          <Button onPress={() => weightRangeSheetRef.current?.dismiss()}>
+            <Text className="text-base font-medium text-primary-foreground">
+              Done
+            </Text>
+          </Button>
+        </View>
+      </BottomSheetModal>
     </View>
   );
 }

@@ -85,6 +85,8 @@ function calculateAge(birthDate?: string | null): number | null {
 function matchesFilters(
   user: {
     birthDate?: string | null;
+    height?: { value: number; unit: string } | null;
+    weight?: { value: number; unit: string } | null;
     bodyTypes?: string | null;
     ethnicity?: string | null;
     lookingFor?: string[] | null;
@@ -94,7 +96,11 @@ function matchesFilters(
   filters?: {
     minAge?: number;
     maxAge?: number;
-    bodyTypes?: string;
+    minHeight?: number;
+    maxHeight?: number;
+    minWeight?: number;
+    maxWeight?: number;
+    bodyType?: string;
     ethnicity?: string;
     lookingFor?: string[];
     position?: string;
@@ -111,10 +117,30 @@ function matchesFilters(
     if (filters.maxAge !== undefined && userAge > filters.maxAge) return false;
   }
 
+  // Height filter (in cm)
+  if (filters.minHeight !== undefined || filters.maxHeight !== undefined) {
+    const userHeight = user.height?.value;
+    if (userHeight === undefined) return false; // No height = exclude when filter is set
+    if (filters.minHeight !== undefined && userHeight < filters.minHeight)
+      return false;
+    if (filters.maxHeight !== undefined && userHeight > filters.maxHeight)
+      return false;
+  }
+
+  // Weight filter (in kg)
+  if (filters.minWeight !== undefined || filters.maxWeight !== undefined) {
+    const userWeight = user.weight?.value;
+    if (userWeight === undefined) return false; // No weight = exclude when filter is set
+    if (filters.minWeight !== undefined && userWeight < filters.minWeight)
+      return false;
+    if (filters.maxWeight !== undefined && userWeight > filters.maxWeight)
+      return false;
+  }
+
   if (filters.orientation && user.orientation !== filters.orientation)
     return false;
 
-  if (filters.bodyTypes && user.bodyTypes !== filters.bodyTypes) return false;
+  if (filters.bodyType && user.bodyTypes !== filters.bodyType) return false;
   if (filters.ethnicity && user.ethnicity !== filters.ethnicity) return false;
   if (!intersects(user.lookingFor ?? undefined, filters.lookingFor))
     return false;
@@ -176,10 +202,13 @@ export const getNearestUsers = query({
     id: v.id("users"),
     filters: v.optional(
       v.object({
-        maxDistance: v.optional(v.number()),
         minAge: v.optional(v.number()),
         maxAge: v.optional(v.number()),
-        bodyTypes: v.optional(v.string()),
+        minHeight: v.optional(v.number()),
+        maxHeight: v.optional(v.number()),
+        minWeight: v.optional(v.number()),
+        maxWeight: v.optional(v.number()),
+        bodyType: v.optional(v.string()),
         ethnicity: v.optional(v.string()),
         lookingFor: v.optional(v.array(v.string())),
         position: v.optional(v.string()),

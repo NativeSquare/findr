@@ -1,4 +1,3 @@
-import { FiltersBottomSheet } from "@/components/app/filters/filters-bottom-sheet";
 import { HomeFiltersRow } from "@/components/app/home/home-filters-row";
 import { HomeHeader } from "@/components/app/home/home-header";
 import { NearestUsersGridItem } from "@/components/app/home/nearest-users-grid-item";
@@ -6,28 +5,36 @@ import { NearestUsersGridItemSkeleton } from "@/components/app/home/nearest-user
 import { Text } from "@/components/ui/text";
 import { usePresence } from "@convex-dev/presence/react-native";
 import { api } from "@convex/_generated/api";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "convex/react";
+import { router } from "expo-router";
 import React, { useMemo } from "react";
 import { Dimensions, ScrollView, View } from "react-native";
 import { FilterData } from "../filters";
 
 const FILTERS_STORAGE_KEY = "filters";
-// const DEFAULT_MAX_DISTANCE = 10000; // meters (10km) // Commented out - distance filter removed
-const DEFAULT_MIN_AGE = 25;
-const DEFAULT_MAX_AGE = 70;
+const DEFAULT_MIN_AGE = 18;
+const DEFAULT_MAX_AGE = 99;
+const DEFAULT_MIN_HEIGHT = 120;
+const DEFAULT_MAX_HEIGHT = 220;
+const DEFAULT_MIN_WEIGHT = 40;
+const DEFAULT_MAX_WEIGHT = 150;
 
 export default function Home() {
   const user = useQuery(api.users.currentUser);
-  const filtersBottomSheetRef = React.useRef<BottomSheetModal>(null);
-  const defaultFilters = {
-    // maxDistance: DEFAULT_MAX_DISTANCE, // Commented out - distance filter removed
+  const defaultFilters: FilterData = {
     minAge: DEFAULT_MIN_AGE,
     maxAge: DEFAULT_MAX_AGE,
+    minHeight: DEFAULT_MIN_HEIGHT,
+    maxHeight: DEFAULT_MAX_HEIGHT,
+    minWeight: DEFAULT_MIN_WEIGHT,
+    maxWeight: DEFAULT_MAX_WEIGHT,
     lookingFor: [],
     orientation: "",
+    position: "",
+    bodyType: "",
+    ethnicity: "",
   };
   const [filters, setFilters] = React.useState<FilterData>(defaultFilters);
 
@@ -37,11 +44,17 @@ export default function Home() {
       if (savedFilters) {
         const parsed = JSON.parse(savedFilters);
         setFilters({
-          // maxDistance: parsed.maxDistance ?? DEFAULT_MAX_DISTANCE, // Commented out - distance filter removed
           minAge: parsed.minAge ?? DEFAULT_MIN_AGE,
           maxAge: parsed.maxAge ?? DEFAULT_MAX_AGE,
+          minHeight: parsed.minHeight ?? DEFAULT_MIN_HEIGHT,
+          maxHeight: parsed.maxHeight ?? DEFAULT_MAX_HEIGHT,
+          minWeight: parsed.minWeight ?? DEFAULT_MIN_WEIGHT,
+          maxWeight: parsed.maxWeight ?? DEFAULT_MAX_WEIGHT,
           lookingFor: parsed.lookingFor ?? [],
           orientation: parsed.orientation ?? "",
+          position: parsed.position ?? "",
+          bodyType: parsed.bodyType ?? "",
+          ethnicity: parsed.ethnicity ?? "",
         });
       }
     } catch (error) {
@@ -63,11 +76,17 @@ export default function Home() {
   // Check if filters are active (non-default)
   const hasActiveFilters = useMemo(() => {
     return (
-      // filters.maxDistance !== DEFAULT_MAX_DISTANCE || // Commented out - distance filter removed
       filters.minAge !== DEFAULT_MIN_AGE ||
       filters.maxAge !== DEFAULT_MAX_AGE ||
+      filters.minHeight !== DEFAULT_MIN_HEIGHT ||
+      filters.maxHeight !== DEFAULT_MAX_HEIGHT ||
+      filters.minWeight !== DEFAULT_MIN_WEIGHT ||
+      filters.maxWeight !== DEFAULT_MAX_WEIGHT ||
       filters.lookingFor.length > 0 ||
-      filters.orientation !== ""
+      filters.orientation !== "" ||
+      filters.position !== "" ||
+      filters.bodyType !== "" ||
+      filters.ethnicity !== ""
     );
   }, [filters]);
 
@@ -75,18 +94,25 @@ export default function Home() {
   const activeFilterLabels = useMemo(() => {
     const labels: string[] = [];
 
-    // Distance filter removed
-    // if (filters.maxDistance !== DEFAULT_MAX_DISTANCE) {
-    //   labels.push(`${Math.round(filters.maxDistance / 1000)}km`);
-    // }
-
     if (
       filters.minAge !== DEFAULT_MIN_AGE ||
       filters.maxAge !== DEFAULT_MAX_AGE
     ) {
-      labels.push(
-        `${filters.minAge ?? DEFAULT_MIN_AGE}-${filters.maxAge ?? DEFAULT_MAX_AGE} years`
-      );
+      labels.push(`${filters.minAge}-${filters.maxAge} yrs`);
+    }
+
+    if (
+      filters.minHeight !== DEFAULT_MIN_HEIGHT ||
+      filters.maxHeight !== DEFAULT_MAX_HEIGHT
+    ) {
+      labels.push(`${filters.minHeight}-${filters.maxHeight}cm`);
+    }
+
+    if (
+      filters.minWeight !== DEFAULT_MIN_WEIGHT ||
+      filters.maxWeight !== DEFAULT_MAX_WEIGHT
+    ) {
+      labels.push(`${filters.minWeight}-${filters.maxWeight}kg`);
     }
 
     if (filters.lookingFor.length > 0) {
@@ -95,6 +121,18 @@ export default function Home() {
 
     if (filters.orientation) {
       labels.push(filters.orientation);
+    }
+
+    if (filters.position) {
+      labels.push(filters.position);
+    }
+
+    if (filters.bodyType) {
+      labels.push(filters.bodyType);
+    }
+
+    if (filters.ethnicity) {
+      labels.push(filters.ethnicity);
     }
 
     return labels;
@@ -112,11 +150,34 @@ export default function Home() {
     }
   };
 
+  // Build filters object with only non-default values
+  const activeFiltersForQuery = useMemo(() => {
+    const result: Partial<FilterData> = {};
+
+    if (filters.minAge !== DEFAULT_MIN_AGE) result.minAge = filters.minAge;
+    if (filters.maxAge !== DEFAULT_MAX_AGE) result.maxAge = filters.maxAge;
+    if (filters.minHeight !== DEFAULT_MIN_HEIGHT)
+      result.minHeight = filters.minHeight;
+    if (filters.maxHeight !== DEFAULT_MAX_HEIGHT)
+      result.maxHeight = filters.maxHeight;
+    if (filters.minWeight !== DEFAULT_MIN_WEIGHT)
+      result.minWeight = filters.minWeight;
+    if (filters.maxWeight !== DEFAULT_MAX_WEIGHT)
+      result.maxWeight = filters.maxWeight;
+    if (filters.lookingFor.length > 0) result.lookingFor = filters.lookingFor;
+    if (filters.orientation) result.orientation = filters.orientation;
+    if (filters.position) result.position = filters.position;
+    if (filters.bodyType) result.bodyType = filters.bodyType;
+    if (filters.ethnicity) result.ethnicity = filters.ethnicity;
+
+    return Object.keys(result).length > 0 ? result : undefined;
+  }, [filters]);
+
   if (!user?._id) return null;
   const presenceState = usePresence(api.presence, "public", user._id);
   const nearestUsers = useQuery(api.geospatial.getNearestUsers, {
     id: user._id,
-    filters: filters,
+    filters: activeFiltersForQuery,
   });
 
   const userRows = useMemo(() => {
@@ -148,7 +209,7 @@ export default function Home() {
         <HomeFiltersRow
           hasActiveFilters={hasActiveFilters}
           activeFilterLabels={activeFilterLabels}
-          onFilterPress={() => filtersBottomSheetRef.current?.present()}
+          onFilterPress={() => router.push("/filters")}
           onClearAll={handleClearAll}
         />
         <Text className="text-lg font-medium">Who&apos;s nearby ?</Text>
@@ -178,12 +239,6 @@ export default function Home() {
               ))}
         </View>
       </View>
-      <FiltersBottomSheet
-        bottomSheetModalRef={filtersBottomSheetRef}
-        filters={filters}
-        setFilters={setFilters}
-        defaultFilters={defaultFilters}
-      />
     </ScrollView>
   );
 }

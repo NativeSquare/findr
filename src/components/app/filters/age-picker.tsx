@@ -67,9 +67,6 @@ export function AgePicker({
 
   return (
     <View className="gap-4">
-      <Text className="text-sm text-muted-foreground">
-        Age Range: {internalMinAge} - {internalMaxAge}
-      </Text>
       <View className="flex-row gap-4">
         <View className="flex-1">
           <Text className="text-xs text-muted-foreground mb-2">Min Age</Text>
