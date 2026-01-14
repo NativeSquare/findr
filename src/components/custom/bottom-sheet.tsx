@@ -51,7 +51,7 @@ export function BottomSheetModal({
           {...props}
           appearsOnIndex={0}
           disappearsOnIndex={-1}
-          opacity={enableBackdrop ? 0.5 : 0.1}
+          opacity={enableBackdrop ? 0.5 : 0}
         />
       )}
     >

@@ -4,10 +4,8 @@ import { Image } from "expo-image";
 import React from "react";
 import { Dimensions, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
-import Carousel, {
-  ICarouselInstance,
-  Pagination,
-} from "react-native-reanimated-carousel";
+import Carousel, { ICarouselInstance } from "react-native-reanimated-carousel";
+import { CarouselPagination } from "./carousel-pagination";
 
 export type ProfilePictureCarouselProps = {
   images: string[];
@@ -87,27 +85,10 @@ export function ProfilePictureCarousel({
       )}
       {/* Pagination */}
       {images.length > 1 && (
-        <View
-          className="absolute left-0 right-0 z-10 items-center justify-center"
-          style={{ top: 80 }}
-        >
-          <Pagination.Basic
+        <View className="absolute left-0 right-0 z-10" style={{ top: 60 }}>
+          <CarouselPagination
             progress={progress}
             data={images}
-            dotStyle={{
-              width: 25,
-              height: 4,
-              backgroundColor: "#262626",
-            }}
-            activeDotStyle={{
-              overflow: "hidden",
-              backgroundColor: "#f1f1f1",
-            }}
-            containerStyle={{
-              gap: 10,
-              marginBottom: 10,
-            }}
-            horizontal
             onPress={onPressPagination}
           />
         </View>

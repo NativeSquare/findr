@@ -188,72 +188,68 @@ export default function UserProfile() {
           className="absolute left-0 right-0 top-0 z-20 flex-row items-center justify-between px-4"
           style={{ paddingTop: insets.top + 16 }}
         >
+          {/* Back Button */}
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-10 w-10 rounded-full bg-black/50"
+            onPress={() => router.back()}
+          >
+            <Icon as={ChevronLeft} size={20} className="text-white" />
+          </Button>
+
+          {/* Action Buttons */}
           <View className="flex-row items-center gap-2">
             <Button
               variant="secondary"
               size="icon"
               className="h-10 w-10 rounded-full bg-black/50"
-              onPress={() => router.back()}
+              onPress={handleFavoritePress}
             >
-              <Icon as={ChevronLeft} size={20} className="text-white" />
+              <Icon
+                as={Heart}
+                size={20}
+                className={isFavorite === true ? "text-red-500" : "text-white"}
+                fill={isFavorite === true ? "currentColor" : "none"}
+              />
+            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-10 w-10 rounded-full bg-black/50"
+                >
+                  {existingTap?.emoji ? (
+                    <Text className="text-xl">{existingTap.emoji}</Text>
+                  ) : (
+                    <Icon as={Smile} size={20} className="text-white" />
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent side="bottom" align="end" className="w-auto p-3">
+                <View className="flex-row flex-wrap gap-2">
+                  {EMOJI_OPTIONS.map((emoji) => (
+                    <Pressable
+                      key={emoji}
+                      onPress={() => handleTapPress(emoji)}
+                      className="w-12 h-12 items-center justify-center rounded-lg active:opacity-70"
+                    >
+                      <Text className="text-3xl">{emoji}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-10 w-10 rounded-full bg-black/50"
+              onPress={handleMessagePress}
+            >
+              <Icon as={MessageCircle} size={20} className="text-white" />
             </Button>
           </View>
-        </View>
-
-        {/* Right Side Action Buttons - Always Visible */}
-        <View
-          className="absolute right-4 z-20 flex-col gap-3"
-          style={{ bottom: insets.bottom + 40 }}
-        >
-          <Button
-            variant="secondary"
-            size="icon"
-            className="h-12 w-12 rounded-full bg-black/50"
-            onPress={handleFavoritePress}
-          >
-            <Icon
-              as={Heart}
-              size={22}
-              className={isFavorite === true ? "text-red-500" : "text-white"}
-              fill={isFavorite === true ? "currentColor" : "none"}
-            />
-          </Button>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-12 w-12 rounded-full bg-black/50"
-              >
-                {existingTap?.emoji ? (
-                  <Text className="text-2xl">{existingTap.emoji}</Text>
-                ) : (
-                  <Icon as={Smile} size={22} className="text-white" />
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent side="top" align="center" className="w-auto p-3">
-              <View className="flex-row flex-wrap gap-2">
-                {EMOJI_OPTIONS.map((emoji) => (
-                  <Pressable
-                    key={emoji}
-                    onPress={() => handleTapPress(emoji)}
-                    className="w-12 h-12 items-center justify-center rounded-lg active:opacity-70"
-                  >
-                    <Text className="text-3xl">{emoji}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </PopoverContent>
-          </Popover>
-          <Button
-            variant="secondary"
-            size="icon"
-            className="h-12 w-12 rounded-full bg-black/50"
-            onPress={handleMessagePress}
-          >
-            <Icon as={MessageCircle} size={22} className="text-white" />
-          </Button>
         </View>
       </Pressable>
 
