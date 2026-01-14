@@ -5,6 +5,7 @@ import {
   SelectAlbumModal,
   type AppAlbum,
 } from "@/components/app/chat/select-album-modal";
+import { UploadMediaBottomSheetModal } from "@/components/shared/upload-media-bottom-sheet-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -15,10 +16,17 @@ import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
+import type { ImagePickerAsset } from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type ChatState = "empty" | "quick-replies" | "messages";
@@ -124,11 +132,12 @@ export default function ChatDetail() {
     }
   };
 
-  const handleImageSelected = (imageUri: string) => {
-    handleSend(imageUri);
+  const handleImageSelected = (image: ImagePickerAsset) => {
+    handleSend(image.uri);
   };
 
   const handleCameraPress = () => {
+    Keyboard.dismiss();
     uploadMediaBottomSheetRef.current?.present();
   };
 
@@ -305,12 +314,12 @@ export default function ChatDetail() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* <UploadMediaBottomSheetModal
+      <UploadMediaBottomSheetModal
         bottomSheetModalRef={uploadMediaBottomSheetRef}
         onImageSelected={handleImageSelected}
         onAlbumPress={handleAlbumPress}
         options={["camera", "gallery", "album"]}
-      /> */}
+      />
 
       <SelectAlbumModal
         bottomSheetModalRef={selectAlbumModalRef}
