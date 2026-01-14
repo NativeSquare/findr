@@ -32,6 +32,7 @@ export default function ChatDetail() {
   const [selectedAlbumId, setSelectedAlbumId] = useState<Id<"albums"> | null>(
     null
   );
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const uploadMediaBottomSheetRef = useRef<BottomSheetModal>(null);
   const selectAlbumModalRef = useRef<BottomSheetModal>(null);
 
@@ -63,6 +64,12 @@ export default function ChatDetail() {
   const selectedAlbum = useQuery(
     api.albums.getAlbum,
     selectedAlbumId ? { albumId: selectedAlbumId } : "skip"
+  );
+
+  // Convert storage ID to URL for user profile picture
+  const userImageUrl = useQuery(
+    api.storage.getImageUrl,
+    user?.profilePictures?.[0] ? { storageId: user.profilePictures[0] } : "skip"
   );
 
   // Determine chat state based on messages
@@ -196,10 +203,8 @@ export default function ChatDetail() {
     .toUpperCase()
     .slice(0, 2);
 
-  const headerHeight = insets.top + 44 + 16; // safe area top + header content height + padding bottom
-
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1">
       {/* Header */}
       <View
         className="border-b border-[#26272b] px-5 pb-4 pt-0"
@@ -215,8 +220,8 @@ export default function ChatDetail() {
             <Icon as={ArrowLeft} size={24} className="text-white" />
           </Button>
           <Avatar className="size-10 shrink-0" alt={userName}>
-            {user.profilePictures?.[0] ? (
-              <AvatarImage source={{ uri: user.profilePictures[0] }} />
+            {userImageUrl ? (
+              <AvatarImage source={{ uri: userImageUrl }} />
             ) : (
               <AvatarFallback>
                 <Text className="text-white">{userInitials}</Text>
@@ -232,12 +237,10 @@ export default function ChatDetail() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
       >
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
-            paddingBottom: 20,
             flexGrow: 1,
           }}
           showsVerticalScrollIndicator={false}
@@ -247,8 +250,8 @@ export default function ChatDetail() {
           {chatState === "empty" && (
             <View className="flex-1 items-center justify-center px-5">
               <Avatar className="size-[100px] mb-1" alt={userName}>
-                {user.profilePictures?.[0] ? (
-                  <AvatarImage source={{ uri: user.profilePictures[0] }} />
+                {userImageUrl ? (
+                  <AvatarImage source={{ uri: userImageUrl }} />
                 ) : (
                   <AvatarFallback>
                     <Text className="text-white text-2xl">{userInitials}</Text>
@@ -289,12 +292,15 @@ export default function ChatDetail() {
           />
         )}
 
-        <View style={{ paddingBottom: insets.bottom }}>
+        <View className={isInputFocused ? "" : "pb-safe"}>
           <MessageInput
             value={message}
             onChangeText={setMessage}
             onSend={() => handleSend()}
             onCameraPress={handleCameraPress}
+            autoFocus
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
           />
         </View>
       </KeyboardAvoidingView>

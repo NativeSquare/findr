@@ -85,7 +85,7 @@ export function ProfilePictureCarousel({
       )}
       {/* Pagination */}
       {images.length > 1 && (
-        <View className="absolute left-0 right-0 z-10" style={{ top: 60 }}>
+        <View className="absolute left-0 right-0 z-10 pt-safe">
           <CarouselPagination
             progress={progress}
             data={images}
