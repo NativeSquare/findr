@@ -199,7 +199,7 @@ export default function Chat() {
                   key={chat.id}
                   id={chat.id}
                   name={chat.name}
-                  avatarUri={chat.avatarUri}
+                  avatarUri={chat.avatarUri || undefined}
                   lastMessage={chat.lastMessage}
                   timestamp={chat.timestamp}
                   unreadCount={chat.unreadCount}

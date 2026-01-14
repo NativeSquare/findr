@@ -134,12 +134,18 @@ export const getConversation = query({
     const otherUser = await ctx.db.get(args.otherUserId);
     if (!otherUser) return null;
 
+    // Convert storage ID to URL
+    const firstProfilePictureId = otherUser.profilePictures?.[0];
+    const imageUrl = firstProfilePictureId
+      ? await ctx.storage.getUrl(firstProfilePictureId)
+      : null;
+
     return {
       ...conversation,
       otherUser: {
         _id: otherUser._id,
         name: otherUser.name,
-        image: otherUser.profilePictures?.[0],
+        image: imageUrl,
       },
     };
   },
@@ -231,12 +237,18 @@ export const getConversations = query({
             (message.read === false || !message.read)
         ).length;
 
+        // Convert storage ID to URL
+        const firstProfilePictureId = otherUser.profilePictures?.[0];
+        const imageUrl = firstProfilePictureId
+          ? await ctx.storage.getUrl(firstProfilePictureId)
+          : null;
+
         return {
           _id: conversation._id,
           otherUser: {
             _id: otherUser._id,
             name: otherUser.name,
-            image: otherUser.profilePictures?.[0],
+            image: imageUrl,
           },
           lastMessage: lastMessage?.text || null,
           lastMessageTime:
