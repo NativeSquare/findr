@@ -11,11 +11,18 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 interface BottomSheetModalProps {
   ref: React.RefObject<GorhomBottomSheetModal | null>;
   children: React.ReactNode;
+  enableBackdrop?: boolean;
+  snapPoints?: (string | number)[];
 }
 
 export type BottomSheetModalType = BottomSheetModalProps;
 
-export function BottomSheetModal({ ref, children }: BottomSheetModalProps) {
+export function BottomSheetModal({
+  ref,
+  children,
+  enableBackdrop = true,
+  snapPoints = ["50%", "90%"],
+}: BottomSheetModalProps) {
   const { colorScheme } = useColorScheme();
   const insets = useSafeAreaInsets();
 
@@ -24,6 +31,7 @@ export function BottomSheetModal({ ref, children }: BottomSheetModalProps) {
   return (
     <GorhomBottomSheetModal
       ref={ref}
+      snapPoints={snapPoints}
       backgroundStyle={{
         backgroundColor:
           colorScheme === "dark" ? theme.input30 : theme.background,
@@ -43,7 +51,7 @@ export function BottomSheetModal({ ref, children }: BottomSheetModalProps) {
           {...props}
           appearsOnIndex={0}
           disappearsOnIndex={-1}
-          opacity={0.5}
+          opacity={enableBackdrop ? 0.5 : 0.1}
         />
       )}
     >

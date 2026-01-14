@@ -1,4 +1,5 @@
 import { ProfilePictureCarousel } from "@/components/app/profile/profile-picture-carousel";
+import { BottomSheetModal } from "@/components/custom/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import {
@@ -10,11 +11,24 @@ import { Text } from "@/components/ui/text";
 import { usePresence } from "@convex-dev/presence/react-native";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
+import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
-import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import { ChevronLeft, Heart, MessageCircle, Smile } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import {
+  Cake,
+  ChevronLeft,
+  Dumbbell,
+  Globe,
+  Heart,
+  MapPin,
+  MessageCircle,
+  Repeat,
+  Ruler,
+  Scale,
+  Smile,
+  Users,
+} from "lucide-react-native";
+import React, { useEffect, useRef } from "react";
 import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -42,8 +56,7 @@ const EMOJI_OPTIONS = ["🍸", "❤️‍🔥", "❌", "😈", "⚡"];
 export default function UserProfile() {
   const { id } = useLocalSearchParams<{ id: Id<"users"> }>();
   const insets = useSafeAreaInsets();
-  const [showInfo, setShowInfo] = useState(true);
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const bottomSheetRef = useRef<GorhomBottomSheetModal>(null);
   const currentUser = useQuery(api.users.currentUser);
   const user = useQuery(api.users.get, { id });
   const imageUrls = useQuery(api.storage.getImageUrls, {
@@ -73,6 +86,7 @@ export default function UserProfile() {
       : (userPresenceState?.online ?? false);
 
   const age = user?.birthDate ? calculateAge(user.birthDate) : null;
+  const shouldShowAge = user?.privacy?.hideAge !== true && age !== null;
   const distance =
     user?.privacy?.hideDistance === true
       ? null
@@ -102,6 +116,13 @@ export default function UserProfile() {
       });
     }
   }, [currentUser?._id, id, recordView]);
+
+  // Open bottom sheet by default when page loads
+  useEffect(() => {
+    if (user) {
+      bottomSheetRef.current?.present();
+    }
+  }, [user]);
 
   if (!user) {
     return (
@@ -143,10 +164,13 @@ export default function UserProfile() {
 
     try {
       await sendTap({ toUserId: id, emoji });
-      setPopoverOpen(false);
     } catch (error) {
       console.error("Error sending tap:", error);
     }
+  };
+
+  const handleCarouselPress = () => {
+    bottomSheetRef.current?.present();
   };
 
   return (
@@ -154,145 +178,269 @@ export default function UserProfile() {
       {/* Full-screen Image Section */}
       <Pressable
         className="relative w-full h-full"
-        onPress={() => setShowInfo((prev) => !prev)}
+        onPress={handleCarouselPress}
       >
         {/* Profile Picture Carousel - Full Screen */}
         <ProfilePictureCarousel images={imageUrls ?? []} />
 
-        {/* Top Navigation */}
-        {showInfo && (
-          <View
-            className="absolute left-0 right-0 top-0 z-20 flex-row items-center justify-between px-4"
-            style={{ paddingTop: insets.top + 16 }}
+        {/* Top Navigation - Always Visible */}
+        <View
+          className="absolute left-0 right-0 top-0 z-20 flex-row items-center justify-between px-4"
+          style={{ paddingTop: insets.top + 16 }}
+        >
+          <View className="flex-row items-center gap-2">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-10 w-10 rounded-full bg-black/50"
+              onPress={() => router.back()}
+            >
+              <Icon as={ChevronLeft} size={20} className="text-white" />
+            </Button>
+          </View>
+        </View>
+
+        {/* Right Side Action Buttons - Always Visible */}
+        <View
+          className="absolute right-4 z-20 flex-col gap-3"
+          style={{ bottom: insets.bottom + 40 }}
+        >
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-12 w-12 rounded-full bg-black/50"
+            onPress={handleFavoritePress}
           >
-            <View className="flex-row items-center gap-2">
+            <Icon
+              as={Heart}
+              size={22}
+              className={isFavorite === true ? "text-red-500" : "text-white"}
+              fill={isFavorite === true ? "currentColor" : "none"}
+            />
+          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
               <Button
                 variant="secondary"
                 size="icon"
-                className="h-10 w-10 rounded-full bg-black/50"
-                onPress={() => router.back()}
+                className="h-12 w-12 rounded-full bg-black/50"
               >
-                <Icon as={ChevronLeft} size={20} className="text-white" />
+                {existingTap?.emoji ? (
+                  <Text className="text-2xl">{existingTap.emoji}</Text>
+                ) : (
+                  <Icon as={Smile} size={22} className="text-white" />
+                )}
               </Button>
-            </View>
-          </View>
-        )}
-
-        {/* Right Side Action Buttons */}
-        {showInfo && (
-          <View
-            className="absolute right-4 z-20 flex-col gap-3"
-            style={{ bottom: insets.bottom + 140 }}
-          >
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-12 w-12 rounded-full bg-black/50"
-              onPress={handleFavoritePress}
-            >
-              <Icon
-                as={Heart}
-                size={22}
-                className={isFavorite === true ? "text-red-500" : "text-white"}
-                fill={isFavorite === true ? "currentColor" : "none"}
-              />
-            </Button>
-            <Popover onOpenChange={setPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="h-12 w-12 rounded-full bg-black/50"
-                >
-                  {existingTap?.emoji ? (
-                    <Text className="text-2xl">{existingTap.emoji}</Text>
-                  ) : (
-                    <Icon as={Smile} size={22} className="text-white" />
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent side="top" align="center" className="w-auto p-3">
-                <View className="flex-row flex-wrap gap-2">
-                  {EMOJI_OPTIONS.map((emoji) => (
-                    <Pressable
-                      key={emoji}
-                      onPress={() => handleTapPress(emoji)}
-                      className="w-12 h-12 items-center justify-center rounded-lg active:opacity-70"
-                    >
-                      <Text className="text-3xl">{emoji}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </PopoverContent>
-            </Popover>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-12 w-12 rounded-full bg-black/50"
-              onPress={handleMessagePress}
-            >
-              <Icon as={MessageCircle} size={22} className="text-white" />
-            </Button>
-          </View>
-        )}
-
-        {/* Bottom Overlay with User Info */}
-        {showInfo && (
-          <View
-            className="absolute bottom-0 left-0 right-0 z-10"
-            style={{ height: 250 }}
-            pointerEvents="box-none"
-          >
-            <LinearGradient
-              colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.95)"]}
-              locations={[0, 0.3, 1]}
-              style={{
-                flex: 1,
-                paddingBottom: insets.bottom + 20,
-                paddingTop: 60,
-                paddingHorizontal: 20,
-                justifyContent: "flex-end",
-              }}
-            >
-              {/* Distance */}
-              {distance !== null && (
-                <Text className="text-sm text-white mb-2">
-                  {distance} Km Away
-                </Text>
-              )}
-
-              {/* Name, Age, and Verified Badge */}
-              <View className="flex-row items-center gap-2 mb-3">
-                <View
-                  className={
-                    isOnline
-                      ? "size-3 shrink-0 rounded-full bg-green-500"
-                      : "size-3 shrink-0 rounded-full bg-gray-500"
-                  }
-                />
-                <Text className="text-3xl font-bold text-white">
-                  {user.name ?? "Unknown"}
-                  {age !== null && `, ${age}`}
-                </Text>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="center" className="w-auto p-3">
+              <View className="flex-row flex-wrap gap-2">
+                {EMOJI_OPTIONS.map((emoji) => (
+                  <Pressable
+                    key={emoji}
+                    onPress={() => handleTapPress(emoji)}
+                    className="w-12 h-12 items-center justify-center rounded-lg active:opacity-70"
+                  >
+                    <Text className="text-3xl">{emoji}</Text>
+                  </Pressable>
+                ))}
               </View>
+            </PopoverContent>
+          </Popover>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-12 w-12 rounded-full bg-black/50"
+            onPress={handleMessagePress}
+          >
+            <Icon as={MessageCircle} size={22} className="text-white" />
+          </Button>
+        </View>
+      </Pressable>
 
-              {/* Bio */}
-              {user.bio ? (
-                <Text
-                  className="text-base leading-6 text-white"
-                  numberOfLines={3}
-                >
+      {/* Bottom Sheet with User Info */}
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        enableBackdrop={false}
+        snapPoints={["20%", "90%"]}
+      >
+        <View className="px-6 py-4 gap-6">
+          {/* Distance */}
+          {distance !== null && (
+            <View className="flex-row items-center gap-2">
+              <Icon as={MapPin} size={16} className="text-muted-foreground" />
+              <Text className="text-sm text-muted-foreground">
+                {distance} Km Away
+              </Text>
+            </View>
+          )}
+
+          {/* Online Status & Name */}
+          <View className="gap-2">
+            <View className="flex-row items-center gap-2">
+              <View
+                className={
+                  isOnline
+                    ? "size-3 shrink-0 rounded-full bg-green-500"
+                    : "size-3 shrink-0 rounded-full bg-gray-500"
+                }
+              />
+              <Text className="text-sm text-muted-foreground">
+                {isOnline ? "Online" : "Offline"}
+              </Text>
+            </View>
+            <Text className="text-3xl font-bold text-foreground">
+              {user.name ?? "Unknown"}
+            </Text>
+          </View>
+
+          {/* ABOUT ME Section */}
+          {user.bio && (
+            <View className="gap-2">
+              <Text className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                About Me
+              </Text>
+              <View className="bg-secondary/30 rounded-2xl p-4">
+                <Text className="text-base leading-6 text-foreground">
                   {user.bio}
                 </Text>
-              ) : (
-                <Text className="text-base leading-6 text-white/70">
-                  No bio available
-                </Text>
-              )}
-            </LinearGradient>
-          </View>
-        )}
-      </Pressable>
+              </View>
+            </View>
+          )}
+
+          {/* USER INFOS Section */}
+          {(shouldShowAge || user.height || user.weight) && (
+            <View className="gap-2">
+              <Text className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                User Infos
+              </Text>
+              <View className="gap-3">
+                {shouldShowAge && (
+                  <View className="flex-row items-center gap-2">
+                    <Icon as={Cake} size={20} className="text-foreground" />
+                    <Text className="text-base text-foreground">
+                      {age} years old
+                    </Text>
+                  </View>
+                )}
+                {user.height && (
+                  <View className="flex-row items-center gap-2">
+                    <Icon as={Ruler} size={20} className="text-foreground" />
+                    <Text className="text-base text-foreground">
+                      {user.height.value} {user.height.unit}
+                    </Text>
+                  </View>
+                )}
+                {user.weight && (
+                  <View className="flex-row items-center gap-2">
+                    <Icon as={Scale} size={20} className="text-foreground" />
+                    <Text className="text-base text-foreground">
+                      {user.weight.value} {user.weight.unit}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* EXPECTATIONS Section */}
+          {(user.lookingFor?.length || user.position) && (
+            <View className="gap-2">
+              <Text className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Expectations
+              </Text>
+              <View className="gap-3">
+                {user.lookingFor && user.lookingFor.length > 0 && (
+                  <View className="flex-row items-start gap-2">
+                    <Icon
+                      as={Heart}
+                      size={20}
+                      className="text-foreground mt-0.5"
+                    />
+                    <View className="flex-1">
+                      <Text className="text-sm text-muted-foreground mb-1">
+                        Looking for
+                      </Text>
+                      <Text className="text-base text-foreground">
+                        {user.lookingFor.join(", ")}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+                {user.position && (
+                  <View className="flex-row items-start gap-2">
+                    <Icon
+                      as={Repeat}
+                      size={20}
+                      className="text-foreground mt-0.5"
+                    />
+                    <View className="flex-1">
+                      <Text className="text-sm text-muted-foreground mb-1">
+                        Position
+                      </Text>
+                      <Text className="text-base text-foreground">
+                        {user.position}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* PHYSICAL Section */}
+          {(user.bodyTypes || user.ethnicity) && (
+            <View className="gap-2">
+              <Text className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Physical
+              </Text>
+              <View className="gap-3">
+                {user.bodyTypes && (
+                  <View className="flex-row items-center gap-2">
+                    <Icon as={Dumbbell} size={20} className="text-foreground" />
+                    <Text className="text-base text-foreground">
+                      {user.bodyTypes}
+                    </Text>
+                  </View>
+                )}
+                {user.ethnicity && (
+                  <View className="flex-row items-center gap-2">
+                    <Icon as={Globe} size={20} className="text-foreground" />
+                    <Text className="text-base text-foreground">
+                      {user.ethnicity}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* IDENTITY Section */}
+          {user.orientation && (
+            <View className="gap-2">
+              <Text className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Identity
+              </Text>
+              <View className="gap-3">
+                <View className="flex-row items-start gap-2">
+                  <Icon
+                    as={Users}
+                    size={20}
+                    className="text-foreground mt-0.5"
+                  />
+                  <View className="flex-1">
+                    <Text className="text-sm text-muted-foreground mb-1">
+                      Sexual Orientation
+                    </Text>
+                    <Text className="text-base text-foreground">
+                      {user.orientation}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+      </BottomSheetModal>
     </View>
   );
 }

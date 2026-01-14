@@ -119,7 +119,7 @@ export default function Profile() {
       keyboardShouldPersistTaps="handled"
       contentContainerClassName="pt-safe px-5 pb-10"
       keyboardDismissMode="interactive"
-      className="flex-1 bg-black"
+      className="flex-1"
     >
       <View className="w-full max-w-2xl self-center gap-5">
         <Text className="text-xl font-medium leading-[30px] text-white mt-5">
