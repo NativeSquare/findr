@@ -25,7 +25,9 @@ interface UploadMediaBottomSheetModalProps {
   aspect?: [number, number];
   showCameraConfirmation?: boolean;
   /** Called when user confirms a camera photo (only when showCameraConfirmation is true) */
-  onCameraSend?: (imageUri: string) => void;
+  onCameraSend?: (imageUri: string, viewOnce?: boolean) => void;
+  /** Show view-once toggle in camera confirmation modal */
+  showViewOnceOption?: boolean;
 }
 
 export function UploadMediaBottomSheetModal({
@@ -39,11 +41,13 @@ export function UploadMediaBottomSheetModal({
   aspect,
   showCameraConfirmation = false,
   onCameraSend,
+  showViewOnceOption = false,
 }: UploadMediaBottomSheetModalProps) {
   const [pendingCameraImage, setPendingCameraImage] =
     React.useState<CapturedImage | null>(null);
   const [showCamera, setShowCamera] = React.useState(false);
   const [showConfirmation, setShowConfirmation] = React.useState(false);
+  const [isViewOnce, setIsViewOnce] = React.useState(false);
 
   const handleTakePicture = () => {
     bottomSheetModalRef.current?.dismiss();
@@ -88,7 +92,7 @@ export function UploadMediaBottomSheetModal({
     if (pendingCameraImage) {
       // When camera confirmation is shown and onCameraSend is provided, send directly
       if (onCameraSend) {
-        onCameraSend(pendingCameraImage.uri);
+        onCameraSend(pendingCameraImage.uri, isViewOnce);
       } else {
         // Fallback to adding to attachments
         const imageAsset: ImagePicker.ImagePickerAsset = {
@@ -109,17 +113,20 @@ export function UploadMediaBottomSheetModal({
     }
     setShowConfirmation(false);
     setPendingCameraImage(null);
+    setIsViewOnce(false); // Reset view-once state
   };
 
   const handleRetakeImage = () => {
     setShowConfirmation(false);
     setPendingCameraImage(null);
+    setIsViewOnce(false); // Reset view-once state
     setShowCamera(true);
   };
 
   const handleCloseConfirmation = () => {
     setShowConfirmation(false);
     setPendingCameraImage(null);
+    setIsViewOnce(false); // Reset view-once state
   };
 
   const handlePickFromGallery = async () => {
@@ -238,6 +245,9 @@ export function UploadMediaBottomSheetModal({
         onConfirm={handleConfirmImage}
         onRetake={handleRetakeImage}
         onClose={handleCloseConfirmation}
+        showViewOnce={showViewOnceOption}
+        isViewOnce={isViewOnce}
+        onToggleViewOnce={() => setIsViewOnce(!isViewOnce)}
       />
     </>
   );

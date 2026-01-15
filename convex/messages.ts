@@ -60,6 +60,9 @@ const documentSchema = {
   text: v.string(),
   imageUrls: v.optional(v.array(v.string())),
   read: v.optional(v.boolean()),
+  // View-once photo fields
+  viewOnce: v.optional(v.boolean()),
+  viewOnceOpened: v.optional(v.boolean()),
 };
 
 export const messages = defineTable(documentSchema)
@@ -88,6 +91,7 @@ export const sendMessage = mutation({
     otherUserId: v.id("users"),
     text: v.string(),
     imageUrls: v.optional(v.array(v.string())),
+    viewOnce: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const currentUserId = await getAuthUserId(ctx);
@@ -151,6 +155,8 @@ export const sendMessage = mutation({
       text: trimmedText || "",
       imageUrls: hasImages ? args.imageUrls : undefined,
       read: false,
+      viewOnce: args.viewOnce ?? false,
+      viewOnceOpened: false,
     });
 
     // The trigger will update the conversation's lastMessageId and lastMessageTime
@@ -167,6 +173,7 @@ export const sendMessageByConversationId = mutation({
     conversationId: v.id("conversations"),
     text: v.string(),
     imageUrls: v.optional(v.array(v.string())),
+    viewOnce: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const currentUserId = await getAuthUserId(ctx);
@@ -206,6 +213,8 @@ export const sendMessageByConversationId = mutation({
       text: trimmedText || "",
       imageUrls: hasImages ? args.imageUrls : undefined,
       read: false,
+      viewOnce: args.viewOnce ?? false,
+      viewOnceOpened: false,
     });
 
     // The trigger will update the conversation's lastMessageId and lastMessageTime
@@ -350,10 +359,20 @@ export const getMessages = query({
     const formattedMessages = messages.map((message) => ({
       _id: message._id,
       text: message.text,
-      imageUrls: message.imageUrls,
+      // For view-once messages that haven't been opened, hide the imageUrls
+      // For view-once messages that have been opened, show nothing
+      // For outgoing view-once messages, show nothing (sender can't see their own view-once photos)
+      imageUrls:
+        message.viewOnce
+          ? message.viewOnceOpened || message.senderId === currentUserId
+            ? undefined
+            : message.imageUrls
+          : message.imageUrls,
       timestamp: message._creationTime,
       isOutgoing: message.senderId === currentUserId,
       read: message.read ?? false,
+      viewOnce: message.viewOnce ?? false,
+      viewOnceOpened: message.viewOnceOpened ?? false,
     }));
 
     return {
@@ -395,10 +414,17 @@ export const getMessage = query({
     return {
       _id: message._id,
       text: message.text,
-      imageUrls: message.imageUrls,
+      imageUrls:
+        message.viewOnce
+          ? message.viewOnceOpened || message.senderId === currentUserId
+            ? undefined
+            : message.imageUrls
+          : message.imageUrls,
       timestamp: message._creationTime,
       isOutgoing: message.senderId === currentUserId,
       read: message.read ?? false,
+      viewOnce: message.viewOnce ?? false,
+      viewOnceOpened: message.viewOnceOpened ?? false,
     };
   },
 });
@@ -445,10 +471,17 @@ export const getMessagesByUserId = query({
     return messagesList.map((message) => ({
       _id: message._id,
       text: message.text,
-      imageUrls: message.imageUrls,
+      imageUrls:
+        message.viewOnce
+          ? message.viewOnceOpened || message.senderId === currentUserId
+            ? undefined
+            : message.imageUrls
+          : message.imageUrls,
       timestamp: message._creationTime,
       isOutgoing: message.senderId === currentUserId,
       read: message.read ?? false,
+      viewOnce: message.viewOnce ?? false,
+      viewOnceOpened: message.viewOnceOpened ?? false,
     }));
   },
 });
@@ -545,6 +578,106 @@ export const markMessageAsRead = mutation({
     });
 
     return args.messageId;
+  },
+});
+
+/**
+ * Open a view-once photo. This marks the photo as viewed and clears the image URL.
+ * Only the recipient can open a view-once photo.
+ */
+export const openViewOncePhoto = mutation({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) {
+      throw new Error("Not authenticated");
+    }
+
+    const message = await ctx.db.get(args.messageId);
+    if (!message) {
+      throw new Error("Message not found");
+    }
+
+    // Only view-once messages can be opened this way
+    if (!message.viewOnce) {
+      throw new Error("This is not a view-once message");
+    }
+
+    // Already opened
+    if (message.viewOnceOpened) {
+      throw new Error("This photo has already been viewed");
+    }
+
+    // Only the recipient can view the photo (not the sender)
+    if (message.senderId === currentUserId) {
+      throw new Error("You cannot view your own view-once photo");
+    }
+
+    // Verify the user is a participant in the conversation
+    const conversation = await ctx.db.get(message.conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    if (
+      conversation.participant1Id !== currentUserId &&
+      conversation.participant2Id !== currentUserId
+    ) {
+      throw new Error("Not authorized to view this message");
+    }
+
+    // Get the image URL before marking as opened (to return it for viewing)
+    const imageUrl = message.imageUrls?.[0];
+
+    // Mark the message as opened and clear the image URL
+    await ctx.db.patch(args.messageId, {
+      viewOnceOpened: true,
+      imageUrls: undefined, // Clear the image URL so it can't be viewed again
+      read: true,
+    });
+
+    return { imageUrl };
+  },
+});
+
+/**
+ * Get the image URL for a view-once photo (only if not yet opened).
+ * This is used to display the photo in the viewer.
+ */
+export const getViewOncePhotoUrl = query({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) return null;
+
+    const message = await ctx.db.get(args.messageId);
+    if (!message) return null;
+
+    // Only view-once messages
+    if (!message.viewOnce) return null;
+
+    // Already opened
+    if (message.viewOnceOpened) return null;
+
+    // Only the recipient can view the photo (not the sender)
+    if (message.senderId === currentUserId) return null;
+
+    // Verify the user is a participant in the conversation
+    const conversation = await ctx.db.get(message.conversationId);
+    if (!conversation) return null;
+
+    if (
+      conversation.participant1Id !== currentUserId &&
+      conversation.participant2Id !== currentUserId
+    ) {
+      return null;
+    }
+
+    return { imageUrl: message.imageUrls?.[0] };
   },
 });
 

@@ -5,6 +5,7 @@ import {
   SelectAlbumModal,
   type AppAlbum,
 } from "@/components/app/chat/select-album-modal";
+import { ViewOncePhotoViewer } from "@/components/app/chat/view-once-photo-viewer";
 import { UploadMediaBottomSheetModal } from "@/components/shared/upload-media-bottom-sheet-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,15 @@ export default function ChatDetail() {
   // Mutations
   const sendMessage = useMutation(api.messages.sendMessage);
   const markMessagesAsRead = useMutation(api.messages.markMessagesAsRead);
+  const openViewOncePhoto = useMutation(api.messages.openViewOncePhoto);
+
+  // View-once photo viewer state
+  const [viewOncePhotoState, setViewOncePhotoState] = useState<{
+    isOpen: boolean;
+    imageUrl: string | null;
+    isLoading: boolean;
+    messageId: Id<"messages"> | null;
+  }>({ isOpen: false, imageUrl: null, isLoading: false, messageId: null });
 
   // Fetch selected album when an album is selected
   const selectedAlbum = useQuery(
@@ -100,6 +110,8 @@ export default function ChatDetail() {
       imageUrls: msg.imageUrls,
       timestamp: formatChatTimestamp(msg.timestamp),
       isOutgoing: msg.isOutgoing,
+      viewOnce: msg.viewOnce,
+      viewOnceOpened: msg.viewOnceOpened,
     }));
   }, [messagesData]);
 
@@ -141,7 +153,7 @@ export default function ChatDetail() {
     setAttachedImageUris((prev) => [...prev, ...newUris]);
   };
 
-  const handleCameraSend = async (imageUri: string) => {
+  const handleCameraSend = async (imageUri: string, viewOnce?: boolean) => {
     if (!otherUserId) return;
 
     setError(null);
@@ -150,11 +162,59 @@ export default function ChatDetail() {
         otherUserId,
         text: "",
         imageUrls: [imageUri],
+        viewOnce: viewOnce ?? false,
       });
     } catch (error) {
       setError(getConvexErrorMessage(error));
       console.error("Error sending camera photo:", error);
     }
+  };
+
+  const handleViewOncePress = async (messageId: Id<"messages">) => {
+    setViewOncePhotoState({
+      isOpen: true,
+      imageUrl: null,
+      isLoading: true,
+      messageId,
+    });
+
+    try {
+      // Open the view-once photo - this marks it as opened and returns the image URL
+      const result = await openViewOncePhoto({ messageId });
+      if (result?.imageUrl) {
+        setViewOncePhotoState({
+          isOpen: true,
+          imageUrl: result.imageUrl,
+          isLoading: false,
+          messageId,
+        });
+      } else {
+        setViewOncePhotoState({
+          isOpen: true,
+          imageUrl: null,
+          isLoading: false,
+          messageId,
+        });
+      }
+    } catch (error) {
+      console.error("Error opening view-once photo:", error);
+      setError(getConvexErrorMessage(error));
+      setViewOncePhotoState({
+        isOpen: false,
+        imageUrl: null,
+        isLoading: false,
+        messageId: null,
+      });
+    }
+  };
+
+  const handleCloseViewOncePhoto = () => {
+    setViewOncePhotoState({
+      isOpen: false,
+      imageUrl: null,
+      isLoading: false,
+      messageId: null,
+    });
   };
 
   const handleRemoveImage = (index: number) => {
@@ -310,6 +370,9 @@ export default function ChatDetail() {
                   timestamp={msg.timestamp}
                   isOutgoing={msg.isOutgoing}
                   imageUrls={msg.imageUrls}
+                  viewOnce={msg.viewOnce}
+                  viewOnceOpened={msg.viewOnceOpened}
+                  onViewOncePress={() => handleViewOncePress(msg.id)}
                 />
               ))}
             </View>
@@ -352,11 +415,19 @@ export default function ChatDetail() {
         allowsMultipleSelection
         showCameraConfirmation
         onCameraSend={handleCameraSend}
+        showViewOnceOption
       />
 
       <SelectAlbumModal
         bottomSheetModalRef={selectAlbumModalRef}
         onAlbumSelected={handleAlbumSelected}
+      />
+
+      <ViewOncePhotoViewer
+        visible={viewOncePhotoState.isOpen}
+        imageUrl={viewOncePhotoState.imageUrl}
+        isLoading={viewOncePhotoState.isLoading}
+        onClose={handleCloseViewOncePhoto}
       />
     </View>
   );

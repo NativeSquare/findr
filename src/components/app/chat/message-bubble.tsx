@@ -2,12 +2,16 @@ import { Text } from "@/components/ui/text";
 import { useState } from "react";
 import { Dimensions, Image, Pressable, View } from "react-native";
 import ImageViewing from "react-native-image-viewing";
+import Svg, { Circle, Text as SvgText } from "react-native-svg";
 
 export type MessageBubbleProps = {
   message: string;
   timestamp: string;
   isOutgoing: boolean;
   imageUrls?: string[];
+  viewOnce?: boolean;
+  viewOnceOpened?: boolean;
+  onViewOncePress?: () => void;
 };
 
 export function MessageBubble({
@@ -15,12 +19,22 @@ export function MessageBubble({
   timestamp,
   isOutgoing,
   imageUrls = [],
+  viewOnce = false,
+  viewOnceOpened = false,
+  onViewOncePress,
 }: MessageBubbleProps) {
   const [isViewerVisible, setIsViewerVisible] = useState(false);
   const [viewerImageIndex, setViewerImageIndex] = useState(0);
 
   const hasImages = imageUrls.length > 0;
   const hasText = !!message && message.trim().length > 0;
+
+  // For view-once messages that haven't been opened (from other user), show the "(1) Photo" placeholder
+  const showViewOncePlaceholder = viewOnce && !viewOnceOpened && !isOutgoing;
+  // For view-once messages that have been opened, show "Photo opened"
+  const showViewOnceOpenedMessage = viewOnce && viewOnceOpened && !isOutgoing;
+  // For outgoing view-once messages, show "Photo" indicator (sender can't view their own)
+  const showOutgoingViewOnceIndicator = viewOnce && isOutgoing;
 
   const screenWidth = Dimensions.get("window").width;
   const maxImageWidth = screenWidth * 0.6; // 60% of screen width for images
@@ -30,6 +44,51 @@ export function MessageBubble({
     setViewerImageIndex(index);
     setIsViewerVisible(true);
   };
+
+  // Render view-once photo placeholder (both for incoming unopened and outgoing)
+  if (showViewOncePlaceholder || showOutgoingViewOnceIndicator || showViewOnceOpenedMessage) {
+    const placeholderText = showViewOnceOpenedMessage ? "Photo" : "Photo";
+    const showOneIcon = !showViewOnceOpenedMessage;
+    const isClickable = showViewOncePlaceholder && onViewOncePress;
+
+    return (
+      <View
+        className={`flex-col ${isOutgoing ? "items-end" : "items-start"} mb-3`}
+      >
+        <Pressable
+          onPress={isClickable ? onViewOncePress : undefined}
+          disabled={!isClickable}
+        >
+          <View
+            className={`flex-row gap-2 items-center px-3 py-2 rounded-xl max-w-[80%] ${
+              isOutgoing
+                ? "bg-[#f7cfb0] rounded-bl-xl rounded-tl-xl rounded-tr-xl"
+                : "bg-[#26272b] rounded-br-xl rounded-tl-xl rounded-tr-xl"
+            }`}
+          >
+            <View className="flex-row items-center gap-1.5">
+              {showOneIcon && <ViewOnceIcon isOutgoing={isOutgoing} />}
+              {showViewOnceOpenedMessage && <OpenedIcon isOutgoing={isOutgoing} />}
+              <Text
+                className={`text-sm leading-5 ${
+                  isOutgoing ? "text-[#26272b]" : "text-[#d1d1d6]"
+                }`}
+              >
+                {placeholderText}
+              </Text>
+            </View>
+            <Text
+              className={`text-xs leading-[18px] shrink-0 ${
+                isOutgoing ? "text-[#51525c]" : "text-[#70707b]"
+              }`}
+            >
+              {timestamp}
+            </Text>
+          </View>
+        </Pressable>
+      </View>
+    );
+  }
 
   // If there's no image, use the original layout
   if (!hasImages) {
@@ -274,5 +333,53 @@ function ArrowLeftIcon() {
         }}
       />
     </View>
+  );
+}
+
+// View-once icon - circle with "1" inside
+function ViewOnceIcon({ isOutgoing }: { isOutgoing: boolean }) {
+  const strokeColor = isOutgoing ? "#26272b" : "#d1d1d6";
+  const textColor = isOutgoing ? "#26272b" : "#d1d1d6";
+
+  return (
+    <Svg width={18} height={18} viewBox="0 0 18 18">
+      <Circle
+        cx={9}
+        cy={9}
+        r={7}
+        stroke={strokeColor}
+        strokeWidth={1.5}
+        fill="none"
+      />
+      <SvgText
+        x={9}
+        y={13}
+        textAnchor="middle"
+        fontSize={11}
+        fontWeight="600"
+        fill={textColor}
+      >
+        1
+      </SvgText>
+    </Svg>
+  );
+}
+
+// Opened icon - indicates the photo has been viewed
+function OpenedIcon({ isOutgoing }: { isOutgoing: boolean }) {
+  const strokeColor = isOutgoing ? "#51525c" : "#70707b";
+
+  return (
+    <Svg width={18} height={18} viewBox="0 0 18 18">
+      <Circle
+        cx={9}
+        cy={9}
+        r={7}
+        stroke={strokeColor}
+        strokeWidth={1.5}
+        fill="none"
+        strokeDasharray="3 2"
+      />
+    </Svg>
   );
 }
