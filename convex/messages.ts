@@ -58,7 +58,7 @@ const documentSchema = {
   conversationId: v.id("conversations"),
   senderId: v.id("users"),
   text: v.string(),
-  imageUrl: v.optional(v.string()),
+  imageUrls: v.optional(v.array(v.string())),
   read: v.optional(v.boolean()),
 };
 
@@ -87,7 +87,7 @@ export const sendMessage = mutation({
   args: {
     otherUserId: v.id("users"),
     text: v.string(),
-    imageUrl: v.optional(v.string()),
+    imageUrls: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const currentUserId = await getAuthUserId(ctx);
@@ -99,10 +99,11 @@ export const sendMessage = mutation({
       throw new Error("Cannot send message to yourself");
     }
 
-    // Validate: either text or imageUrl must be provided
+    // Validate: either text or imageUrls must be provided
     const trimmedText = args.text.trim();
-    if (!trimmedText && !args.imageUrl) {
-      throw new Error("Message must have either text or an image");
+    const hasImages = args.imageUrls && args.imageUrls.length > 0;
+    if (!trimmedText && !hasImages) {
+      throw new Error("Message must have either text or images");
     }
     if (trimmedText && trimmedText.length > MAX_MESSAGE_LENGTH) {
       throw new Error(
@@ -148,7 +149,7 @@ export const sendMessage = mutation({
       conversationId: conversation._id,
       senderId: currentUserId,
       text: trimmedText || "",
-      imageUrl: args.imageUrl,
+      imageUrls: hasImages ? args.imageUrls : undefined,
       read: false,
     });
 
@@ -165,7 +166,7 @@ export const sendMessageByConversationId = mutation({
   args: {
     conversationId: v.id("conversations"),
     text: v.string(),
-    imageUrl: v.optional(v.string()),
+    imageUrls: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const currentUserId = await getAuthUserId(ctx);
@@ -173,10 +174,11 @@ export const sendMessageByConversationId = mutation({
       throw new Error("Not authenticated");
     }
 
-    // Validate: either text or imageUrl must be provided
+    // Validate: either text or imageUrls must be provided
     const trimmedText = args.text.trim();
-    if (!trimmedText && !args.imageUrl) {
-      throw new Error("Message must have either text or an image");
+    const hasImages = args.imageUrls && args.imageUrls.length > 0;
+    if (!trimmedText && !hasImages) {
+      throw new Error("Message must have either text or images");
     }
     if (trimmedText && trimmedText.length > MAX_MESSAGE_LENGTH) {
       throw new Error(
@@ -202,7 +204,7 @@ export const sendMessageByConversationId = mutation({
       conversationId: args.conversationId,
       senderId: currentUserId,
       text: trimmedText || "",
-      imageUrl: args.imageUrl,
+      imageUrls: hasImages ? args.imageUrls : undefined,
       read: false,
     });
 
@@ -348,7 +350,7 @@ export const getMessages = query({
     const formattedMessages = messages.map((message) => ({
       _id: message._id,
       text: message.text,
-      imageUrl: message.imageUrl,
+      imageUrls: message.imageUrls,
       timestamp: message._creationTime,
       isOutgoing: message.senderId === currentUserId,
       read: message.read ?? false,
@@ -393,7 +395,7 @@ export const getMessage = query({
     return {
       _id: message._id,
       text: message.text,
-      imageUrl: message.imageUrl,
+      imageUrls: message.imageUrls,
       timestamp: message._creationTime,
       isOutgoing: message.senderId === currentUserId,
       read: message.read ?? false,
@@ -443,7 +445,7 @@ export const getMessagesByUserId = query({
     return messagesList.map((message) => ({
       _id: message._id,
       text: message.text,
-      imageUrl: message.imageUrl,
+      imageUrls: message.imageUrls,
       timestamp: message._creationTime,
       isOutgoing: message.senderId === currentUserId,
       read: message.read ?? false,

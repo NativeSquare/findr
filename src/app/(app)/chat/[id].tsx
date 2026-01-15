@@ -41,7 +41,7 @@ export default function ChatDetail() {
     null
   );
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [attachedImageUri, setAttachedImageUri] = useState<string | null>(null);
+  const [attachedImageUris, setAttachedImageUris] = useState<string[]>([]);
   const uploadMediaBottomSheetRef = useRef<BottomSheetModal>(null);
   const selectAlbumModalRef = useRef<BottomSheetModal>(null);
 
@@ -96,7 +96,7 @@ export default function ChatDetail() {
     return messagesData.map((msg) => ({
       id: msg._id,
       text: msg.text,
-      imageUrl: msg.imageUrl,
+      imageUrls: msg.imageUrls,
       timestamp: formatChatTimestamp(msg.timestamp),
       isOutgoing: msg.isOutgoing,
     }));
@@ -117,29 +117,32 @@ export default function ChatDetail() {
   const quickReplies = currentUser?.firstSentences ?? [];
 
   const handleSend = async () => {
-    if ((!message.trim() && !attachedImageUri) || !otherUserId) return;
+    if ((!message.trim() && attachedImageUris.length === 0) || !otherUserId)
+      return;
 
     setError(null);
     try {
       await sendMessage({
         otherUserId,
         text: message,
-        imageUrl: attachedImageUri ?? undefined,
+        imageUrls:
+          attachedImageUris.length > 0 ? attachedImageUris : undefined,
       });
       setMessage("");
-      setAttachedImageUri(null);
+      setAttachedImageUris([]);
     } catch (error) {
       setError(getConvexErrorMessage(error));
       console.error("Error sending message:", error);
     }
   };
 
-  const handleImageSelected = (image: ImagePickerAsset) => {
-    setAttachedImageUri(image.uri);
+  const handleImagesSelected = (images: ImagePickerAsset[]) => {
+    const newUris = images.map((img) => img.uri);
+    setAttachedImageUris((prev) => [...prev, ...newUris]);
   };
 
-  const handleRemoveImage = () => {
-    setAttachedImageUri(null);
+  const handleRemoveImage = (index: number) => {
+    setAttachedImageUris((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleCameraPress = () => {
@@ -165,15 +168,13 @@ export default function ChatDetail() {
     const sendAlbumPhotos = async () => {
       setError(null);
       try {
-        // Send each photo as a separate message
-        // Note: We send them sequentially to avoid overwhelming the server
-        for (const photo of selectedAlbum.photos) {
-          await sendMessage({
-            otherUserId: otherUserId!,
-            text: "",
-            imageUrl: photo.photoUrl,
-          });
-        }
+        // Send all album photos as a single message with multiple images
+        const photoUrls = selectedAlbum.photos.map((photo) => photo.photoUrl);
+        await sendMessage({
+          otherUserId: otherUserId!,
+          text: "",
+          imageUrls: photoUrls,
+        });
         // Reset selected album ID after sending
         setSelectedAlbumId(null);
       } catch (error) {
@@ -287,7 +288,7 @@ export default function ChatDetail() {
                   message={msg.text}
                   timestamp={msg.timestamp}
                   isOutgoing={msg.isOutgoing}
-                  imageUrl={msg.imageUrl}
+                  imageUrls={msg.imageUrls}
                 />
               ))}
             </View>
@@ -316,7 +317,7 @@ export default function ChatDetail() {
             autoFocus
             onFocus={() => setIsInputFocused(true)}
             onBlur={() => setIsInputFocused(false)}
-            attachedImageUri={attachedImageUri}
+            attachedImageUris={attachedImageUris}
             onRemoveImage={handleRemoveImage}
           />
         </View>
@@ -324,9 +325,10 @@ export default function ChatDetail() {
 
       <UploadMediaBottomSheetModal
         bottomSheetModalRef={uploadMediaBottomSheetRef}
-        onImageSelected={handleImageSelected}
+        onImagesSelected={handleImagesSelected}
         onAlbumPress={handleAlbumPress}
         options={["camera", "gallery", "album"]}
+        allowsMultipleSelection
       />
 
       <SelectAlbumModal

@@ -10,19 +10,23 @@ import { Alert, Dimensions, Linking, View } from "react-native";
 
 interface UploadMediaBottomSheetModalProps {
   bottomSheetModalRef: React.RefObject<GorhomBottomSheetModal | null>;
-  onImageSelected: (image: ImagePicker.ImagePickerAsset) => void;
+  onImageSelected?: (image: ImagePicker.ImagePickerAsset) => void;
+  onImagesSelected?: (images: ImagePicker.ImagePickerAsset[]) => void;
   onAlbumPress?: () => void;
   options?: ("camera" | "gallery" | "album")[];
   allowsEditing?: boolean;
+  allowsMultipleSelection?: boolean;
   aspect?: [number, number];
 }
 
 export function UploadMediaBottomSheetModal({
   bottomSheetModalRef,
   onImageSelected,
+  onImagesSelected,
   onAlbumPress,
   options = ["camera", "gallery", "album"],
   allowsEditing = false,
+  allowsMultipleSelection = false,
   aspect,
 }: UploadMediaBottomSheetModalProps) {
   const handleTakePicture = async () => {
@@ -52,7 +56,11 @@ export function UploadMediaBottomSheetModal({
       });
 
       if (!result.canceled && result.assets[0]) {
-        onImageSelected(result.assets[0]);
+        if (onImagesSelected) {
+          onImagesSelected(result.assets);
+        } else if (onImageSelected) {
+          onImageSelected(result.assets[0]);
+        }
         bottomSheetModalRef.current?.dismiss();
       }
     } catch (error) {
@@ -84,13 +92,18 @@ export function UploadMediaBottomSheetModal({
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
-        allowsMultipleSelection: false,
-        allowsEditing: false,
+        allowsMultipleSelection: allowsMultipleSelection,
+        allowsEditing: allowsEditing,
         quality: 1.0,
+        selectionLimit: allowsMultipleSelection ? 10 : 1,
       });
 
-      if (!result.canceled && result.assets[0]) {
-        onImageSelected(result.assets[0]);
+      if (!result.canceled && result.assets.length > 0) {
+        if (onImagesSelected) {
+          onImagesSelected(result.assets);
+        } else if (onImageSelected && result.assets[0]) {
+          onImageSelected(result.assets[0]);
+        }
         bottomSheetModalRef.current?.dismiss();
       }
     } catch (error) {
