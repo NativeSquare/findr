@@ -126,8 +126,7 @@ export default function ChatDetail() {
       await sendMessage({
         otherUserId,
         text: message,
-        imageUrls:
-          attachedImageUris.length > 0 ? attachedImageUris : undefined,
+        imageUrls: attachedImageUris.length > 0 ? attachedImageUris : undefined,
       });
       setMessage("");
       setAttachedImageUris([]);
@@ -140,6 +139,22 @@ export default function ChatDetail() {
   const handleImagesSelected = (images: ImagePickerAsset[]) => {
     const newUris = images.map((img) => img.uri);
     setAttachedImageUris((prev) => [...prev, ...newUris]);
+  };
+
+  const handleCameraSend = async (imageUri: string) => {
+    if (!otherUserId) return;
+
+    setError(null);
+    try {
+      await sendMessage({
+        otherUserId,
+        text: "",
+        imageUrls: [imageUri],
+      });
+    } catch (error) {
+      setError(getConvexErrorMessage(error));
+      console.error("Error sending camera photo:", error);
+    }
   };
 
   const handleRemoveImage = (index: number) => {
@@ -336,6 +351,7 @@ export default function ChatDetail() {
         options={["camera", "gallery", "album"]}
         allowsMultipleSelection
         showCameraConfirmation
+        onCameraSend={handleCameraSend}
       />
 
       <SelectAlbumModal

@@ -24,6 +24,8 @@ interface UploadMediaBottomSheetModalProps {
   allowsMultipleSelection?: boolean;
   aspect?: [number, number];
   showCameraConfirmation?: boolean;
+  /** Called when user confirms a camera photo (only when showCameraConfirmation is true) */
+  onCameraSend?: (imageUri: string) => void;
 }
 
 export function UploadMediaBottomSheetModal({
@@ -36,6 +38,7 @@ export function UploadMediaBottomSheetModal({
   allowsMultipleSelection = false,
   aspect,
   showCameraConfirmation = false,
+  onCameraSend,
 }: UploadMediaBottomSheetModalProps) {
   const [pendingCameraImage, setPendingCameraImage] =
     React.useState<CapturedImage | null>(null);
@@ -83,19 +86,25 @@ export function UploadMediaBottomSheetModal({
 
   const handleConfirmImage = () => {
     if (pendingCameraImage) {
-      const imageAsset: ImagePicker.ImagePickerAsset = {
-        uri: pendingCameraImage.uri,
-        width: pendingCameraImage.width ?? 0,
-        height: pendingCameraImage.height ?? 0,
-        type: "image",
-        fileName: `photo_${Date.now()}.jpg`,
-        assetId: null,
-        mimeType: "image/jpeg",
-      };
-      if (onImagesSelected) {
-        onImagesSelected([imageAsset]);
-      } else if (onImageSelected) {
-        onImageSelected(imageAsset);
+      // When camera confirmation is shown and onCameraSend is provided, send directly
+      if (onCameraSend) {
+        onCameraSend(pendingCameraImage.uri);
+      } else {
+        // Fallback to adding to attachments
+        const imageAsset: ImagePicker.ImagePickerAsset = {
+          uri: pendingCameraImage.uri,
+          width: pendingCameraImage.width ?? 0,
+          height: pendingCameraImage.height ?? 0,
+          type: "image",
+          fileName: `photo_${Date.now()}.jpg`,
+          assetId: null,
+          mimeType: "image/jpeg",
+        };
+        if (onImagesSelected) {
+          onImagesSelected([imageAsset]);
+        } else if (onImageSelected) {
+          onImageSelected(imageAsset);
+        }
       }
     }
     setShowConfirmation(false);
