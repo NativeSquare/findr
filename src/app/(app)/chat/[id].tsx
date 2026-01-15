@@ -24,6 +24,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   View,
 } from "react-native";
@@ -235,18 +236,23 @@ export default function ChatDetail() {
           >
             <Icon as={ArrowLeft} size={24} className="text-white" />
           </Button>
-          <Avatar className="size-10 shrink-0" alt={userName}>
-            {userImageUrl ? (
-              <AvatarImage source={{ uri: userImageUrl }} />
-            ) : (
-              <AvatarFallback>
-                <Text className="text-white">{userInitials}</Text>
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <Text className="text-lg font-medium leading-7 text-white">
-            {userName}
-          </Text>
+          <Pressable
+            className="flex-row items-center gap-3 flex-1"
+            onPress={() => router.push(`/user/${otherUserId}`)}
+          >
+            <Avatar className="size-10 shrink-0" alt={userName}>
+              {userImageUrl ? (
+                <AvatarImage source={{ uri: userImageUrl }} />
+              ) : (
+                <AvatarFallback>
+                  <Text className="text-white">{userInitials}</Text>
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <Text className="text-lg font-medium leading-7 text-white">
+              {userName}
+            </Text>
+          </Pressable>
         </View>
       </View>
 
