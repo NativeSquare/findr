@@ -335,6 +335,7 @@ export default function ChatDetail() {
         onAlbumPress={handleAlbumPress}
         options={["camera", "gallery", "album"]}
         allowsMultipleSelection
+        showCameraConfirmation
       />
 
       <SelectAlbumModal

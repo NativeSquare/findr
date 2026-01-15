@@ -1,8 +1,14 @@
 import { BottomSheetModal } from "@/components/custom/bottom-sheet";
+import {
+  CameraConfirmationModal,
+  type CapturedImage,
+} from "@/components/shared/camera-confirmation-modal";
+import { CameraModal } from "@/components/shared/camera-modal";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
+import type { CameraCapturedPicture } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, Image, Images, LucideIcon } from "lucide-react-native";
 import * as React from "react";
@@ -17,6 +23,7 @@ interface UploadMediaBottomSheetModalProps {
   allowsEditing?: boolean;
   allowsMultipleSelection?: boolean;
   aspect?: [number, number];
+  showCameraConfirmation?: boolean;
 }
 
 export function UploadMediaBottomSheetModal({
@@ -28,45 +35,82 @@ export function UploadMediaBottomSheetModal({
   allowsEditing = false,
   allowsMultipleSelection = false,
   aspect,
+  showCameraConfirmation = false,
 }: UploadMediaBottomSheetModalProps) {
-  const handleTakePicture = async () => {
-    try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission Required",
-          "Please grant access to your camera to take photos.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Open Settings",
-              onPress: () => {
-                Linking.openSettings();
-              },
-            },
-          ]
-        );
-        return;
-      }
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ["images"],
-        allowsMultipleSelection: false,
-        allowsEditing: false,
-        quality: 1.0,
-      });
+  const [pendingCameraImage, setPendingCameraImage] =
+    React.useState<CapturedImage | null>(null);
+  const [showCamera, setShowCamera] = React.useState(false);
+  const [showConfirmation, setShowConfirmation] = React.useState(false);
 
-      if (!result.canceled && result.assets[0]) {
-        if (onImagesSelected) {
-          onImagesSelected(result.assets);
-        } else if (onImageSelected) {
-          onImageSelected(result.assets[0]);
-        }
-        bottomSheetModalRef.current?.dismiss();
+  const handleTakePicture = () => {
+    bottomSheetModalRef.current?.dismiss();
+    setShowCamera(true);
+  };
+
+  const handlePhotoTaken = (photo: CameraCapturedPicture) => {
+    setShowCamera(false);
+
+    if (showCameraConfirmation) {
+      // Show custom confirmation modal
+      setPendingCameraImage({
+        uri: photo.uri,
+        width: photo.width,
+        height: photo.height,
+      });
+      setShowConfirmation(true);
+    } else {
+      // Original behavior - immediately return the image
+      const imageAsset: ImagePicker.ImagePickerAsset = {
+        uri: photo.uri,
+        width: photo.width,
+        height: photo.height,
+        type: "image",
+        fileName: `photo_${Date.now()}.jpg`,
+        assetId: null,
+        mimeType: "image/jpeg",
+      };
+      if (onImagesSelected) {
+        onImagesSelected([imageAsset]);
+      } else if (onImageSelected) {
+        onImageSelected(imageAsset);
       }
-    } catch (error) {
-      console.error("Error taking photo:", error);
-      Alert.alert("Error", "Failed to take photo. Please try again.");
     }
+  };
+
+  const handleCameraClose = () => {
+    setShowCamera(false);
+  };
+
+  const handleConfirmImage = () => {
+    if (pendingCameraImage) {
+      const imageAsset: ImagePicker.ImagePickerAsset = {
+        uri: pendingCameraImage.uri,
+        width: pendingCameraImage.width ?? 0,
+        height: pendingCameraImage.height ?? 0,
+        type: "image",
+        fileName: `photo_${Date.now()}.jpg`,
+        assetId: null,
+        mimeType: "image/jpeg",
+      };
+      if (onImagesSelected) {
+        onImagesSelected([imageAsset]);
+      } else if (onImageSelected) {
+        onImageSelected(imageAsset);
+      }
+    }
+    setShowConfirmation(false);
+    setPendingCameraImage(null);
+  };
+
+  const handleRetakeImage = () => {
+    setShowConfirmation(false);
+    setPendingCameraImage(null);
+    setShowCamera(true);
+  };
+
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+    setPendingCameraImage(null);
   };
 
   const handlePickFromGallery = async () => {
@@ -149,27 +193,43 @@ export function UploadMediaBottomSheetModal({
   const itemWidth = (screenWidth - padding - gapsTotal) / 3;
 
   return (
-    <BottomSheetModal ref={bottomSheetModalRef}>
-      <View className="flex-row flex-wrap gap-3 px-4 pb-6 pt-3">
-        {displayOptions.map((option, index) => (
-          <Button
-            key={index}
-            variant="outline"
-            onPress={option.onPress}
-            style={{ width: itemWidth }}
-            className="aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-border bg-card/60 px-3 py-4"
-          >
-            <Icon
-              as={option.icon}
-              size={26}
-              className="text-muted-foreground"
-            />
-            <Text className="mt-2 text-sm font-normal text-muted-foreground">
-              {option.label}
-            </Text>
-          </Button>
-        ))}
-      </View>
-    </BottomSheetModal>
+    <>
+      <BottomSheetModal ref={bottomSheetModalRef}>
+        <View className="flex-row flex-wrap gap-3 px-4 pb-6 pt-3">
+          {displayOptions.map((option, index) => (
+            <Button
+              key={index}
+              variant="outline"
+              onPress={option.onPress}
+              style={{ width: itemWidth }}
+              className="aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-border bg-card/60 px-3 py-4"
+            >
+              <Icon
+                as={option.icon}
+                size={26}
+                className="text-muted-foreground"
+              />
+              <Text className="mt-2 text-sm font-normal text-muted-foreground">
+                {option.label}
+              </Text>
+            </Button>
+          ))}
+        </View>
+      </BottomSheetModal>
+
+      <CameraModal
+        visible={showCamera}
+        onClose={handleCameraClose}
+        onPhotoTaken={handlePhotoTaken}
+      />
+
+      <CameraConfirmationModal
+        visible={showConfirmation}
+        image={pendingCameraImage}
+        onConfirm={handleConfirmImage}
+        onRetake={handleRetakeImage}
+        onClose={handleCloseConfirmation}
+      />
+    </>
   );
 }
