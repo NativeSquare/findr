@@ -215,16 +215,31 @@ export const getNearestUsers = query({
         orientation: v.optional(v.string()),
       })
     ),
+    // Optional custom location coordinates (for location search feature)
+    customLocation: v.optional(
+      v.object({
+        latitude: v.number(),
+        longitude: v.number(),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const maxResults = 10000;
     const FIXED_MAX_DISTANCE = 5000000; // Fixed 5000km limit (not shown in UI, but used to limit data fetching)
 
-    const geo = await geospatial.get(ctx, args.id);
-    if (!geo) return [];
+    // Use custom location if provided, otherwise use user's stored location
+    let searchPoint: { latitude: number; longitude: number };
+
+    if (args.customLocation) {
+      searchPoint = args.customLocation;
+    } else {
+      const geo = await geospatial.get(ctx, args.id);
+      if (!geo) return [];
+      searchPoint = geo.coordinates;
+    }
 
     const result = await geospatial.nearest(ctx, {
-      point: geo.coordinates,
+      point: searchPoint,
       limit: maxResults + 1, // +1 so we can exclude self and still return maxResults
       maxDistance: FIXED_MAX_DISTANCE, // Fixed 50km limit to reduce data fetching
       // We tried the filterKeys method, but it doesn't allow multiple in() statements as we speak (12/2025). We needed them for making filters like : "position IN […] and ethnicity IN […] and lookingFor IN […]". Sequencing eq() statements is not possible either because doing so results in AND statements instead of OR statements. For example : q.eq("position", "top").eq("position", "bottom") means getting users with : "position is top AND position is bottom", which is not what we want.

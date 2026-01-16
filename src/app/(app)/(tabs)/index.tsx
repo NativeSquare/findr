@@ -12,8 +12,16 @@ import { router } from "expo-router";
 import React, { useMemo } from "react";
 import { Dimensions, ScrollView, View } from "react-native";
 import { FilterData } from "../filters";
+import { SEARCH_LOCATION_STORAGE_KEY } from "../location-search";
 
 const FILTERS_STORAGE_KEY = "filters";
+
+type SearchLocation = {
+  latitude: number;
+  longitude: number;
+  name?: string;
+  address?: string;
+};
 const DEFAULT_MIN_AGE = 18;
 const DEFAULT_MAX_AGE = 99;
 const DEFAULT_MIN_HEIGHT = 120;
@@ -37,6 +45,8 @@ export default function Home() {
     ethnicity: "",
   };
   const [filters, setFilters] = React.useState<FilterData>(defaultFilters);
+  const [searchLocation, setSearchLocation] =
+    React.useState<SearchLocation | null>(null);
 
   const loadFilters = React.useCallback(async () => {
     try {
@@ -62,15 +72,31 @@ export default function Home() {
     }
   }, []);
 
-  // Load filters on mount and when screen comes into focus
+  const loadSearchLocation = React.useCallback(async () => {
+    try {
+      const savedLocation = await AsyncStorage.getItem(
+        SEARCH_LOCATION_STORAGE_KEY
+      );
+      if (savedLocation) {
+        const parsed = JSON.parse(savedLocation);
+        setSearchLocation(parsed);
+      }
+    } catch (error) {
+      console.error("Error loading search location:", error);
+    }
+  }, []);
+
+  // Load filters and location on mount and when screen comes into focus
   React.useEffect(() => {
     loadFilters();
-  }, [loadFilters]);
+    loadSearchLocation();
+  }, [loadFilters, loadSearchLocation]);
 
   useFocusEffect(
     React.useCallback(() => {
       loadFilters();
-    }, [loadFilters])
+      loadSearchLocation();
+    }, [loadFilters, loadSearchLocation])
   );
 
   // Check if filters are active (non-default)
@@ -178,6 +204,12 @@ export default function Home() {
   const nearestUsers = useQuery(api.geospatial.getNearestUsers, {
     id: user._id,
     filters: activeFiltersForQuery,
+    customLocation: searchLocation
+      ? {
+          latitude: searchLocation.latitude,
+          longitude: searchLocation.longitude,
+        }
+      : undefined,
   });
 
   const userRows = useMemo(() => {
@@ -205,7 +237,7 @@ export default function Home() {
       keyboardDismissMode="interactive"
     >
       <View className="w-full max-w-sm gap-4">
-        <HomeHeader user={user} />
+        <HomeHeader user={user} locationName={searchLocation?.name} />
         <HomeFiltersRow
           hasActiveFilters={hasActiveFilters}
           activeFilterLabels={activeFilterLabels}

@@ -12,9 +12,10 @@ import { Pressable, View } from "react-native";
 
 export type HomeHeaderProps = {
   user: Doc<"users">;
+  locationName?: string;
 };
 
-export function HomeHeader({ user }: HomeHeaderProps) {
+export function HomeHeader({ user, locationName }: HomeHeaderProps) {
   const router = useRouter();
   const imageUrl = useQuery(
     api.storage.getImageUrl,
@@ -45,7 +46,7 @@ export function HomeHeader({ user }: HomeHeaderProps) {
       >
         <Icon as={MapPin} size={20} />
         <View className="flex-1">
-          <Text numberOfLines={1}>San Francisco</Text>
+          <Text numberOfLines={1}>{locationName || "My Location"}</Text>
         </View>
         <Icon as={ChevronDown} size={16} />
       </Button>

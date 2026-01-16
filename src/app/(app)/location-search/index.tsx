@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { api } from "@convex/_generated/api";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "convex/react";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -11,6 +12,8 @@ import { ArrowLeft, Crosshair, MapPin } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+
+export const SEARCH_LOCATION_STORAGE_KEY = "search_location";
 
 export default function LocationSearch() {
   const router = useRouter();
@@ -116,9 +119,23 @@ export default function LocationSearch() {
     getCurrentLocation();
   }, []);
 
-  const handleSetLocation = () => {
-    // TODO: Implement location setting logic with selectedLocation
-    console.log("Setting location:", selectedLocation);
+  const handleSetLocation = async () => {
+    if (!selectedLocation) return;
+
+    try {
+      const locationData = {
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        name: selectedLocation.name,
+        address: selectedLocation.address,
+      };
+      await AsyncStorage.setItem(
+        SEARCH_LOCATION_STORAGE_KEY,
+        JSON.stringify(locationData)
+      );
+    } catch (error) {
+      console.error("Error saving location:", error);
+    }
     router.back();
   };
 
