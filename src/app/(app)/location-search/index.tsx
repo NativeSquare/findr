@@ -156,7 +156,7 @@ export default function LocationSearch() {
         longitude: location.coords.longitude,
       };
 
-      setSelectedLocation(coords);
+      setSelectedLocation({ ...coords, name: "Current Location" });
       setRegion({
         ...coords,
         latitudeDelta: 0.01,
@@ -172,6 +172,30 @@ export default function LocationSearch() {
         },
         500
       );
+
+      // Reverse geocode to get address info
+      try {
+        const [result] = await Location.reverseGeocodeAsync(coords);
+        if (result) {
+          const name =
+            result.name || result.street || result.city || "Current Location";
+          const addressParts = [
+            result.street,
+            result.city,
+            result.region,
+            result.country,
+          ].filter(Boolean);
+          const address = addressParts.join(", ");
+
+          setSelectedLocation({
+            ...coords,
+            name,
+            address: address || undefined,
+          });
+        }
+      } catch (error) {
+        console.error("Error reverse geocoding:", error);
+      }
     } catch (error) {
       console.error("Error getting current location:", error);
     }
@@ -186,8 +210,13 @@ export default function LocationSearch() {
   }) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
 
-    // Set the selected location from long press
-    const newLocation = {
+    // Set the selected location from long press with initial coords
+    const newLocation: {
+      latitude: number;
+      longitude: number;
+      address?: string;
+      name?: string;
+    } = {
       latitude,
       longitude,
     };
@@ -204,6 +233,38 @@ export default function LocationSearch() {
       },
       300
     );
+
+    // Reverse geocode to get address info
+    try {
+      const [result] = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
+      if (result) {
+        const name =
+          result.name ||
+          result.street ||
+          result.city ||
+          `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        const addressParts = [
+          result.street,
+          result.city,
+          result.region,
+          result.country,
+        ].filter(Boolean);
+        const address = addressParts.join(", ");
+
+        setSelectedLocation({
+          latitude,
+          longitude,
+          name,
+          address: address || undefined,
+        });
+      }
+    } catch (error) {
+      console.error("Error reverse geocoding:", error);
+      // Keep the location without name/address if reverse geocoding fails
+    }
   };
 
   return (

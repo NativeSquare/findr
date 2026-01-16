@@ -69,7 +69,9 @@ export function HomeHeader({ user, searchLocation }: HomeHeaderProps) {
       >
         <Icon as={MapPin} size={20} />
         <View className="flex-1">
-          <Text numberOfLines={1}>{searchLocation?.name || "My Location"}</Text>
+          <Text numberOfLines={1}>
+            {searchLocation?.address || searchLocation?.name || "My Location"}
+          </Text>
         </View>
         <Icon as={ChevronDown} size={16} />
       </Button>
