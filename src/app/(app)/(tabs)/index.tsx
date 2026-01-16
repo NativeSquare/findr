@@ -237,7 +237,7 @@ export default function Home() {
       keyboardDismissMode="interactive"
     >
       <View className="w-full max-w-sm gap-4">
-        <HomeHeader user={user} locationName={searchLocation?.name} />
+        <HomeHeader user={user} searchLocation={searchLocation} />
         <HomeFiltersRow
           hasActiveFilters={hasActiveFilters}
           activeFilterLabels={activeFilterLabels}

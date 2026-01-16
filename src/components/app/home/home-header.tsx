@@ -10,17 +10,40 @@ import { useRouter } from "expo-router";
 import { ChevronDown, MapPin } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
-export type HomeHeaderProps = {
-  user: Doc<"users">;
-  locationName?: string;
+export type SearchLocation = {
+  latitude: number;
+  longitude: number;
+  name?: string;
+  address?: string;
 };
 
-export function HomeHeader({ user, locationName }: HomeHeaderProps) {
+export type HomeHeaderProps = {
+  user: Doc<"users">;
+  searchLocation?: SearchLocation | null;
+};
+
+export function HomeHeader({ user, searchLocation }: HomeHeaderProps) {
   const router = useRouter();
   const imageUrl = useQuery(
     api.storage.getImageUrl,
     user.profilePictures?.[0] ? { storageId: user.profilePictures[0] } : "skip"
   );
+
+  const handleLocationPress = () => {
+    if (searchLocation) {
+      router.push({
+        pathname: "/location-search",
+        params: {
+          selectedLat: String(searchLocation.latitude),
+          selectedLng: String(searchLocation.longitude),
+          selectedAddress: searchLocation.address,
+          selectedName: searchLocation.name,
+        },
+      });
+    } else {
+      router.push("/location-search");
+    }
+  };
 
   return (
     <View className="flex-row items-center gap-3">
@@ -42,11 +65,11 @@ export function HomeHeader({ user, locationName }: HomeHeaderProps) {
       <Button
         variant="outline"
         className="flex-1 flex-row items-center gap-2"
-        onPress={() => router.push("/location-search")}
+        onPress={handleLocationPress}
       >
         <Icon as={MapPin} size={20} />
         <View className="flex-1">
-          <Text numberOfLines={1}>{locationName || "My Location"}</Text>
+          <Text numberOfLines={1}>{searchLocation?.name || "My Location"}</Text>
         </View>
         <Icon as={ChevronDown} size={16} />
       </Button>
