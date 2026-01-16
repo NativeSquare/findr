@@ -10,7 +10,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, Crosshair, MapPin } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import MapView, { Circle, Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
 export default function LocationSearch() {
   const router = useRouter();
@@ -164,6 +164,31 @@ export default function LocationSearch() {
     router.push("/(app)/location-search/autocomplete");
   };
 
+  const handleMapLongPress = async (event: {
+    nativeEvent: { coordinate: { latitude: number; longitude: number } };
+  }) => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+
+    // Set the selected location from long press
+    const newLocation = {
+      latitude,
+      longitude,
+    };
+
+    setSelectedLocation(newLocation);
+
+    // Animate to the new location
+    mapRef.current?.animateToRegion(
+      {
+        latitude,
+        longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      },
+      300
+    );
+  };
+
   return (
     <View className="flex-1 bg-background">
       {/* Header with back button and search bar */}
@@ -216,32 +241,21 @@ export default function LocationSearch() {
             showsUserLocation={false}
             showsMyLocationButton={false}
             mapType="standard"
+            onLongPress={handleMapLongPress}
           >
             {selectedLocation && (
-              <>
-                {/* Location Pin Marker */}
-                <Marker
-                  coordinate={selectedLocation}
-                  anchor={{ x: 0.5, y: 1 }}
-                  flat={false}
-                >
-                  <View style={styles.markerContainer}>
-                    <View style={styles.markerIconContainer}>
-                      <MapPin size={20} color="#fff" />
-                    </View>
-                    <View style={styles.markerPointer} />
+              <Marker
+                coordinate={selectedLocation}
+                anchor={{ x: 0.5, y: 1 }}
+                flat={false}
+              >
+                <View style={styles.markerContainer}>
+                  <View style={styles.markerIconContainer}>
+                    <MapPin size={20} color="#fff" />
                   </View>
-                </Marker>
-
-                {/* Radius Circle */}
-                <Circle
-                  center={selectedLocation}
-                  radius={1000} // 1km radius
-                  strokeWidth={2}
-                  strokeColor="rgb(249, 115, 22)" // orange-500
-                  fillColor="rgba(249, 115, 22, 0.1)" // semi-transparent orange
-                />
-              </>
+                  <View style={styles.markerPointer} />
+                </View>
+              </Marker>
             )}
           </MapView>
         )}
