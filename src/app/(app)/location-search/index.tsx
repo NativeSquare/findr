@@ -38,6 +38,7 @@ export default function LocationSearch() {
     address?: string;
     name?: string;
   } | null>(null);
+  const [isCurrentLocation, setIsCurrentLocation] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Handle selected location from autocomplete
@@ -53,6 +54,7 @@ export default function LocationSearch() {
         name: params.selectedName,
       };
 
+      setIsCurrentLocation(false);
       setSelectedLocation(newLocation);
       setRegion({
         latitude: lat,
@@ -123,16 +125,21 @@ export default function LocationSearch() {
     if (!selectedLocation) return;
 
     try {
-      const locationData = {
-        latitude: selectedLocation.latitude,
-        longitude: selectedLocation.longitude,
-        name: selectedLocation.name,
-        address: selectedLocation.address,
-      };
-      await AsyncStorage.setItem(
-        SEARCH_LOCATION_STORAGE_KEY,
-        JSON.stringify(locationData)
-      );
+      if (isCurrentLocation) {
+        // Clear stored location so home screen shows "My Location"
+        await AsyncStorage.removeItem(SEARCH_LOCATION_STORAGE_KEY);
+      } else {
+        const locationData = {
+          latitude: selectedLocation.latitude,
+          longitude: selectedLocation.longitude,
+          name: selectedLocation.name,
+          address: selectedLocation.address,
+        };
+        await AsyncStorage.setItem(
+          SEARCH_LOCATION_STORAGE_KEY,
+          JSON.stringify(locationData)
+        );
+      }
     } catch (error) {
       console.error("Error saving location:", error);
     }
@@ -156,7 +163,8 @@ export default function LocationSearch() {
         longitude: location.coords.longitude,
       };
 
-      setSelectedLocation({ ...coords, name: "Current Location" });
+      setIsCurrentLocation(true);
+      setSelectedLocation({ ...coords, name: "My Location" });
       setRegion({
         ...coords,
         latitudeDelta: 0.01,
@@ -173,12 +181,10 @@ export default function LocationSearch() {
         500
       );
 
-      // Reverse geocode to get address info
+      // Reverse geocode to get address info (but keep "My Location" as name)
       try {
         const [result] = await Location.reverseGeocodeAsync(coords);
         if (result) {
-          const name =
-            result.name || result.street || result.city || "Current Location";
           const addressParts = [
             result.street,
             result.city,
@@ -189,7 +195,7 @@ export default function LocationSearch() {
 
           setSelectedLocation({
             ...coords,
-            name,
+            name: "My Location",
             address: address || undefined,
           });
         }
@@ -221,6 +227,7 @@ export default function LocationSearch() {
       longitude,
     };
 
+    setIsCurrentLocation(false);
     setSelectedLocation(newLocation);
 
     // Animate to the new location
