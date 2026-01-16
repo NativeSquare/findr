@@ -56,6 +56,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
+    config: {
+      googleMapsApiKey: process.env.GOOGLE_MAPS_IOS_API_KEY,
+    },
   },
   android: {
     package: getUniqueIdentifier(),
@@ -69,7 +72,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     predictiveBackGestureEnabled: false,
     config: {
       googleMaps: {
-        apiKey: process.env.GOOGLE_MAPS_API_KEY,
+        apiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY,
       },
     },
     // googleServicesFile: getGoogleServicesJson(),
