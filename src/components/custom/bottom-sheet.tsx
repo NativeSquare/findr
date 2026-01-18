@@ -32,6 +32,7 @@ export function BottomSheetModal({
     <GorhomBottomSheetModal
       ref={ref}
       snapPoints={snapPoints}
+      stackBehavior="replace"
       backgroundStyle={{
         backgroundColor:
           colorScheme === "dark" ? theme.input30 : theme.background,
