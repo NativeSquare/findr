@@ -1,14 +1,13 @@
-import { AddSentenceBottomSheet } from "@/components/app/first-sentences/add-sentence-bottom-sheet";
 import { FirstSentenceListItem } from "@/components/app/first-sentences/first-sentence-list-item";
 import { QuickRepliesInfoCard } from "@/components/app/first-sentences/quick-replies-info-card";
+import { SentenceInputCard } from "@/components/app/first-sentences/sentence-input-card";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { api } from "@convex/_generated/api";
-import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
 import { ArrowLeft, Plus } from "lucide-react-native";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { Alert, Pressable, ScrollView, View } from "react-native";
 
 const MAX_SENTENCES = 5;
@@ -16,18 +15,15 @@ const MAX_SENTENCES = 5;
 export default function FirstSentences() {
   const user = useQuery(api.users.currentUser);
   const patchUser = useMutation(api.users.patch);
-  const addSentenceBottomSheetRef = useRef<GorhomBottomSheetModal>(null);
-  const editSentenceBottomSheetRef = useRef<GorhomBottomSheetModal>(null);
+  const [isAdding, setIsAdding] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editingSentence, setEditingSentence] = useState("");
 
   const sentences = user?.firstSentences ?? [];
-  const canAddMore = sentences.length < MAX_SENTENCES;
+  const canAddMore = sentences.length < MAX_SENTENCES && !isAdding;
 
   const handleEdit = (index: number) => {
+    setIsAdding(false);
     setEditingIndex(index);
-    setEditingSentence(sentences[index] || "");
-    editSentenceBottomSheetRef.current?.present();
   };
 
   const handleSaveEdit = async (text: string) => {
@@ -42,12 +38,10 @@ export default function FirstSentences() {
     });
 
     setEditingIndex(null);
-    setEditingSentence("");
   };
 
   const handleCancelEdit = () => {
     setEditingIndex(null);
-    setEditingSentence("");
   };
 
   const handleDelete = (index: number) => {
@@ -86,10 +80,17 @@ export default function FirstSentences() {
       id: user._id,
       data: { firstSentences: updatedSentences },
     });
+
+    setIsAdding(false);
   };
 
-  const handleOpenAddSheet = () => {
-    addSentenceBottomSheetRef.current?.present();
+  const handleCancelAdd = () => {
+    setIsAdding(false);
+  };
+
+  const handleOpenAdd = () => {
+    setEditingIndex(null);
+    setIsAdding(true);
   };
 
   return (
@@ -127,19 +128,37 @@ export default function FirstSentences() {
             </Text>
 
             <View className="flex-col gap-3">
-              {sentences.map((sentence, index) => (
-                <FirstSentenceListItem
-                  key={index}
-                  sentence={sentence}
-                  onEdit={() => handleEdit(index)}
-                  onDelete={() => handleDelete(index)}
-                />
-              ))}
+              {sentences.map((sentence, index) =>
+                editingIndex === index ? (
+                  <SentenceInputCard
+                    key={index}
+                    title="Edit Sentence"
+                    initialValue={sentence}
+                    onSave={handleSaveEdit}
+                    onCancel={handleCancelEdit}
+                  />
+                ) : (
+                  <FirstSentenceListItem
+                    key={index}
+                    sentence={sentence}
+                    onEdit={() => handleEdit(index)}
+                    onDelete={() => handleDelete(index)}
+                  />
+                )
+              )}
             </View>
+
+            {isAdding && (
+              <SentenceInputCard
+                title="Add Sentence"
+                onSave={handleAddSentence}
+                onCancel={handleCancelAdd}
+              />
+            )}
 
             {canAddMore && (
               <Pressable
-                onPress={handleOpenAddSheet}
+                onPress={handleOpenAdd}
                 className="flex-row items-center gap-1 self-end"
               >
                 <Icon as={Plus} size={18} className="text-[#e56400]" />
@@ -151,20 +170,6 @@ export default function FirstSentences() {
           </View>
         </View>
       </ScrollView>
-
-      <AddSentenceBottomSheet
-        bottomSheetModalRef={addSentenceBottomSheetRef}
-        title="Add Sentence"
-        onSave={handleAddSentence}
-      />
-
-      <AddSentenceBottomSheet
-        bottomSheetModalRef={editSentenceBottomSheetRef}
-        title="Edit Sentence"
-        initialValue={editingSentence}
-        onSave={handleSaveEdit}
-        onCancel={handleCancelEdit}
-      />
     </View>
   );
 }
