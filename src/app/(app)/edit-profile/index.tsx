@@ -23,6 +23,7 @@ export type EditProfileFormData = Partial<
     | "weight"
     | "position"
     | "ethnicity"
+    | "relationshipStatus"
     | "profilePictures"
     | "bodyTypes"
     | "orientation"
@@ -44,6 +45,7 @@ export default function EditProfile() {
     weight: user?.weight,
     position: user?.position,
     ethnicity: user?.ethnicity,
+    relationshipStatus: user?.relationshipStatus,
     profilePictures: user?.profilePictures,
     bodyTypes: user?.bodyTypes,
     orientation: user?.orientation,

@@ -40,6 +40,7 @@ export function BirthDateField({
         error={error}
         maximumDate={maximumDate} // Can't select dates after 16 years ago (ensures user is at least 16)
         minimumDate={minimumDate} // Reasonable minimum date in the past
+        title={label}
       />
       {error && errorMessage && (
         <Text className="text-sm text-destructive">{errorMessage}</Text>

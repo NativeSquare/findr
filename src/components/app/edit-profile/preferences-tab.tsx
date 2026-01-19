@@ -1,6 +1,6 @@
 import { EditProfileFormData } from "@/app/(app)/edit-profile";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
-import { Heart, Sparkles, User } from "lucide-react-native";
+import { Heart, Sparkles, User, Users } from "lucide-react-native";
 import React from "react";
 import { View } from "react-native";
 import { PreferenceRow } from "./preference-row";
@@ -49,6 +49,15 @@ const LOOKING_FOR = [
   "Hookups",
   "Not Specified",
 ];
+const RELATIONSHIP_STATUSES = [
+  "Single",
+  "Dating",
+  "Committed",
+  "Open relationship",
+  "Married",
+  "Partnered",
+  "Polyamorous",
+];
 
 export function PreferencesTab({
   formData,
@@ -62,6 +71,7 @@ export function PreferencesTab({
   const positionSheetRef = React.useRef<GorhomBottomSheetModal>(null);
   const ethnicitySheetRef = React.useRef<GorhomBottomSheetModal>(null);
   const lookingForSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const relationshipStatusSheetRef = React.useRef<GorhomBottomSheetModal>(null);
 
   return (
     <View className="gap-4">
@@ -78,6 +88,19 @@ export function PreferencesTab({
             label="Position"
             values={formData.position}
             onPress={() => positionSheetRef.current?.present()}
+            isLast
+          />
+        </View>
+      </View>
+
+      {/* Relationship Status Section */}
+      <View>
+        <PreferenceSectionHeader icon={Users} title="Relationship Status" />
+        <View className="rounded-xl overflow-hidden">
+          <PreferenceRow
+            label="Status"
+            values={formData.relationshipStatus}
+            onPress={() => relationshipStatusSheetRef.current?.present()}
             isLast
           />
         </View>
@@ -178,6 +201,20 @@ export function PreferencesTab({
             lookingFor: formData.lookingFor?.includes(option)
               ? formData.lookingFor?.filter((type) => type !== option)
               : [...(formData.lookingFor || []), option],
+          })
+        }
+      />
+
+      <PreferenceSelectionSheet
+        bottomSheetRef={relationshipStatusSheetRef}
+        title="Relationship Status"
+        options={RELATIONSHIP_STATUSES}
+        selectedValues={formData.relationshipStatus}
+        onSelect={(option) =>
+          setFormData({
+            ...formData,
+            relationshipStatus:
+              formData.relationshipStatus === option ? undefined : option,
           })
         }
       />

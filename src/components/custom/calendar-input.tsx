@@ -1,11 +1,14 @@
+import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
+import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Calendar } from "lucide-react-native";
 import * as React from "react";
 import { Platform, Pressable, View } from "react-native";
 import { Input } from "../ui/input";
+import { BottomSheetModal } from "./bottom-sheet";
 
 export type CalendarInputProps = {
   value?: string; // ISO8601 string (e.g., "2000-01-15T00:00:00Z")
@@ -16,6 +19,7 @@ export type CalendarInputProps = {
   maximumDate?: Date;
   minimumDate?: Date;
   error?: boolean;
+  title?: string;
 };
 
 function formatDateForDisplay(isoString?: string): string {
@@ -48,8 +52,9 @@ export function CalendarInput({
   maximumDate,
   minimumDate,
   error = false,
+  title = "Select Date",
 }: CalendarInputProps) {
-  const [showPicker, setShowPicker] = React.useState(false);
+  const bottomSheetRef = React.useRef<GorhomBottomSheetModal>(null);
   const [internalDate, setInternalDate] = React.useState<Date>(() => {
     if (value) {
       try {
@@ -61,8 +66,8 @@ export function CalendarInput({
         // Invalid date, fall through to default
       }
     }
-    // Default to current date
-    return new Date();
+    // Default to maximumDate if provided, otherwise current date
+    return maximumDate ?? new Date();
   });
 
   // Update internal date when value prop changes
@@ -79,13 +84,14 @@ export function CalendarInput({
     }
   }, [value]);
 
-  const handleDateChange = (event: any, selectedDate?: Date | undefined) => {
+  const handleDateChange = (_event: any, selectedDate?: Date | undefined) => {
     if (Platform.OS === "android") {
-      setShowPicker(false);
+      // On Android, immediately apply and close
       if (selectedDate) {
         setInternalDate(selectedDate);
         onChange?.(dateToISO8601(selectedDate));
       }
+      bottomSheetRef.current?.dismiss();
     } else if (Platform.OS === "ios") {
       // On iOS, onChange is called continuously as user scrolls
       // Only update internalDate, don't call onChange until "Done" is pressed
@@ -98,11 +104,11 @@ export function CalendarInput({
   const handleDone = () => {
     // Convert current internalDate to ISO8601 and call onChange
     onChange?.(dateToISO8601(internalDate));
-    setShowPicker(false);
+    bottomSheetRef.current?.dismiss();
   };
 
   const handlePress = () => {
-    setShowPicker(true);
+    bottomSheetRef.current?.present();
   };
 
   return (
@@ -127,34 +133,29 @@ export function CalendarInput({
           />
         </View>
       </Pressable>
-      {showPicker && (
-        <DateTimePicker
-          value={internalDate}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={handleDateChange}
-          maximumDate={maximumDate}
-          minimumDate={minimumDate}
-        />
-      )}
-      {Platform.OS === "ios" && showPicker && (
-        <View className="flex-row gap-2 mt-2">
-          <Pressable
-            onPress={() => setShowPicker(false)}
-            className="flex-1 bg-muted rounded-lg p-3 items-center"
-          >
-            <Text className="text-sm font-medium">Cancel</Text>
-          </Pressable>
-          <Pressable
-            onPress={handleDone}
-            className="flex-1 bg-primary rounded-lg p-3 items-center"
-          >
-            <Text className="text-sm font-medium text-primary-foreground">
+
+      <BottomSheetModal ref={bottomSheetRef} snapPoints={["50%"]}>
+        <View className="px-4 pb-6 gap-6">
+          <Text className="text-xl font-semibold text-foreground">{title}</Text>
+
+          <View className="items-center">
+            <DateTimePicker
+              value={internalDate}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={handleDateChange}
+              maximumDate={maximumDate}
+              minimumDate={minimumDate}
+            />
+          </View>
+
+          <Button onPress={handleDone}>
+            <Text className="text-base font-medium text-primary-foreground">
               Done
             </Text>
-          </Pressable>
+          </Button>
         </View>
-      )}
+      </BottomSheetModal>
     </View>
   );
 }

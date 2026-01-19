@@ -69,6 +69,7 @@ const documentSchema = {
   profilePictures: v.optional(v.array(v.id("_storage"))),
   position: v.optional(v.string()),
   ethnicity: v.optional(v.string()),
+  relationshipStatus: v.optional(v.string()),
   hasCompletedOnboarding: v.optional(v.boolean()),
   favorites: v.optional(v.array(v.id("users"))),
   firstSentences: v.optional(v.array(v.string())),

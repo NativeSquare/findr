@@ -30,6 +30,7 @@ export type OnboardingFormData = Partial<
     | "orientation"
     | "position"
     | "ethnicity"
+    | "relationshipStatus"
     | "lookingFor"
     | "privacy"
     | "profilePictures"
@@ -51,6 +52,7 @@ export default function Onboarding() {
     orientation: user?.orientation,
     position: user?.position,
     ethnicity: user?.ethnicity,
+    relationshipStatus: user?.relationshipStatus,
     lookingFor: user?.lookingFor,
     privacy: user?.privacy,
     profilePictures: user?.profilePictures,
