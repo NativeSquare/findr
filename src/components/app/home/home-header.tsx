@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import { ChevronDown, MapPin } from "lucide-react-native";
-import { Pressable, View } from "react-native";
+import { Alert, Pressable, View } from "react-native";
 
 export type SearchLocation = {
   latitude: number;
@@ -30,19 +30,8 @@ export function HomeHeader({ user, searchLocation }: HomeHeaderProps) {
   );
 
   const handleLocationPress = () => {
-    if (searchLocation) {
-      router.push({
-        pathname: "/location-search",
-        params: {
-          selectedLat: String(searchLocation.latitude),
-          selectedLng: String(searchLocation.longitude),
-          selectedAddress: searchLocation.address,
-          selectedName: searchLocation.name,
-        },
-      });
-    } else {
-      router.push("/location-search");
-    }
+    // Feature temporarily disabled
+    Alert.alert("Coming Soon", "Browse by location will be available soon!");
   };
 
   return (

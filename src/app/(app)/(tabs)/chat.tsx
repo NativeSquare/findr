@@ -144,43 +144,17 @@ export default function Chat() {
           />
         </View>
 
+        {/* Album tab temporarily hidden - feature coming soon */}
         <View className="flex-row mb-5 gap-2">
           <Pressable
             onPress={() => {
               setActiveTab("Chats");
               setSearchQuery("");
             }}
-            className={`h-[35px] px-3 py-1.5 rounded-[18px] ${
-              activeTab === "Chats"
-                ? "bg-primary"
-                : "bg-[#131316] border border-[#1a1a1e]"
-            }`}
+            className="h-[35px] px-3 py-1.5 rounded-[18px] bg-primary"
           >
-            <Text
-              className={`text-sm font-medium leading-5 ${
-                activeTab === "Chats" ? "text-black" : "text-[#d1d1d6]"
-              }`}
-            >
+            <Text className="text-sm font-medium leading-5 text-black">
               Chats
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              setActiveTab("Album");
-              setSearchQuery("");
-            }}
-            className={`h-[35px] px-3 py-1.5 rounded-[18px] ${
-              activeTab === "Album"
-                ? "bg-[#e56400]"
-                : "bg-[#131316] border border-[#1a1a1e]"
-            }`}
-          >
-            <Text
-              className={`text-sm font-medium leading-5 ${
-                activeTab === "Album" ? "text-black" : "text-[#d1d1d6]"
-              }`}
-            >
-              Album
             </Text>
           </Pressable>
         </View>

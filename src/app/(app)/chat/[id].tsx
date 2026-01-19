@@ -1,10 +1,6 @@
 import { MessageBubble } from "@/components/app/chat/message-bubble";
 import { MessageInput } from "@/components/app/chat/message-input";
 import { QuickReplies } from "@/components/app/chat/quick-replies";
-import {
-  SelectAlbumModal,
-  type AppAlbum,
-} from "@/components/app/chat/select-album-modal";
 import { ViewOncePhotoViewer } from "@/components/app/chat/view-once-photo-viewer";
 import { UploadMediaBottomSheetModal } from "@/components/shared/upload-media-bottom-sheet-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,12 +18,12 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  View,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -39,13 +35,9 @@ export default function ChatDetail() {
   const insets = useSafeAreaInsets();
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [selectedAlbumId, setSelectedAlbumId] = useState<Id<"albums"> | null>(
-    null
-  );
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [attachedImageUris, setAttachedImageUris] = useState<string[]>([]);
   const uploadMediaBottomSheetRef = useRef<BottomSheetModal>(null);
-  const selectAlbumModalRef = useRef<BottomSheetModal>(null);
 
   const otherUserId = id as Id<"users"> | undefined;
 
@@ -79,12 +71,6 @@ export default function ChatDetail() {
     isLoading: boolean;
     messageId: Id<"messages"> | null;
   }>({ isOpen: false, imageUrl: null, isLoading: false, messageId: null });
-
-  // Fetch selected album when an album is selected
-  const selectedAlbum = useQuery(
-    api.albums.getAlbum,
-    selectedAlbumId ? { albumId: selectedAlbumId } : "skip"
-  );
 
   // Convert storage ID to URL for user profile picture
   const userImageUrl = useQuery(
@@ -225,43 +211,6 @@ export default function ChatDetail() {
     Keyboard.dismiss();
     uploadMediaBottomSheetRef.current?.present();
   };
-
-  const handleAlbumPress = () => {
-    selectAlbumModalRef.current?.present();
-  };
-
-  const handleAlbumSelected = (album: AppAlbum) => {
-    // Set the selected album ID to trigger the query
-    setSelectedAlbumId(album._id);
-  };
-
-  // Send album photos when album is loaded
-  useEffect(() => {
-    if (!selectedAlbum || !otherUserId || selectedAlbum.photos.length === 0) {
-      return;
-    }
-
-    const sendAlbumPhotos = async () => {
-      setError(null);
-      try {
-        // Send all album photos as a single message with multiple images
-        const photoUrls = selectedAlbum.photos.map((photo) => photo.photoUrl);
-        await sendMessage({
-          otherUserId: otherUserId!,
-          text: "",
-          imageUrls: photoUrls,
-        });
-        // Reset selected album ID after sending
-        setSelectedAlbumId(null);
-      } catch (error) {
-        setError(getConvexErrorMessage(error));
-        console.error("Error sending album:", error);
-        setSelectedAlbumId(null);
-      }
-    };
-
-    sendAlbumPhotos();
-  }, [selectedAlbum, otherUserId, sendMessage]);
 
   const handleQuickReply = async (reply: string) => {
     if (!otherUserId) return;
@@ -410,18 +359,14 @@ export default function ChatDetail() {
       <UploadMediaBottomSheetModal
         bottomSheetModalRef={uploadMediaBottomSheetRef}
         onImagesSelected={handleImagesSelected}
-        onAlbumPress={handleAlbumPress}
-        options={["camera", "gallery", "album"]}
+        options={["camera", "gallery"]}
         allowsMultipleSelection
         showCameraConfirmation
         onCameraSend={handleCameraSend}
         showViewOnceOption
       />
 
-      <SelectAlbumModal
-        bottomSheetModalRef={selectAlbumModalRef}
-        onAlbumSelected={handleAlbumSelected}
-      />
+      {/* Album feature temporarily disabled */}
 
       <ViewOncePhotoViewer
         visible={viewOncePhotoState.isOpen}
