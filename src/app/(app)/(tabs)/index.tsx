@@ -43,6 +43,7 @@ export default function Home() {
     position: "",
     bodyType: "",
     ethnicity: "",
+    relationshipStatus: "",
   };
   const [filters, setFilters] = React.useState<FilterData>(defaultFilters);
   const [searchLocation, setSearchLocation] =
@@ -65,6 +66,7 @@ export default function Home() {
           position: parsed.position ?? "",
           bodyType: parsed.bodyType ?? "",
           ethnicity: parsed.ethnicity ?? "",
+          relationshipStatus: parsed.relationshipStatus ?? "",
         });
       }
     } catch (error) {
@@ -112,7 +114,8 @@ export default function Home() {
       filters.orientation !== "" ||
       filters.position !== "" ||
       filters.bodyType !== "" ||
-      filters.ethnicity !== ""
+      filters.ethnicity !== "" ||
+      filters.relationshipStatus !== ""
     );
   }, [filters]);
 
@@ -161,6 +164,10 @@ export default function Home() {
       labels.push(filters.ethnicity);
     }
 
+    if (filters.relationshipStatus) {
+      labels.push(filters.relationshipStatus);
+    }
+
     return labels;
   }, [filters]);
 
@@ -195,6 +202,8 @@ export default function Home() {
     if (filters.position) result.position = filters.position;
     if (filters.bodyType) result.bodyType = filters.bodyType;
     if (filters.ethnicity) result.ethnicity = filters.ethnicity;
+    if (filters.relationshipStatus)
+      result.relationshipStatus = filters.relationshipStatus;
 
     return Object.keys(result).length > 0 ? result : undefined;
   }, [filters]);

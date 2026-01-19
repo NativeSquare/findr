@@ -34,6 +34,7 @@ export type FilterData = {
   position: string;
   bodyType: string;
   ethnicity: string;
+  relationshipStatus: string;
 };
 
 const FILTERS_STORAGE_KEY = "filters";
@@ -86,6 +87,13 @@ const LOOKING_FOR = [
   "Hookups",
   "Not Specified",
 ];
+const RELATIONSHIP_STATUSES = [
+  "Single",
+  "Dating",
+  "Partnered",
+  "Open relationship",
+  "Married",
+];
 
 export default function Filters() {
   const defaultFilters: FilterData = {
@@ -100,6 +108,7 @@ export default function Filters() {
     position: "",
     bodyType: "",
     ethnicity: "",
+    relationshipStatus: "",
   };
   const [filters, setFilters] = React.useState<FilterData>(defaultFilters);
 
@@ -112,6 +121,7 @@ export default function Filters() {
   const bodyTypeSheetRef = React.useRef<GorhomBottomSheetModal>(null);
   const ethnicitySheetRef = React.useRef<GorhomBottomSheetModal>(null);
   const orientationSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const relationshipStatusSheetRef = React.useRef<GorhomBottomSheetModal>(null);
 
   React.useEffect(() => {
     const loadFilters = async () => {
@@ -131,6 +141,7 @@ export default function Filters() {
             position: parsed.position ?? "",
             bodyType: parsed.bodyType ?? "",
             ethnicity: parsed.ethnicity ?? "",
+            relationshipStatus: parsed.relationshipStatus ?? "",
           });
         }
       } catch (error) {
@@ -237,6 +248,11 @@ export default function Filters() {
                   label="Position"
                   values={filters.position || undefined}
                   onPress={() => positionSheetRef.current?.present()}
+                />
+                <PreferenceRow
+                  label="Relationship Status"
+                  values={filters.relationshipStatus || undefined}
+                  onPress={() => relationshipStatusSheetRef.current?.present()}
                   isLast
                 />
               </View>
@@ -353,6 +369,20 @@ export default function Filters() {
           setFilters({
             ...filters,
             orientation: filters.orientation === option ? "" : option,
+          })
+        }
+      />
+
+      <PreferenceSelectionSheet
+        bottomSheetRef={relationshipStatusSheetRef}
+        title="Relationship Status"
+        options={RELATIONSHIP_STATUSES}
+        selectedValues={filters.relationshipStatus || undefined}
+        onSelect={(option) =>
+          setFilters({
+            ...filters,
+            relationshipStatus:
+              filters.relationshipStatus === option ? "" : option,
           })
         }
       />

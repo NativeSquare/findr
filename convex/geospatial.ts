@@ -92,6 +92,7 @@ function matchesFilters(
     lookingFor?: string[] | null;
     position?: string | null;
     orientation?: string | null;
+    relationshipStatus?: string | null;
   },
   filters?: {
     minAge?: number;
@@ -105,6 +106,7 @@ function matchesFilters(
     lookingFor?: string[];
     position?: string;
     orientation?: string;
+    relationshipStatus?: string;
   }
 ) {
   if (!filters) return true;
@@ -145,6 +147,11 @@ function matchesFilters(
   if (!intersects(user.lookingFor ?? undefined, filters.lookingFor))
     return false;
   if (filters.position && user.position !== filters.position) return false;
+  if (
+    filters.relationshipStatus &&
+    user.relationshipStatus !== filters.relationshipStatus
+  )
+    return false;
 
   return true;
 }
@@ -213,6 +220,7 @@ export const getNearestUsers = query({
         lookingFor: v.optional(v.array(v.string())),
         position: v.optional(v.string()),
         orientation: v.optional(v.string()),
+        relationshipStatus: v.optional(v.string()),
       })
     ),
     // Optional custom location coordinates (for location search feature)
