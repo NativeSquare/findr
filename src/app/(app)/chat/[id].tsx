@@ -2,8 +2,8 @@ import { MessageBubble } from "@/components/app/chat/message-bubble";
 import { MessageInput } from "@/components/app/chat/message-input";
 import { QuickReplies } from "@/components/app/chat/quick-replies";
 import {
-  SelectAlbumModal,
-  type AppAlbum,
+    SelectAlbumModal,
+    type AppAlbum,
 } from "@/components/app/chat/select-album-modal";
 import { ViewOncePhotoViewer } from "@/components/app/chat/view-once-photo-viewer";
 import { UploadMediaBottomSheetModal } from "@/components/shared/upload-media-bottom-sheet-modal";
@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { useUploadImage } from "@/hooks/use-upload-image";
 import { formatChatTimestamp } from "@/utils/formatChatTimestamp";
 import { getConvexErrorMessage } from "@/utils/getConvexErrorMessage";
 import { api } from "@convex/_generated/api";
@@ -22,13 +23,15 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  View,
+    ActivityIndicator,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    View,
 } from "react-native";
+import ImageViewing from "react-native-image-viewing";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type ChatState = "empty" | "quick-replies" | "messages";
@@ -39,9 +42,6 @@ export default function ChatDetail() {
   const insets = useSafeAreaInsets();
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [selectedAlbumId, setSelectedAlbumId] = useState<Id<"albums"> | null>(
-    null
-  );
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [attachedImageUris, setAttachedImageUris] = useState<string[]>([]);
   const uploadMediaBottomSheetRef = useRef<BottomSheetModal>(null);
@@ -69,8 +69,13 @@ export default function ChatDetail() {
 
   // Mutations
   const sendMessage = useMutation(api.messages.sendMessage);
+  const sendAlbumMessage = useMutation(api.messages.sendAlbumMessage);
   const markMessagesAsRead = useMutation(api.messages.markMessagesAsRead);
   const openViewOncePhoto = useMutation(api.messages.openViewOncePhoto);
+  const stopAlbumSharing = useMutation(api.messages.stopAlbumSharing);
+
+  // Image upload hook
+  const { uploadImage, uploadImages, isUploading } = useUploadImage();
 
   // View-once photo viewer state
   const [viewOncePhotoState, setViewOncePhotoState] = useState<{
@@ -80,11 +85,45 @@ export default function ChatDetail() {
     messageId: Id<"messages"> | null;
   }>({ isOpen: false, imageUrl: null, isLoading: false, messageId: null });
 
-  // Fetch selected album when an album is selected
-  const selectedAlbum = useQuery(
-    api.albums.getAlbum,
-    selectedAlbumId ? { albumId: selectedAlbumId } : "skip"
+  // Album viewer state
+  const [albumViewerState, setAlbumViewerState] = useState<{
+    isOpen: boolean;
+    isLoading: boolean;
+    photos: Array<{ uri: string }>;
+    albumTitle: string;
+    messageId: Id<"messages"> | null;
+  }>({ isOpen: false, isLoading: false, photos: [], albumTitle: "", messageId: null });
+
+  // Fetch album photos for viewer (only when viewing an album)
+  const albumPhotosData = useQuery(
+    api.messages.getAlbumPhotosForMessage,
+    albumViewerState.messageId ? { messageId: albumViewerState.messageId } : "skip"
   );
+
+  // Update album viewer when photos are loaded
+  useEffect(() => {
+    if (albumPhotosData && albumViewerState.isLoading) {
+      if (albumPhotosData.locked) {
+        // Album is locked/expired
+        setAlbumViewerState({
+          isOpen: false,
+          isLoading: false,
+          photos: [],
+          albumTitle: "",
+          messageId: null,
+        });
+        setError("This album has expired");
+      } else {
+        // Album is accessible
+        setAlbumViewerState((prev) => ({
+          ...prev,
+          isLoading: false,
+          photos: albumPhotosData.photos.map((p) => ({ uri: p.photoUrl })),
+          albumTitle: albumPhotosData.albumTitle || "Album",
+        }));
+      }
+    }
+  }, [albumPhotosData, albumViewerState.isLoading]);
 
   // Convert storage ID to URL for user profile picture
   const userImageUrl = useQuery(
@@ -112,6 +151,12 @@ export default function ChatDetail() {
       isOutgoing: msg.isOutgoing,
       viewOnce: msg.viewOnce,
       viewOnceOpened: msg.viewOnceOpened,
+      // Album fields
+      albumId: msg.albumId,
+      albumExpiresAt: msg.albumExpiresAt,
+      albumTitle: msg.albumTitle,
+      albumCoverUrl: msg.albumCoverUrl,
+      albumPhotoCount: msg.albumPhotoCount,
     }));
   }, [messagesData]);
 
@@ -135,10 +180,16 @@ export default function ChatDetail() {
 
     setError(null);
     try {
+      // Upload images first if there are any attached
+      let uploadedImageUrls: string[] | undefined;
+      if (attachedImageUris.length > 0) {
+        uploadedImageUrls = await uploadImages(attachedImageUris);
+      }
+
       await sendMessage({
         otherUserId,
         text: message,
-        imageUrls: attachedImageUris.length > 0 ? attachedImageUris : undefined,
+        imageUrls: uploadedImageUrls,
       });
       setMessage("");
       setAttachedImageUris([]);
@@ -158,10 +209,13 @@ export default function ChatDetail() {
 
     setError(null);
     try {
+      // Upload image first
+      const uploadedImageUrl = await uploadImage(imageUri);
+
       await sendMessage({
         otherUserId,
         text: "",
-        imageUrls: [imageUri],
+        imageUrls: [uploadedImageUrl],
         viewOnce: viewOnce ?? false,
       });
     } catch (error) {
@@ -230,38 +284,41 @@ export default function ChatDetail() {
     selectAlbumModalRef.current?.present();
   };
 
-  const handleAlbumSelected = (album: AppAlbum) => {
-    // Set the selected album ID to trigger the query
-    setSelectedAlbumId(album._id);
+  const handleAlbumSelected = async (album: AppAlbum, durationMs: number) => {
+    if (!otherUserId) return;
+
+    setError(null);
+    try {
+      await sendAlbumMessage({
+        otherUserId,
+        albumId: album._id,
+        durationMs,
+      });
+    } catch (error) {
+      setError(getConvexErrorMessage(error));
+      console.error("Error sending album:", error);
+    }
   };
 
-  // Send album photos when album is loaded
-  useEffect(() => {
-    if (!selectedAlbum || !otherUserId || selectedAlbum.photos.length === 0) {
-      return;
-    }
+  const handleAlbumMessagePress = (messageId: Id<"messages">) => {
+    setAlbumViewerState({
+      isOpen: true,
+      isLoading: true,
+      photos: [],
+      albumTitle: "",
+      messageId,
+    });
+  };
 
-    const sendAlbumPhotos = async () => {
-      setError(null);
-      try {
-        // Send all album photos as a single message with multiple images
-        const photoUrls = selectedAlbum.photos.map((photo) => photo.photoUrl);
-        await sendMessage({
-          otherUserId: otherUserId!,
-          text: "",
-          imageUrls: photoUrls,
-        });
-        // Reset selected album ID after sending
-        setSelectedAlbumId(null);
-      } catch (error) {
-        setError(getConvexErrorMessage(error));
-        console.error("Error sending album:", error);
-        setSelectedAlbumId(null);
-      }
-    };
-
-    sendAlbumPhotos();
-  }, [selectedAlbum, otherUserId, sendMessage]);
+  const handleCloseAlbumViewer = () => {
+    setAlbumViewerState({
+      isOpen: false,
+      isLoading: false,
+      photos: [],
+      albumTitle: "",
+      messageId: null,
+    });
+  };
 
   const handleQuickReply = async (reply: string) => {
     if (!otherUserId) return;
@@ -275,6 +332,16 @@ export default function ChatDetail() {
     } catch (error) {
       setError(getConvexErrorMessage(error));
       console.error("Error sending quick reply:", error);
+    }
+  };
+
+  const handleStopSharing = async (messageId: Id<"messages">) => {
+    setError(null);
+    try {
+      await stopAlbumSharing({ messageId });
+    } catch (error) {
+      setError(getConvexErrorMessage(error));
+      console.error("Error stopping album sharing:", error);
     }
   };
 
@@ -373,6 +440,18 @@ export default function ChatDetail() {
                   viewOnce={msg.viewOnce}
                   viewOnceOpened={msg.viewOnceOpened}
                   onViewOncePress={() => handleViewOncePress(msg.id)}
+                  // Album props
+                  albumId={msg.albumId}
+                  albumExpiresAt={msg.albumExpiresAt}
+                  albumTitle={msg.albumTitle}
+                  albumCoverUrl={msg.albumCoverUrl}
+                  albumPhotoCount={msg.albumPhotoCount}
+                  onAlbumPress={() => handleAlbumMessagePress(msg.id)}
+                  onStopSharing={
+                    msg.isOutgoing && msg.albumId
+                      ? () => handleStopSharing(msg.id)
+                      : undefined
+                  }
                 />
               ))}
             </View>
@@ -403,6 +482,7 @@ export default function ChatDetail() {
             onBlur={() => setIsInputFocused(false)}
             attachedImageUris={attachedImageUris}
             onRemoveImage={handleRemoveImage}
+            isLoading={isUploading}
           />
         </View>
       </KeyboardAvoidingView>
@@ -429,6 +509,67 @@ export default function ChatDetail() {
         isLoading={viewOncePhotoState.isLoading}
         onClose={handleCloseViewOncePhoto}
       />
+
+      {/* Album Carousel Viewer */}
+      {albumViewerState.isLoading ? (
+        <View className="absolute inset-0 bg-black items-center justify-center z-50">
+          <ActivityIndicator size="large" color="#e56400" />
+          <Text className="text-white mt-4">Loading album...</Text>
+        </View>
+      ) : albumViewerState.isOpen && albumViewerState.photos.length > 0 ? (
+        <ImageViewing
+          images={albumViewerState.photos}
+          imageIndex={0}
+          visible={albumViewerState.isOpen}
+          onRequestClose={handleCloseAlbumViewer}
+          HeaderComponent={({ imageIndex }) => (
+            <AlbumViewerHeader
+              albumTitle={albumViewerState.albumTitle}
+              currentIndex={imageIndex}
+              totalCount={albumViewerState.photos.length}
+              onClose={handleCloseAlbumViewer}
+            />
+          )}
+          backgroundColor="#000000"
+          swipeToCloseEnabled
+          doubleTapToZoomEnabled
+        />
+      ) : null}
+    </View>
+  );
+}
+
+type AlbumViewerHeaderProps = {
+  albumTitle: string;
+  currentIndex: number;
+  totalCount: number;
+  onClose: () => void;
+};
+
+function AlbumViewerHeader({
+  albumTitle,
+  currentIndex,
+  totalCount,
+  onClose,
+}: AlbumViewerHeaderProps) {
+  return (
+    <View className="absolute top-0 left-0 right-0 z-10 flex-row items-center justify-between px-4 pt-safe pb-3 bg-black/50">
+      <Pressable
+        onPress={onClose}
+        className="size-10 items-center justify-center rounded-full"
+        hitSlop={8}
+      >
+        <Icon as={ArrowLeft} size={24} className="text-white" />
+      </Pressable>
+      <View className="flex-1 items-center">
+        <Text className="text-white text-base font-medium" numberOfLines={1}>
+          {albumTitle}
+        </Text>
+        <Text className="text-white/70 text-xs">
+          {currentIndex + 1} of {totalCount}
+        </Text>
+      </View>
+      <View className="size-10" />
     </View>
   );
 }

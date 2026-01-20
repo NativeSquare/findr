@@ -63,6 +63,12 @@ const documentSchema = {
   // View-once photo fields
   viewOnce: v.optional(v.boolean()),
   viewOnceOpened: v.optional(v.boolean()),
+  // Time-limited album sharing fields
+  albumId: v.optional(v.id("albums")),
+  albumExpiresAt: v.optional(v.number()), // Unix timestamp when album access expires
+  albumTitle: v.optional(v.string()), // Denormalized for display
+  albumCoverUrl: v.optional(v.string()), // Denormalized cover photo URL
+  albumPhotoCount: v.optional(v.number()), // Number of photos in the album
 };
 
 export const messages = defineTable(documentSchema)
@@ -218,6 +224,111 @@ export const sendMessageByConversationId = mutation({
     });
 
     // The trigger will update the conversation's lastMessageId and lastMessageTime
+    return messageId;
+  },
+});
+
+/**
+ * Send an album as a time-limited message.
+ * The album will be accessible for the specified duration.
+ */
+export const sendAlbumMessage = mutation({
+  args: {
+    otherUserId: v.id("users"),
+    albumId: v.id("albums"),
+    durationMs: v.number(), // Duration in milliseconds
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) {
+      throw new Error("Not authenticated");
+    }
+
+    if (currentUserId === args.otherUserId) {
+      throw new Error("Cannot send message to yourself");
+    }
+
+    // Check if other user exists
+    const otherUser = await ctx.db.get(args.otherUserId);
+    if (!otherUser) {
+      throw new Error("User not found");
+    }
+
+    // Get the album and verify ownership
+    const album = await ctx.db.get(args.albumId);
+    if (!album) {
+      throw new Error("Album not found");
+    }
+    if (album.userId !== currentUserId) {
+      throw new Error("Not authorized to share this album");
+    }
+
+    // Get album photos
+    const photos = await ctx.db
+      .query("albumPhotos")
+      .withIndex("albumId", (q) => q.eq("albumId", args.albumId))
+      .collect();
+
+    if (photos.length === 0) {
+      throw new Error("Album has no photos to share");
+    }
+
+    // Get cover photo URL
+    let coverPhotoUrl: string | undefined;
+    if (album.coverPhotoId) {
+      const coverPhoto = await ctx.db.get(album.coverPhotoId);
+      if (coverPhoto) {
+        coverPhotoUrl = coverPhoto.photoUrl;
+      }
+    }
+    if (!coverPhotoUrl && photos.length > 0) {
+      coverPhotoUrl = photos[0].photoUrl;
+    }
+
+    // Get or create conversation
+    const [participant1Id, participant2Id] =
+      currentUserId < args.otherUserId
+        ? [currentUserId, args.otherUserId]
+        : [args.otherUserId, currentUserId];
+
+    let conversation = await ctx.db
+      .query("conversations")
+      .withIndex("participants", (q) =>
+        q
+          .eq("participant1Id", participant1Id)
+          .eq("participant2Id", participant2Id)
+      )
+      .first();
+
+    if (!conversation) {
+      const conversationId = await ctx.db.insert("conversations", {
+        participant1Id,
+        participant2Id,
+      });
+      conversation = await ctx.db.get(conversationId);
+      if (!conversation) {
+        throw new Error("Failed to create conversation");
+      }
+    }
+
+    // Calculate expiration time
+    const now = Date.now();
+    const expiresAt = now + args.durationMs;
+
+    // Insert message with album data
+    const messageId = await ctx.db.insert("messages", {
+      conversationId: conversation._id,
+      senderId: currentUserId,
+      text: "",
+      read: false,
+      // Album fields
+      albumId: args.albumId,
+      albumExpiresAt: expiresAt,
+      albumTitle: album.title,
+      albumCoverUrl: coverPhotoUrl,
+      albumPhotoCount: photos.length,
+    });
+
     return messageId;
   },
 });
@@ -482,6 +593,12 @@ export const getMessagesByUserId = query({
       read: message.read ?? false,
       viewOnce: message.viewOnce ?? false,
       viewOnceOpened: message.viewOnceOpened ?? false,
+      // Album fields
+      albumId: message.albumId,
+      albumExpiresAt: message.albumExpiresAt,
+      albumTitle: message.albumTitle,
+      albumCoverUrl: message.albumCoverUrl,
+      albumPhotoCount: message.albumPhotoCount,
     }));
   },
 });
@@ -768,5 +885,104 @@ export const getTotalUnreadCount = query({
     }
 
     return totalUnread;
+  },
+});
+
+/**
+ * Stop sharing an album immediately by setting its expiration to now.
+ * Only the sender (album owner) can stop sharing.
+ */
+export const stopAlbumSharing = mutation({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) {
+      throw new Error("Not authenticated");
+    }
+
+    const message = await ctx.db.get(args.messageId);
+    if (!message) {
+      throw new Error("Message not found");
+    }
+
+    // Verify this is an album message
+    if (!message.albumId) {
+      throw new Error("This is not an album message");
+    }
+
+    // Only the sender (album owner) can stop sharing
+    if (message.senderId !== currentUserId) {
+      throw new Error("Only the album owner can stop sharing");
+    }
+
+    // Check if already expired
+    const now = Date.now();
+    if (message.albumExpiresAt && now > message.albumExpiresAt) {
+      throw new Error("Album sharing has already expired");
+    }
+
+    // Set expiration to now (immediately expire the album access)
+    await ctx.db.patch(args.messageId, {
+      albumExpiresAt: now,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Get album photos for a message. Returns the photos if the album is not expired,
+ * or a locked status if it has expired.
+ */
+export const getAlbumPhotosForMessage = query({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) return { locked: true, photos: [] };
+
+    const message = await ctx.db.get(args.messageId);
+    if (!message) return { locked: true, photos: [] };
+
+    // Verify this is an album message
+    if (!message.albumId) {
+      return { locked: true, photos: [] };
+    }
+
+    // Verify the user is a participant in the conversation
+    const conversation = await ctx.db.get(message.conversationId);
+    if (!conversation) return { locked: true, photos: [] };
+
+    if (
+      conversation.participant1Id !== currentUserId &&
+      conversation.participant2Id !== currentUserId
+    ) {
+      return { locked: true, photos: [] };
+    }
+
+    // Check if the album has expired
+    const now = Date.now();
+    if (message.albumExpiresAt && now > message.albumExpiresAt) {
+      return { locked: true, photos: [] };
+    }
+
+    // Get the album photos
+    const photos = await ctx.db
+      .query("albumPhotos")
+      .withIndex("albumId", (q) => q.eq("albumId", message.albumId!))
+      .collect();
+
+    return {
+      locked: false,
+      photos: photos.map((photo) => ({
+        _id: photo._id,
+        photoUrl: photo.photoUrl,
+      })),
+      albumTitle: message.albumTitle,
+      expiresAt: message.albumExpiresAt,
+    };
   },
 });

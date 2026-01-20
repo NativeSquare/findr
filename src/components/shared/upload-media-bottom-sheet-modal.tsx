@@ -12,7 +12,7 @@ import type { CameraCapturedPicture } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, Image, Images, LucideIcon } from "lucide-react-native";
 import * as React from "react";
-import { Alert, Dimensions, Linking, View } from "react-native";
+import { Alert, Dimensions, Keyboard, Linking, View } from "react-native";
 
 interface UploadMediaBottomSheetModalProps {
   bottomSheetModalRef: React.RefObject<GorhomBottomSheetModal | null>;
@@ -194,8 +194,12 @@ export function UploadMediaBottomSheetModal({
       icon: Images,
       label: "Album",
       onPress: () => {
+        Keyboard.dismiss();
         bottomSheetModalRef.current?.dismiss();
-        onAlbumPress?.();
+        // Small delay to ensure the first bottom sheet is fully dismissed
+        setTimeout(() => {
+          onAlbumPress?.();
+        }, 100);
       },
     },
   };

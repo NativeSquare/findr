@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, Send, X } from "lucide-react-native";
-import { Image, Pressable, ScrollView, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, ScrollView, View } from "react-native";
 
 export type MessageInputProps = {
   value: string;
@@ -15,6 +15,7 @@ export type MessageInputProps = {
   onBlur?: () => void;
   attachedImageUris?: string[];
   onRemoveImage?: (index: number) => void;
+  isLoading?: boolean;
 };
 
 export function MessageInput({
@@ -28,8 +29,10 @@ export function MessageInput({
   onBlur,
   attachedImageUris = [],
   onRemoveImage,
+  isLoading = false,
 }: MessageInputProps) {
   const hasContent = value.trim().length > 0 || attachedImageUris.length > 0;
+  const isDisabled = !hasContent || isLoading;
 
   return (
     <View className="px-5 pb-4">
@@ -75,10 +78,14 @@ export function MessageInput({
           variant="default"
           size="icon"
           onPress={onSend}
-          disabled={!hasContent}
-          className={!hasContent ? "opacity-50" : ""}
+          disabled={isDisabled}
+          className={isDisabled ? "opacity-50" : ""}
         >
-          <Icon as={Send} size={20} className="text-white" />
+          {isLoading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Icon as={Send} size={20} className="text-white" />
+          )}
         </Button>
       </View>
     </View>

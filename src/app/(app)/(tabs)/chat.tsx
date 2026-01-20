@@ -1,6 +1,6 @@
 import { AlbumListItem } from "@/components/app/chat/album-list-item";
 import { ChatListItem } from "@/components/app/chat/chat-list-item";
-import { CreateAlbumBottomSheet } from "@/components/app/chat/create-album-bottom-sheet";
+import { CreateAlbumModal } from "@/components/app/chat/create-album-modal";
 import { DeleteAlbumBottomSheet } from "@/components/app/chat/delete-album-bottom-sheet";
 import { SearchInput } from "@/components/custom/search-input";
 import { Icon } from "@/components/ui/icon";
@@ -23,7 +23,7 @@ export default function Chat() {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<ChatTabType>("Chats");
   const [searchQuery, setSearchQuery] = useState("");
-  const createAlbumSheetRef = useRef<GorhomBottomSheetModal>(null);
+  const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
   const deleteAlbumSheetRef = useRef<GorhomBottomSheetModal>(null);
   const [albumToDelete, setAlbumToDelete] = useState<{
     id: Id<"albums">;
@@ -77,7 +77,7 @@ export default function Chat() {
   );
 
   const handleCreateAlbum = () => {
-    createAlbumSheetRef.current?.present();
+    setIsCreateAlbumModalOpen(true);
   };
 
   const handleAlbumCreated = () => {
@@ -260,8 +260,9 @@ export default function Chat() {
         )}
       </ScrollView>
 
-      <CreateAlbumBottomSheet
-        bottomSheetModalRef={createAlbumSheetRef}
+      <CreateAlbumModal
+        open={isCreateAlbumModalOpen}
+        onOpenChange={setIsCreateAlbumModalOpen}
         onAlbumCreated={handleAlbumCreated}
       />
 

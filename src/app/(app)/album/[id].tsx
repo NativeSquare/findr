@@ -1,12 +1,15 @@
 import { AlbumPhotoItem } from "@/components/app/album/album-photo-item";
+import { UploadMediaBottomSheetModal } from "@/components/shared/upload-media-bottom-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { useUploadImage } from "@/hooks/use-upload-image";
 import { getConvexErrorMessage } from "@/utils/getConvexErrorMessage";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
+import type { ImagePickerAsset } from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Image as ImageIcon, Plus } from "lucide-react-native";
 import { useRef, useState } from "react";
@@ -21,28 +24,32 @@ export default function AlbumDetail() {
   const addPhotoToAlbum = useMutation(api.albums.addPhotoToAlbum);
   const deletePhotoFromAlbum = useMutation(api.albums.deletePhotoFromAlbum);
   const setCoverPhoto = useMutation(api.albums.setCoverPhoto);
-  const [isUploading, setIsUploading] = useState(false);
+  const { uploadImage, isUploading } = useUploadImage();
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<
     Set<Id<"albumPhotos">>
   >(new Set());
 
-  const handleImageSelected = async (imageUri: string) => {
-    if (!id || isUploading) return;
+  const handleImagesSelected = async (images: ImagePickerAsset[]) => {
+    if (!id || isUploading || images.length === 0) return;
 
-    setIsUploading(true);
     try {
-      await addPhotoToAlbum({
-        albumId: id,
-        photoUrl: imageUri,
-      });
+      // Upload all selected images
+      for (const image of images) {
+        // Upload and compress the image
+        const uploadedUrl = await uploadImage(image.uri);
+        
+        // Add the uploaded photo to the album
+        await addPhotoToAlbum({
+          albumId: id,
+          photoUrl: uploadedUrl,
+        });
+      }
     } catch (error) {
       console.error(
         "Failed to add photo to album:",
         getConvexErrorMessage(error)
       );
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -217,7 +224,7 @@ export default function AlbumDetail() {
       {isEditMode && (
         <View
           className="px-5 pb-5 bg-black border-t border-[#26272b]"
-          style={{ paddingBottom: insets.bottom + 20 }}
+          style={{ paddingBottom: insets.bottom + 40 }}
         >
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-xs leading-[18px] text-white">
@@ -230,33 +237,34 @@ export default function AlbumDetail() {
           <View className="flex-row gap-3">
             <Button
               variant="outline"
-              className="flex-1 border border-[#f04438] rounded-full px-5 py-3"
+              className="flex-1 rounded-full border-primary"
               onPress={handleRemovePhotos}
               disabled={selectedCount === 0}
             >
-              <Text className="text-[#f04438] text-base font-medium leading-6">
+              <Text className="text-primary text-base font-medium leading-6">
                 Remove
               </Text>
             </Button>
             <Button
               variant="default"
-              className="flex-1 bg-[#e56400] rounded-full px-5 py-3"
+              className="flex-1 rounded-full"
               onPress={handleSetAsCover}
               disabled={!canSetCover}
             >
               <Text className="text-black text-base font-medium leading-6">
-                Set a cover
+                Set as cover
               </Text>
             </Button>
           </View>
         </View>
       )}
 
-      {/* <UploadMediaBottomSheetModal
+      <UploadMediaBottomSheetModal
         bottomSheetModalRef={uploadMediaBottomSheetRef}
-        onImageSelected={handleImageSelected}
+        onImagesSelected={handleImagesSelected}
         options={["camera", "gallery"]}
-      /> */}
+        allowsMultipleSelection
+      />
     </View>
   );
 }
