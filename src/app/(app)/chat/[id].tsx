@@ -1,10 +1,6 @@
 import { MessageBubble } from "@/components/app/chat/message-bubble";
 import { MessageInput } from "@/components/app/chat/message-input";
 import { QuickReplies } from "@/components/app/chat/quick-replies";
-import {
-    SelectAlbumModal,
-    type AppAlbum,
-} from "@/components/app/chat/select-album-modal";
 import { ViewOncePhotoViewer } from "@/components/app/chat/view-once-photo-viewer";
 import { UploadMediaBottomSheetModal } from "@/components/shared/upload-media-bottom-sheet-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,7 +19,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -31,7 +26,6 @@ import {
     ScrollView,
     View,
 } from "react-native";
-import ImageViewing from "react-native-image-viewing";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type ChatState = "empty" | "quick-replies" | "messages";
@@ -45,7 +39,6 @@ export default function ChatDetail() {
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [attachedImageUris, setAttachedImageUris] = useState<string[]>([]);
   const uploadMediaBottomSheetRef = useRef<BottomSheetModal>(null);
-  const selectAlbumModalRef = useRef<BottomSheetModal>(null);
 
   const otherUserId = id as Id<"users"> | undefined;
 
@@ -69,10 +62,8 @@ export default function ChatDetail() {
 
   // Mutations
   const sendMessage = useMutation(api.messages.sendMessage);
-  const sendAlbumMessage = useMutation(api.messages.sendAlbumMessage);
   const markMessagesAsRead = useMutation(api.messages.markMessagesAsRead);
   const openViewOncePhoto = useMutation(api.messages.openViewOncePhoto);
-  const stopAlbumSharing = useMutation(api.messages.stopAlbumSharing);
 
   // Image upload hook
   const { uploadImage, uploadImages, isUploading } = useUploadImage();
@@ -84,46 +75,6 @@ export default function ChatDetail() {
     isLoading: boolean;
     messageId: Id<"messages"> | null;
   }>({ isOpen: false, imageUrl: null, isLoading: false, messageId: null });
-
-  // Album viewer state
-  const [albumViewerState, setAlbumViewerState] = useState<{
-    isOpen: boolean;
-    isLoading: boolean;
-    photos: Array<{ uri: string }>;
-    albumTitle: string;
-    messageId: Id<"messages"> | null;
-  }>({ isOpen: false, isLoading: false, photos: [], albumTitle: "", messageId: null });
-
-  // Fetch album photos for viewer (only when viewing an album)
-  const albumPhotosData = useQuery(
-    api.messages.getAlbumPhotosForMessage,
-    albumViewerState.messageId ? { messageId: albumViewerState.messageId } : "skip"
-  );
-
-  // Update album viewer when photos are loaded
-  useEffect(() => {
-    if (albumPhotosData && albumViewerState.isLoading) {
-      if (albumPhotosData.locked) {
-        // Album is locked/expired
-        setAlbumViewerState({
-          isOpen: false,
-          isLoading: false,
-          photos: [],
-          albumTitle: "",
-          messageId: null,
-        });
-        setError("This album has expired");
-      } else {
-        // Album is accessible
-        setAlbumViewerState((prev) => ({
-          ...prev,
-          isLoading: false,
-          photos: albumPhotosData.photos.map((p) => ({ uri: p.photoUrl })),
-          albumTitle: albumPhotosData.albumTitle || "Album",
-        }));
-      }
-    }
-  }, [albumPhotosData, albumViewerState.isLoading]);
 
   // Convert storage ID to URL for user profile picture
   const userImageUrl = useQuery(

@@ -35,7 +35,7 @@ export function UploadMediaBottomSheetModal({
   onImageSelected,
   onImagesSelected,
   onAlbumPress,
-  options = ["camera", "gallery", "album"],
+  options = ["camera", "gallery"],
   allowsEditing = false,
   allowsMultipleSelection = false,
   aspect,
