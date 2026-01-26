@@ -102,12 +102,6 @@ export default function ChatDetail() {
       isOutgoing: msg.isOutgoing,
       viewOnce: msg.viewOnce,
       viewOnceOpened: msg.viewOnceOpened,
-      // Album fields
-      albumId: msg.albumId,
-      albumExpiresAt: msg.albumExpiresAt,
-      albumTitle: msg.albumTitle,
-      albumCoverUrl: msg.albumCoverUrl,
-      albumPhotoCount: msg.albumPhotoCount,
     }));
   }, [messagesData]);
 
@@ -231,46 +225,6 @@ export default function ChatDetail() {
     uploadMediaBottomSheetRef.current?.present();
   };
 
-  const handleAlbumPress = () => {
-    selectAlbumModalRef.current?.present();
-  };
-
-  const handleAlbumSelected = async (album: AppAlbum, durationMs: number) => {
-    if (!otherUserId) return;
-
-    setError(null);
-    try {
-      await sendAlbumMessage({
-        otherUserId,
-        albumId: album._id,
-        durationMs,
-      });
-    } catch (error) {
-      setError(getConvexErrorMessage(error));
-      console.error("Error sending album:", error);
-    }
-  };
-
-  const handleAlbumMessagePress = (messageId: Id<"messages">) => {
-    setAlbumViewerState({
-      isOpen: true,
-      isLoading: true,
-      photos: [],
-      albumTitle: "",
-      messageId,
-    });
-  };
-
-  const handleCloseAlbumViewer = () => {
-    setAlbumViewerState({
-      isOpen: false,
-      isLoading: false,
-      photos: [],
-      albumTitle: "",
-      messageId: null,
-    });
-  };
-
   const handleQuickReply = async (reply: string) => {
     if (!otherUserId) return;
 
@@ -283,16 +237,6 @@ export default function ChatDetail() {
     } catch (error) {
       setError(getConvexErrorMessage(error));
       console.error("Error sending quick reply:", error);
-    }
-  };
-
-  const handleStopSharing = async (messageId: Id<"messages">) => {
-    setError(null);
-    try {
-      await stopAlbumSharing({ messageId });
-    } catch (error) {
-      setError(getConvexErrorMessage(error));
-      console.error("Error stopping album sharing:", error);
     }
   };
 
@@ -391,18 +335,6 @@ export default function ChatDetail() {
                   viewOnce={msg.viewOnce}
                   viewOnceOpened={msg.viewOnceOpened}
                   onViewOncePress={() => handleViewOncePress(msg.id)}
-                  // Album props
-                  albumId={msg.albumId}
-                  albumExpiresAt={msg.albumExpiresAt}
-                  albumTitle={msg.albumTitle}
-                  albumCoverUrl={msg.albumCoverUrl}
-                  albumPhotoCount={msg.albumPhotoCount}
-                  onAlbumPress={() => handleAlbumMessagePress(msg.id)}
-                  onStopSharing={
-                    msg.isOutgoing && msg.albumId
-                      ? () => handleStopSharing(msg.id)
-                      : undefined
-                  }
                 />
               ))}
             </View>
@@ -441,17 +373,10 @@ export default function ChatDetail() {
       <UploadMediaBottomSheetModal
         bottomSheetModalRef={uploadMediaBottomSheetRef}
         onImagesSelected={handleImagesSelected}
-        onAlbumPress={handleAlbumPress}
-        options={["camera", "gallery", "album"]}
         allowsMultipleSelection
         showCameraConfirmation
         onCameraSend={handleCameraSend}
         showViewOnceOption
-      />
-
-      <SelectAlbumModal
-        bottomSheetModalRef={selectAlbumModalRef}
-        onAlbumSelected={handleAlbumSelected}
       />
 
       <ViewOncePhotoViewer
@@ -460,67 +385,6 @@ export default function ChatDetail() {
         isLoading={viewOncePhotoState.isLoading}
         onClose={handleCloseViewOncePhoto}
       />
-
-      {/* Album Carousel Viewer */}
-      {albumViewerState.isLoading ? (
-        <View className="absolute inset-0 bg-black items-center justify-center z-50">
-          <ActivityIndicator size="large" color="#e56400" />
-          <Text className="text-white mt-4">Loading album...</Text>
-        </View>
-      ) : albumViewerState.isOpen && albumViewerState.photos.length > 0 ? (
-        <ImageViewing
-          images={albumViewerState.photos}
-          imageIndex={0}
-          visible={albumViewerState.isOpen}
-          onRequestClose={handleCloseAlbumViewer}
-          HeaderComponent={({ imageIndex }) => (
-            <AlbumViewerHeader
-              albumTitle={albumViewerState.albumTitle}
-              currentIndex={imageIndex}
-              totalCount={albumViewerState.photos.length}
-              onClose={handleCloseAlbumViewer}
-            />
-          )}
-          backgroundColor="#000000"
-          swipeToCloseEnabled
-          doubleTapToZoomEnabled
-        />
-      ) : null}
-    </View>
-  );
-}
-
-type AlbumViewerHeaderProps = {
-  albumTitle: string;
-  currentIndex: number;
-  totalCount: number;
-  onClose: () => void;
-};
-
-function AlbumViewerHeader({
-  albumTitle,
-  currentIndex,
-  totalCount,
-  onClose,
-}: AlbumViewerHeaderProps) {
-  return (
-    <View className="absolute top-0 left-0 right-0 z-10 flex-row items-center justify-between px-4 pt-safe pb-3 bg-black/50">
-      <Pressable
-        onPress={onClose}
-        className="size-10 items-center justify-center rounded-full"
-        hitSlop={8}
-      >
-        <Icon as={ArrowLeft} size={24} className="text-white" />
-      </Pressable>
-      <View className="flex-1 items-center">
-        <Text className="text-white text-base font-medium" numberOfLines={1}>
-          {albumTitle}
-        </Text>
-        <Text className="text-white/70 text-xs">
-          {currentIndex + 1} of {totalCount}
-        </Text>
-      </View>
-      <View className="size-10" />
     </View>
   );
 }
