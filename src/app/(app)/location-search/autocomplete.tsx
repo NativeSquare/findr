@@ -159,7 +159,7 @@ export default function LocationAutocomplete() {
       // Reset token once a place is chosen (new typing session next time)
       sessionTokenRef.current = makeSessionToken();
 
-      router.navigate({
+      router.replace({
         pathname: "/(app)/location-search",
         params: {
           selectedLat: String(lat),
@@ -177,7 +177,7 @@ export default function LocationAutocomplete() {
   };
 
   const handleUseCurrentLocation = () => {
-    router.navigate({
+    router.replace({
       pathname: "/(app)/location-search",
       params: {
         useCurrentLocation: "true",
