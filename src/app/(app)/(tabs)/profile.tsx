@@ -1,24 +1,27 @@
 import { DeleteAccountBottomSheet } from "@/components/app/settings/delete-account-bottom-sheet";
+import { MeasurementSystemRow } from "@/components/app/settings/measurement-system-row";
+import { MeasurementSystemSheet } from "@/components/app/settings/measurement-system-sheet";
 import {
-  SettingItem,
-  SettingsRow,
+    SettingItem,
+    SettingsRow,
 } from "@/components/app/settings/settings-row";
 import { Text } from "@/components/ui/text";
+import type { MeasurementSystem } from "@/utils/measurements";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@convex/_generated/api";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
 import {
-  File,
-  FileText,
-  LockOpen,
-  LogOut,
-  MessageCircle,
-  Pencil,
-  ShieldCheck,
-  UserMinus,
-  XCircle,
+    File,
+    FileText,
+    LockOpen,
+    LogOut,
+    MessageCircle,
+    Pencil,
+    ShieldCheck,
+    UserMinus,
+    XCircle,
 } from "lucide-react-native";
 import React from "react";
 import { Alert, ScrollView, View } from "react-native";
@@ -26,9 +29,19 @@ import { Alert, ScrollView, View } from "react-native";
 export default function Profile() {
   const { signOut } = useAuthActions();
   const deleteUser = useMutation(api.users.del);
+  const patchUser = useMutation(api.users.patch);
   const user = useQuery(api.users.currentUser);
   const deleteAccountBottomSheetRef =
     React.useRef<GorhomBottomSheetModal>(null);
+  const measurementSystemSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+
+  const handleMeasurementSystemChange = React.useCallback(
+    async (system: MeasurementSystem) => {
+      if (!user?._id) return;
+      await patchUser({ id: user._id, data: { measurementSystem: system } });
+    },
+    [user?._id, patchUser]
+  );
 
   const handleDeleteAccount = React.useCallback(() => {
     deleteAccountBottomSheetRef.current?.present();
@@ -127,6 +140,10 @@ export default function Profile() {
         </Text>
 
         <View className="flex-col">
+          <MeasurementSystemRow
+            value={user?.measurementSystem ?? "metric"}
+            onPress={() => measurementSystemSheetRef.current?.present()}
+          />
           {settingsItems.map((item) => (
             <SettingsRow key={item.label} {...item} />
           ))}
@@ -136,6 +153,12 @@ export default function Profile() {
       <DeleteAccountBottomSheet
         bottomSheetModalRef={deleteAccountBottomSheetRef}
         onConfirm={handleConfirmDeleteAccount}
+      />
+
+      <MeasurementSystemSheet
+        ref={measurementSystemSheetRef}
+        value={user?.measurementSystem ?? "metric"}
+        onChange={handleMeasurementSystemChange}
       />
     </ScrollView>
   );

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { Filter } from "lucide-react-native";
+import { Settings2 } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
 
 export type HomeFiltersRowProps = {
@@ -29,7 +29,7 @@ export function HomeFiltersRow({
         className="flex-row items-center gap-1.5"
         onPress={onFilterPress}
       >
-        <Icon as={Filter} size={16} />
+        <Icon as={Settings2} size={16} />
       </Button>
       {activeFilterLabels.map((label, index) => (
         <View

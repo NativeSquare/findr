@@ -1,8 +1,11 @@
 import { EditProfileFormData } from "@/app/(app)/edit-profile";
+import type { MeasurementSystem } from "@/utils/measurements";
+import { api } from "@convex/_generated/api";
+import { useQuery } from "convex/react";
 import React from "react";
 import { View } from "react-native";
-import { BirthDateField } from "../profile/birth-date-field";
 import { BioField } from "../profile/bio-field";
+import { BirthDateField } from "../profile/birth-date-field";
 import { HeightField } from "../profile/height-field";
 import { NameField } from "../profile/name-field";
 import { WeightField } from "../profile/weight-field";
@@ -14,6 +17,8 @@ export function PersonalInfoTab({
   formData: EditProfileFormData;
   setFormData: (data: EditProfileFormData) => void;
 }) {
+  const user = useQuery(api.users.currentUser);
+  const measurementSystem: MeasurementSystem = user?.measurementSystem ?? "metric";
   return (
     <View className="gap-5">
       <NameField
@@ -33,12 +38,14 @@ export function PersonalInfoTab({
 
       <HeightField
         value={formData.height?.value ? formData.height?.value.toString() : ""}
+        unit={formData.height?.unit || "cm"}
+        measurementSystem={measurementSystem}
         onChangeHeight={(value) =>
           setFormData({
             ...formData,
             height: {
               value: Number(value),
-              unit: formData.height?.unit || "cm",
+              unit: "cm", // Always store in cm
             },
           })
         }
@@ -55,12 +62,14 @@ export function PersonalInfoTab({
 
       <WeightField
         value={formData.weight?.value ? formData.weight?.value.toString() : ""}
+        unit={formData.weight?.unit || "kg"}
+        measurementSystem={measurementSystem}
         onChangeWeight={(value) =>
           setFormData({
             ...formData,
             weight: {
               value: Number(value),
-              unit: formData.weight?.unit || "kg",
+              unit: "kg", // Always store in kg
             },
           })
         }

@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Text } from "@/components/ui/text";
+import { formatDistance } from "@/utils/measurements";
 import { PresenceState } from "@convex-dev/presence/react-native";
 import { api } from "@convex/_generated/api";
 import { Doc } from "@convex/_generated/dataModel";
@@ -20,6 +21,7 @@ export function NearestUsersGridItem({
   userItem,
   presenceState,
 }: NearestUsersGridItemProps) {
+  const currentUser = useQuery(api.users.currentUser);
   const imageUrl = useQuery(
     api.storage.getImageUrl,
     userItem.profilePictures?.[0]
@@ -31,7 +33,8 @@ export function NearestUsersGridItem({
   const userPresenceState = (presenceState || []).find(
     (state) => state.userId === userItem._id
   );
-  const distance = (userItem.distance / 1000).toFixed(1);
+  const measurementSystem = currentUser?.measurementSystem ?? "metric";
+  const distanceText = formatDistance(userItem.distance, measurementSystem);
   // If user has hidden their online status, always show as offline (gray)
   const isOnline =
     userItem.privacy?.hideOnlineStatus === true
@@ -83,7 +86,7 @@ export function NearestUsersGridItem({
           </Text>
         </View>
         <Text className="text-xs font-normal text-white">
-          {distance} km away
+          {distanceText} away
         </Text>
       </View>
     </Pressable>

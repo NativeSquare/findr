@@ -66,6 +66,7 @@ const documentSchema = {
       hideProfileFromDiscovery: v.optional(v.boolean()),
     })
   ),
+  measurementSystem: v.optional(v.union(v.literal("metric"), v.literal("imperial"))),
   profilePictures: v.optional(v.array(v.id("_storage"))),
   position: v.optional(v.string()),
   ethnicity: v.optional(v.string()),

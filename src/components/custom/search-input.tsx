@@ -11,7 +11,7 @@ export function SearchInput({
 }: TextInputProps & React.RefAttributes<TextInput>) {
   return (
     <View className="relative">
-      <View className="absolute left-3 top-1/2 -translate-y-1/2">
+      <View className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
         <Ionicons
           name="search-outline"
           size={20}
@@ -20,7 +20,7 @@ export function SearchInput({
       </View>
       <Input
         placeholder={props.placeholder ?? "Search"}
-        className={cn("pl-10", className)}
+        className={cn("pl-12 rounded-full", className)}
         placeholderClassName={placeholderClassName}
         {...props}
       />

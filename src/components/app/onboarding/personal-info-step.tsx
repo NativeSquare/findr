@@ -1,5 +1,6 @@
 import { OnboardingFormData } from "@/app/(onboarding)";
 import { calculateAge } from "@/utils/calculateAge";
+import type { MeasurementSystem } from "@/utils/measurements";
 import * as React from "react";
 import { View } from "react-native";
 import { BirthDateField } from "../profile/birth-date-field";
@@ -12,10 +13,12 @@ export function PersonalInfoStep({
   formData,
   setFormData,
   showErrors = false,
+  measurementSystem = "metric",
 }: {
   formData: OnboardingFormData;
   setFormData: (data: OnboardingFormData) => void;
   showErrors?: boolean;
+  measurementSystem?: MeasurementSystem;
 }) {
   const age = formData.birthDate ? calculateAge(formData.birthDate) : null;
   const isBirthDateMissing = showErrors && !formData.birthDate;
@@ -43,12 +46,14 @@ export function PersonalInfoStep({
 
       <HeightField
         value={formData.height?.value ? formData.height?.value.toString() : ""}
+        unit={formData.height?.unit || "cm"}
+        measurementSystem={measurementSystem}
         onChangeHeight={(value) =>
           setFormData({
             ...formData,
             height: {
               value: Number(value),
-              unit: formData.height?.unit || "cm",
+              unit: "cm", // Always store in cm
             },
           })
         }
@@ -65,12 +70,14 @@ export function PersonalInfoStep({
 
       <WeightField
         value={formData.weight?.value ? formData.weight?.value.toString() : ""}
+        unit={formData.weight?.unit || "kg"}
+        measurementSystem={measurementSystem}
         onChangeWeight={(value) =>
           setFormData({
             ...formData,
             weight: {
               value: Number(value),
-              unit: formData.weight?.unit || "kg",
+              unit: "kg", // Always store in kg
             },
           })
         }

@@ -3,21 +3,22 @@ import { BottomSheetModal } from "@/components/custom/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { formatHeight, formatWeight } from "@/utils/measurements";
 import { api } from "@convex/_generated/api";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import { useQuery } from "convex/react";
 import { router } from "expo-router";
 import {
-  Cake,
-  ChevronLeft,
-  Dumbbell,
-  Globe,
-  Heart,
-  Pencil,
-  Repeat,
-  Ruler,
-  Scale,
-  Users,
+    Cake,
+    ChevronLeft,
+    Dumbbell,
+    Globe,
+    Heart,
+    Pencil,
+    Repeat,
+    Ruler,
+    Scale,
+    Users,
 } from "lucide-react-native";
 import React, { useEffect, useRef } from "react";
 import { Pressable, View } from "react-native";
@@ -50,6 +51,7 @@ export default function MyProfile() {
     storageIds: user?.profilePictures ?? [],
   });
 
+  const measurementSystem = user?.measurementSystem ?? "metric";
   const age = user?.birthDate ? calculateAge(user.birthDate) : null;
   const shouldShowAge = user?.privacy?.hideAge !== true && age !== null;
 
@@ -160,7 +162,7 @@ export default function MyProfile() {
                   <View className="flex-row items-center gap-2">
                     <Icon as={Ruler} size={20} className="text-foreground" />
                     <Text className="text-base text-foreground">
-                      {user.height.value} {user.height.unit}
+                      {formatHeight(user.height.value, user.height.unit, measurementSystem)}
                     </Text>
                   </View>
                 )}
@@ -168,7 +170,7 @@ export default function MyProfile() {
                   <View className="flex-row items-center gap-2">
                     <Icon as={Scale} size={20} className="text-foreground" />
                     <Text className="text-base text-foreground">
-                      {user.weight.value} {user.weight.unit}
+                      {formatWeight(user.weight.value, user.weight.unit, measurementSystem)}
                     </Text>
                   </View>
                 )}

@@ -2,7 +2,7 @@ import { HomeFiltersRow } from "@/components/app/home/home-filters-row";
 import { HomeHeader } from "@/components/app/home/home-header";
 import { NearestUsersGridItem } from "@/components/app/home/nearest-users-grid-item";
 import { NearestUsersGridItemSkeleton } from "@/components/app/home/nearest-users-grid-item-skeleton";
-import { Text } from "@/components/ui/text";
+import { cmToFeetInches, kgToLbs } from "@/utils/measurements";
 import { usePresence } from "@convex-dev/presence/react-native";
 import { api } from "@convex/_generated/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -120,6 +120,7 @@ export default function Home() {
   }, [filters]);
 
   // Get active filter labels
+  const measurementSystem = user?.measurementSystem ?? "metric";
   const activeFilterLabels = useMemo(() => {
     const labels: string[] = [];
 
@@ -134,14 +135,28 @@ export default function Home() {
       filters.minHeight !== DEFAULT_MIN_HEIGHT ||
       filters.maxHeight !== DEFAULT_MAX_HEIGHT
     ) {
-      labels.push(`${filters.minHeight}-${filters.maxHeight}cm`);
+      const minH = filters.minHeight ?? DEFAULT_MIN_HEIGHT;
+      const maxH = filters.maxHeight ?? DEFAULT_MAX_HEIGHT;
+      if (measurementSystem === "imperial") {
+        const minFt = cmToFeetInches(minH);
+        const maxFt = cmToFeetInches(maxH);
+        labels.push(`${minFt.feet}'${minFt.inches}"-${maxFt.feet}'${maxFt.inches}"`);
+      } else {
+        labels.push(`${minH}-${maxH}cm`);
+      }
     }
 
     if (
       filters.minWeight !== DEFAULT_MIN_WEIGHT ||
       filters.maxWeight !== DEFAULT_MAX_WEIGHT
     ) {
-      labels.push(`${filters.minWeight}-${filters.maxWeight}kg`);
+      const minW = filters.minWeight ?? DEFAULT_MIN_WEIGHT;
+      const maxW = filters.maxWeight ?? DEFAULT_MAX_WEIGHT;
+      if (measurementSystem === "imperial") {
+        labels.push(`${kgToLbs(minW)}-${kgToLbs(maxW)}lbs`);
+      } else {
+        labels.push(`${minW}-${maxW}kg`);
+      }
     }
 
     if (filters.lookingFor.length > 0) {
@@ -169,7 +184,7 @@ export default function Home() {
     }
 
     return labels;
-  }, [filters]);
+  }, [filters, measurementSystem]);
 
   const handleClearAll = async () => {
     setFilters(defaultFilters);
@@ -253,7 +268,6 @@ export default function Home() {
           onFilterPress={() => router.push("/filters")}
           onClearAll={handleClearAll}
         />
-        <Text className="text-lg font-medium">Who&apos;s nearby ?</Text>
         <View className="gap-1.5">
           {nearestUsers === undefined
             ? // Show skeleton loading state (3 rows, 3 items per row)

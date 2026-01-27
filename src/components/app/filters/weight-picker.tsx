@@ -1,4 +1,6 @@
 import { Text } from "@/components/ui/text";
+import type { MeasurementSystem } from "@/utils/measurements";
+import { kgToLbs } from "@/utils/measurements";
 import { Picker } from "@react-native-picker/picker";
 import * as React from "react";
 import { Platform, useColorScheme, View } from "react-native";
@@ -10,10 +12,18 @@ export type WeightPickerProps = {
   onMaxWeightChange: (weight: number) => void;
   minValue?: number;
   maxValue?: number;
+  measurementSystem?: MeasurementSystem;
 };
 
 const DEFAULT_MIN_WEIGHT = 40; // kg
 const DEFAULT_MAX_WEIGHT = 150; // kg
+
+function formatWeightLabel(kg: number, system: MeasurementSystem): string {
+  if (system === "imperial") {
+    return `${kgToLbs(kg)} lbs`;
+  }
+  return `${kg} kg`;
+}
 
 export function WeightPicker({
   minWeight,
@@ -22,6 +32,7 @@ export function WeightPicker({
   onMaxWeightChange,
   minValue = DEFAULT_MIN_WEIGHT,
   maxValue = DEFAULT_MAX_WEIGHT,
+  measurementSystem = "metric",
 }: WeightPickerProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -75,7 +86,7 @@ export function WeightPicker({
               {weightOptions.map((weight) => (
                 <Picker.Item
                   key={weight}
-                  label={`${weight} kg`}
+                  label={formatWeightLabel(weight, measurementSystem)}
                   value={weight}
                   enabled={weight <= internalMaxWeight}
                   color={weight <= internalMaxWeight ? textColor : iconColor}
@@ -99,7 +110,7 @@ export function WeightPicker({
               {weightOptions.map((weight) => (
                 <Picker.Item
                   key={weight}
-                  label={`${weight} kg`}
+                  label={formatWeightLabel(weight, measurementSystem)}
                   value={weight}
                   enabled={weight >= internalMinWeight}
                   color={weight >= internalMinWeight ? textColor : iconColor}

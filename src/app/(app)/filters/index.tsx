@@ -8,16 +8,18 @@ import { BottomSheetModal } from "@/components/custom/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { cmToFeetInches, kgToLbs } from "@/utils/measurements";
+import { api } from "@convex/_generated/api";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useQuery } from "convex/react";
 import { router } from "expo-router";
 import {
-  ChevronLeft,
-  Heart,
-  Ruler,
-  Sparkles,
-  User,
-  Weight,
+    ChevronLeft,
+    Heart,
+    Ruler,
+    Sparkles,
+    User
 } from "lucide-react-native";
 import React from "react";
 import { Pressable, ScrollView, View } from "react-native";
@@ -98,6 +100,9 @@ const RELATIONSHIP_STATUSES = [
 ];
 
 export default function Filters() {
+  const user = useQuery(api.users.currentUser);
+  const measurementSystem = user?.measurementSystem ?? "metric";
+  
   const defaultFilters: FilterData = {
     minAge: DEFAULT_MIN_AGE,
     maxAge: DEFAULT_MAX_AGE,
@@ -179,6 +184,11 @@ export default function Filters() {
     const max = filters.maxHeight ?? DEFAULT_MAX_HEIGHT;
     if (min === DEFAULT_MIN_HEIGHT && max === DEFAULT_MAX_HEIGHT)
       return undefined;
+    if (measurementSystem === "imperial") {
+      const minFt = cmToFeetInches(min);
+      const maxFt = cmToFeetInches(max);
+      return `${minFt.feet}'${minFt.inches}" - ${maxFt.feet}'${maxFt.inches}"`;
+    }
     return `${min}cm - ${max}cm`;
   };
 
@@ -187,6 +197,9 @@ export default function Filters() {
     const max = filters.maxWeight ?? DEFAULT_MAX_WEIGHT;
     if (min === DEFAULT_MIN_WEIGHT && max === DEFAULT_MAX_WEIGHT)
       return undefined;
+    if (measurementSystem === "imperial") {
+      return `${kgToLbs(min)}lbs - ${kgToLbs(max)}lbs`;
+    }
     return `${min}kg - ${max}kg`;
   };
 
@@ -423,6 +436,7 @@ export default function Filters() {
             onMaxHeightChange={(height) =>
               setFilters({ ...filters, maxHeight: height })
             }
+            measurementSystem={measurementSystem}
           />
           <Button onPress={() => heightRangeSheetRef.current?.dismiss()}>
             <Text className="text-base font-medium text-primary-foreground">
@@ -446,6 +460,7 @@ export default function Filters() {
             onMaxWeightChange={(weight) =>
               setFilters({ ...filters, maxWeight: weight })
             }
+            measurementSystem={measurementSystem}
           />
           <Button onPress={() => weightRangeSheetRef.current?.dismiss()}>
             <Text className="text-base font-medium text-primary-foreground">

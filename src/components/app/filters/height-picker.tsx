@@ -1,4 +1,6 @@
 import { Text } from "@/components/ui/text";
+import type { MeasurementSystem } from "@/utils/measurements";
+import { cmToFeetInches } from "@/utils/measurements";
 import { Picker } from "@react-native-picker/picker";
 import * as React from "react";
 import { Platform, useColorScheme, View } from "react-native";
@@ -10,10 +12,19 @@ export type HeightPickerProps = {
   onMaxHeightChange: (height: number) => void;
   minValue?: number;
   maxValue?: number;
+  measurementSystem?: MeasurementSystem;
 };
 
 const DEFAULT_MIN_HEIGHT = 120; // cm
 const DEFAULT_MAX_HEIGHT = 220; // cm
+
+function formatHeightLabel(cm: number, system: MeasurementSystem): string {
+  if (system === "imperial") {
+    const { feet, inches } = cmToFeetInches(cm);
+    return `${feet}'${inches}"`;
+  }
+  return `${cm} cm`;
+}
 
 export function HeightPicker({
   minHeight,
@@ -22,6 +33,7 @@ export function HeightPicker({
   onMaxHeightChange,
   minValue = DEFAULT_MIN_HEIGHT,
   maxValue = DEFAULT_MAX_HEIGHT,
+  measurementSystem = "metric",
 }: HeightPickerProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -75,7 +87,7 @@ export function HeightPicker({
               {heightOptions.map((height) => (
                 <Picker.Item
                   key={height}
-                  label={`${height} cm`}
+                  label={formatHeightLabel(height, measurementSystem)}
                   value={height}
                   enabled={height <= internalMaxHeight}
                   color={height <= internalMaxHeight ? textColor : iconColor}
@@ -99,7 +111,7 @@ export function HeightPicker({
               {heightOptions.map((height) => (
                 <Picker.Item
                   key={height}
-                  label={`${height} cm`}
+                  label={formatHeightLabel(height, measurementSystem)}
                   value={height}
                   enabled={height >= internalMinHeight}
                   color={height >= internalMinHeight ? textColor : iconColor}

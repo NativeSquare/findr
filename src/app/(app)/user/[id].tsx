@@ -3,11 +3,12 @@ import { BottomSheetModal } from "@/components/custom/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover";
 import { Text } from "@/components/ui/text";
+import { formatDistance, formatHeight, formatWeight } from "@/utils/measurements";
 import { usePresence } from "@convex-dev/presence/react-native";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
@@ -16,18 +17,18 @@ import { useMutation, useQuery } from "convex/react";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import {
-  Cake,
-  ChevronLeft,
-  Dumbbell,
-  Globe,
-  Heart,
-  MapPin,
-  MessageCircle,
-  Repeat,
-  Ruler,
-  Scale,
-  Smile,
-  Users,
+    Cake,
+    ChevronLeft,
+    Dumbbell,
+    Globe,
+    Heart,
+    MapPin,
+    MessageCircle,
+    Repeat,
+    Ruler,
+    Scale,
+    Smile,
+    Users,
 } from "lucide-react-native";
 import React, { useEffect, useRef } from "react";
 import { Pressable, View } from "react-native";
@@ -86,13 +87,14 @@ export default function UserProfile() {
       ? false
       : (userPresenceState?.online ?? false);
 
+  const measurementSystem = currentUser?.measurementSystem ?? "metric";
   const age = user?.birthDate ? calculateAge(user.birthDate) : null;
   const shouldShowAge = user?.privacy?.hideAge !== true && age !== null;
   const distance =
     user?.privacy?.hideDistance === true
       ? null
       : distanceInMeters !== null && distanceInMeters !== undefined
-        ? (distanceInMeters / 1000).toFixed(1)
+        ? formatDistance(distanceInMeters, measurementSystem)
         : null;
 
   const toggleFavorite = useMutation(api.users.toggleFavorite);
@@ -269,7 +271,7 @@ export default function UserProfile() {
             <View className="flex-row items-center gap-2">
               <Icon as={MapPin} size={16} className="text-muted-foreground" />
               <Text className="text-sm text-muted-foreground">
-                {distance} Km Away
+                {distance} Away
               </Text>
             </View>
           )}
@@ -326,7 +328,7 @@ export default function UserProfile() {
                   <View className="flex-row items-center gap-2">
                     <Icon as={Ruler} size={20} className="text-foreground" />
                     <Text className="text-base text-foreground">
-                      {user.height.value} {user.height.unit}
+                      {formatHeight(user.height.value, user.height.unit, measurementSystem)}
                     </Text>
                   </View>
                 )}
@@ -334,7 +336,7 @@ export default function UserProfile() {
                   <View className="flex-row items-center gap-2">
                     <Icon as={Scale} size={20} className="text-foreground" />
                     <Text className="text-base text-foreground">
-                      {user.weight.value} {user.weight.unit}
+                      {formatWeight(user.weight.value, user.weight.unit, measurementSystem)}
                     </Text>
                   </View>
                 )}
