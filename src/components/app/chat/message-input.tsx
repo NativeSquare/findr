@@ -69,7 +69,7 @@ export function MessageInput({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          className="flex-1"
+          className="flex-1 rounded-3xl"
           autoFocus={autoFocus}
           onFocus={onFocus}
           onBlur={onBlur}

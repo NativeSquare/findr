@@ -1,8 +1,8 @@
 import {
-    ContextMenu,
-    ContextMenuContent,
-    ContextMenuItem,
-    ContextMenuTrigger,
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -91,8 +91,8 @@ export function MessageBubble({
           <View
             className={`flex-row gap-2 items-center px-4 py-2.5 max-w-[80%] ${
               isOutgoing
-                ? "bg-[#f7cfb0] rounded-full rounded-br-lg"
-                : "bg-[#26272b] rounded-full rounded-bl-lg"
+                ? "bg-[#f7cfb0] rounded-full"
+                : "bg-[#26272b] rounded-full"
             }`}
           >
             <View className="flex-row items-center gap-1.5">
@@ -253,8 +253,8 @@ export function MessageBubble({
         <View
           className={`flex-row gap-4 items-center px-4 py-2.5 max-w-[80%] ${
             isOutgoing
-              ? "bg-[#f7cfb0] rounded-full rounded-br-lg"
-              : "bg-[#26272b] rounded-full rounded-bl-lg"
+              ? "bg-[#f7cfb0] rounded-full"
+              : "bg-[#26272b] rounded-full"
           }`}
         >
           <View className="flex-1">
@@ -383,8 +383,8 @@ export function MessageBubble({
       <View
         className={`flex-col gap-2 rounded-3xl max-w-[80%] ${
           isOutgoing
-            ? "bg-[#f7cfb0] rounded-br-lg"
-            : "bg-[#26272b] rounded-bl-lg"
+            ? "bg-[#f7cfb0] rounded-full"
+            : "bg-[#26272b] rounded-full"
         } ${hasText ? "px-4 py-2.5" : "p-0"}`}
       >
         {renderImages()}
