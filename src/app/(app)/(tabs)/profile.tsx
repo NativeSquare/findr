@@ -1,4 +1,5 @@
 import { DeleteAccountBottomSheet } from "@/components/app/settings/delete-account-bottom-sheet";
+import { ManageCachedPicturesSheet } from "@/components/app/settings/manage-cached-pictures-sheet";
 import { MeasurementSystemRow } from "@/components/app/settings/measurement-system-row";
 import { MeasurementSystemSheet } from "@/components/app/settings/measurement-system-sheet";
 import {
@@ -15,6 +16,7 @@ import { router } from "expo-router";
 import {
     File,
     FileText,
+    Images,
     LockOpen,
     LogOut,
     MessageCircle,
@@ -34,6 +36,7 @@ export default function Profile() {
   const deleteAccountBottomSheetRef =
     React.useRef<GorhomBottomSheetModal>(null);
   const measurementSystemSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const cachedPicturesSheetRef = React.useRef<GorhomBottomSheetModal>(null);
 
   const handleMeasurementSystemChange = React.useCallback(
     async (system: MeasurementSystem) => {
@@ -81,6 +84,11 @@ export default function Profile() {
       label: "Edit Profile",
       icon: Pencil,
       onPress: () => router.push("/edit-profile"),
+    },
+    {
+      label: "Cached Pictures",
+      icon: Images,
+      onPress: () => cachedPicturesSheetRef.current?.present(),
     },
     {
       label: "Terms & Conditions",
@@ -160,6 +168,8 @@ export default function Profile() {
         value={user?.measurementSystem ?? "metric"}
         onChange={handleMeasurementSystemChange}
       />
+
+      <ManageCachedPicturesSheet ref={cachedPicturesSheetRef} />
     </ScrollView>
   );
 }

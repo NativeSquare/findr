@@ -496,6 +496,7 @@ export default function ChatDetail() {
         showCameraConfirmation
         onCameraSend={handleCameraSend}
         showViewOnceOption
+        cacheOnSelect
       />
 
       <SelectAlbumModal

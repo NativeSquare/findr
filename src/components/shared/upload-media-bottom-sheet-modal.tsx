@@ -1,3 +1,4 @@
+import { CachedPicturesGrid } from "@/components/app/settings/cached-pictures-grid";
 import { BottomSheetModal } from "@/components/custom/bottom-sheet";
 import {
   CameraConfirmationModal,
@@ -7,6 +8,10 @@ import { CameraModal } from "@/components/shared/camera-modal";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import {
+  type CachedPicture,
+  useCachedPictures,
+} from "@/hooks/use-cached-pictures";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import type { CameraCapturedPicture } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
@@ -28,6 +33,10 @@ interface UploadMediaBottomSheetModalProps {
   onCameraSend?: (imageUri: string, viewOnce?: boolean) => void;
   /** Show view-once toggle in camera confirmation modal */
   showViewOnceOption?: boolean;
+  /** Show cached pictures section (default: true) */
+  showCachedPictures?: boolean;
+  /** Cache images when they are selected (default: false) */
+  cacheOnSelect?: boolean;
 }
 
 export function UploadMediaBottomSheetModal({
@@ -42,6 +51,8 @@ export function UploadMediaBottomSheetModal({
   showCameraConfirmation = false,
   onCameraSend,
   showViewOnceOption = false,
+  showCachedPictures = true,
+  cacheOnSelect = false,
 }: UploadMediaBottomSheetModalProps) {
   const [pendingCameraImage, setPendingCameraImage] =
     React.useState<CapturedImage | null>(null);
@@ -49,12 +60,38 @@ export function UploadMediaBottomSheetModal({
   const [showConfirmation, setShowConfirmation] = React.useState(false);
   const [isViewOnce, setIsViewOnce] = React.useState(false);
 
+  const { cachedPictures, addToCache } = useCachedPictures();
+
+  const handleCachedPictureSelect = (picture: CachedPicture) => {
+    const imageAsset: ImagePicker.ImagePickerAsset = {
+      uri: picture.localUri,
+      width: picture.width ?? 0,
+      height: picture.height ?? 0,
+      type: "image",
+      fileName: `cached_${picture.id}.jpg`,
+      assetId: null,
+      mimeType: "image/jpeg",
+    };
+    if (onImagesSelected) {
+      onImagesSelected([imageAsset]);
+    } else if (onImageSelected) {
+      onImageSelected(imageAsset);
+    }
+    bottomSheetModalRef.current?.dismiss();
+  };
+
+  const cacheImage = async (uri: string, width?: number, height?: number) => {
+    if (cacheOnSelect) {
+      await addToCache({ uri, width, height });
+    }
+  };
+
   const handleTakePicture = () => {
     bottomSheetModalRef.current?.dismiss();
     setShowCamera(true);
   };
 
-  const handlePhotoTaken = (photo: CameraCapturedPicture) => {
+  const handlePhotoTaken = async (photo: CameraCapturedPicture) => {
     setShowCamera(false);
 
     if (showCameraConfirmation) {
@@ -76,6 +113,7 @@ export function UploadMediaBottomSheetModal({
         assetId: null,
         mimeType: "image/jpeg",
       };
+      await cacheImage(photo.uri, photo.width, photo.height);
       if (onImagesSelected) {
         onImagesSelected([imageAsset]);
       } else if (onImageSelected) {
@@ -88,8 +126,13 @@ export function UploadMediaBottomSheetModal({
     setShowCamera(false);
   };
 
-  const handleConfirmImage = () => {
+  const handleConfirmImage = async () => {
     if (pendingCameraImage) {
+      await cacheImage(
+        pendingCameraImage.uri,
+        pendingCameraImage.width ?? undefined,
+        pendingCameraImage.height ?? undefined
+      );
       // When camera confirmation is shown and onCameraSend is provided, send directly
       if (onCameraSend) {
         onCameraSend(pendingCameraImage.uri, isViewOnce);
@@ -159,6 +202,10 @@ export function UploadMediaBottomSheetModal({
       });
 
       if (!result.canceled && result.assets.length > 0) {
+        // Cache selected images
+        for (const asset of result.assets) {
+          await cacheImage(asset.uri, asset.width, asset.height);
+        }
         if (onImagesSelected) {
           onImagesSelected(result.assets);
         } else if (onImageSelected && result.assets[0]) {
@@ -215,7 +262,7 @@ export function UploadMediaBottomSheetModal({
   return (
     <>
       <BottomSheetModal ref={bottomSheetModalRef}>
-        <View className="flex-row flex-wrap gap-3 px-4 pb-6 pt-3">
+        <View className="flex-row flex-wrap gap-3 px-4 pb-4 pt-3">
           {displayOptions.map((option, index) => (
             <Button
               key={index}
@@ -235,6 +282,22 @@ export function UploadMediaBottomSheetModal({
             </Button>
           ))}
         </View>
+
+        {showCachedPictures && cachedPictures.length > 0 && (
+          <View className="pb-6">
+            <Text className="px-4 pb-3 text-sm font-medium text-muted-foreground">
+              Recent
+            </Text>
+            <CachedPicturesGrid
+              pictures={cachedPictures}
+              mode="select"
+              layout="horizontal"
+              thumbnailSize={72}
+              onSelect={handleCachedPictureSelect}
+              showEmptyState={false}
+            />
+          </View>
+        )}
       </BottomSheetModal>
 
       <CameraModal

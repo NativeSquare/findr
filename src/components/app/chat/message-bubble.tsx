@@ -381,10 +381,8 @@ export function MessageBubble({
       className={`flex-col ${isOutgoing ? "items-end" : "items-start"} mb-3`}
     >
       <View
-        className={`flex-col gap-2 rounded-3xl max-w-[80%] ${
-          isOutgoing
-            ? "bg-[#f7cfb0] rounded-full"
-            : "bg-[#26272b] rounded-full"
+        className={`flex-col gap-2 rounded-3xl overflow-hidden max-w-[80%] ${
+          isOutgoing ? "bg-[#f7cfb0]" : "bg-[#26272b]"
         } ${hasText ? "px-4 py-2.5" : "p-0"}`}
       >
         {renderImages()}
