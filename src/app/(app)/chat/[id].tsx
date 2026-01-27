@@ -44,6 +44,7 @@ export default function ChatDetail() {
   const [error, setError] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [attachedImageUris, setAttachedImageUris] = useState<string[]>([]);
+  const [isViewOnce, setIsViewOnce] = useState(false);
   const uploadMediaBottomSheetRef = useRef<BottomSheetModal>(null);
   const selectAlbumModalRef = useRef<BottomSheetModal>(null);
 
@@ -182,7 +183,8 @@ export default function ChatDetail() {
     try {
       // Upload images first if there are any attached
       let uploadedImageUrls: string[] | undefined;
-      if (attachedImageUris.length > 0) {
+      const hasImages = attachedImageUris.length > 0;
+      if (hasImages) {
         uploadedImageUrls = await uploadImages(attachedImageUris);
       }
 
@@ -190,9 +192,11 @@ export default function ChatDetail() {
         otherUserId,
         text: message,
         imageUrls: uploadedImageUrls,
+        viewOnce: hasImages ? isViewOnce : false,
       });
       setMessage("");
       setAttachedImageUris([]);
+      setIsViewOnce(false); // Reset view-once after sending
     } catch (error) {
       setError(getConvexErrorMessage(error));
       console.error("Error sending message:", error);
@@ -272,7 +276,14 @@ export default function ChatDetail() {
   };
 
   const handleRemoveImage = (index: number) => {
-    setAttachedImageUris((prev) => prev.filter((_, i) => i !== index));
+    setAttachedImageUris((prev) => {
+      const newUris = prev.filter((_, i) => i !== index);
+      // Reset view-once when all images are removed
+      if (newUris.length === 0) {
+        setIsViewOnce(false);
+      }
+      return newUris;
+    });
   };
 
   const handleCameraPress = () => {
@@ -483,6 +494,9 @@ export default function ChatDetail() {
             attachedImageUris={attachedImageUris}
             onRemoveImage={handleRemoveImage}
             isLoading={isUploading}
+            isViewOnce={isViewOnce}
+            onToggleViewOnce={() => setIsViewOnce(!isViewOnce)}
+            showViewOnceOption
           />
         </View>
       </KeyboardAvoidingView>

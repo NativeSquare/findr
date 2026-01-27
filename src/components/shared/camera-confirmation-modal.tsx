@@ -28,6 +28,8 @@ interface CameraConfirmationModalProps {
   showViewOnce?: boolean;
   onToggleViewOnce?: () => void;
   isViewOnce?: boolean;
+  /** Custom label for the retake/reselect button (default: "Retake") */
+  retakeLabel?: string;
 }
 
 function formatTime(date: Date): string {
@@ -47,6 +49,7 @@ export function CameraConfirmationModal({
   showViewOnce = false,
   isViewOnce = false,
   onToggleViewOnce,
+  retakeLabel = "Retake",
 }: CameraConfirmationModalProps) {
   const insets = useSafeAreaInsets();
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -122,7 +125,7 @@ export function CameraConfirmationModal({
           <Text className="text-sm text-white">{formatTime(currentTime)}</Text>
         </View>
 
-        {/* Retake button - bottom left */}
+        {/* Retake/Reselect button - bottom left */}
         <View
           className="absolute left-5"
           style={{ bottom: insets.bottom + 20 }}
@@ -131,7 +134,7 @@ export function CameraConfirmationModal({
             onPress={onRetake}
             className="rounded-full bg-black/30 px-4 py-2"
           >
-            <Text className="text-sm text-white">Retake</Text>
+            <Text className="text-sm text-white">{retakeLabel}</Text>
           </Pressable>
         </View>
       </View>

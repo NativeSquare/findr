@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, Send, X } from "lucide-react-native";
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from "react-native";
@@ -16,6 +17,12 @@ export type MessageInputProps = {
   attachedImageUris?: string[];
   onRemoveImage?: (index: number) => void;
   isLoading?: boolean;
+  /** Whether view-once mode is enabled */
+  isViewOnce?: boolean;
+  /** Callback to toggle view-once mode */
+  onToggleViewOnce?: () => void;
+  /** Whether to show the view-once toggle (only shown when images are attached) */
+  showViewOnceOption?: boolean;
 };
 
 export function MessageInput({
@@ -30,14 +37,31 @@ export function MessageInput({
   attachedImageUris = [],
   onRemoveImage,
   isLoading = false,
+  isViewOnce = false,
+  onToggleViewOnce,
+  showViewOnceOption = false,
 }: MessageInputProps) {
   const hasContent = value.trim().length > 0 || attachedImageUris.length > 0;
   const isDisabled = !hasContent || isLoading;
+  const hasImages = attachedImageUris.length > 0;
 
   return (
     <View className="px-5 pb-4">
-      {attachedImageUris.length > 0 && (
+      {hasImages && (
         <View className="mb-2">
+          <View className="flex-row items-center justify-between mb-2">
+            {showViewOnceOption && (
+              <Pressable
+                onPress={onToggleViewOnce}
+                className="flex-row items-center gap-2"
+              >
+                <ViewOnceIcon active={isViewOnce} />
+                <Text className={`text-sm ${isViewOnce ? "text-white" : "text-[#70707b]"}`}>
+                  View once
+                </Text>
+              </Pressable>
+            )}
+          </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -88,6 +112,25 @@ export function MessageInput({
           )}
         </Button>
       </View>
+    </View>
+  );
+}
+
+function ViewOnceIcon({ active }: { active: boolean }) {
+  return (
+    <View className="relative h-5 w-5 items-center justify-center">
+      {/* Circle outline */}
+      <View
+        className={`absolute h-5 w-5 rounded-full border-[1.5px] ${
+          active ? "border-white" : "border-[#70707b]"
+        }`}
+      />
+      {/* Number 1 in center */}
+      <Text
+        className={`text-[10px] font-semibold ${active ? "text-white" : "text-[#70707b]"}`}
+      >
+        1
+      </Text>
     </View>
   );
 }
