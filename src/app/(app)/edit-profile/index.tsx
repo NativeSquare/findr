@@ -9,7 +9,7 @@ import { api } from "@convex/_generated/api";
 import { Doc } from "@convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
-import { ChevronLeft } from "lucide-react-native";
+import { ChevronLeft, Eye } from "lucide-react-native";
 import React from "react";
 import { Pressable, ScrollView, View } from "react-native";
 
@@ -62,7 +62,9 @@ export default function EditProfile() {
           <Icon as={ChevronLeft} size={24} className="text-white" />
         </Pressable>
         <Text className="text-xl font-medium text-white">Edit Profile</Text>
-        <View className="size-6" />
+        <Pressable onPress={() => router.push("/my-profile")} className="size-6">
+          <Icon as={Eye} size={24} className="text-white" />
+        </Pressable>
       </View>
     );
   };

@@ -47,7 +47,7 @@ export function HomeHeader({ user, searchLocation }: HomeHeaderProps) {
 
   return (
     <View className="flex-row items-center gap-3">
-      <Pressable onPress={() => router.push("/profile")}>
+      <Pressable onPress={() => router.push("/my-profile")}>
         <Avatar className="size-10" alt="Profile">
           {imageUrl ? (
             <AvatarImage source={{ uri: imageUrl }} />
