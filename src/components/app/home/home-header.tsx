@@ -7,7 +7,7 @@ import { Doc } from "@convex/_generated/dataModel";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
-import { ChevronDown, MapPin } from "lucide-react-native";
+import { ChevronDown, MapPin, Settings2 } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 export type SearchLocation = {
@@ -20,9 +20,16 @@ export type SearchLocation = {
 export type HomeHeaderProps = {
   user: Doc<"users">;
   searchLocation?: SearchLocation | null;
+  hasActiveFilters?: boolean;
+  onFilterPress?: () => void;
 };
 
-export function HomeHeader({ user, searchLocation }: HomeHeaderProps) {
+export function HomeHeader({
+  user,
+  searchLocation,
+  hasActiveFilters,
+  onFilterPress,
+}: HomeHeaderProps) {
   const router = useRouter();
   const imageUrl = useQuery(
     api.storage.getImageUrl,
@@ -74,6 +81,13 @@ export function HomeHeader({ user, searchLocation }: HomeHeaderProps) {
           </Text>
         </View>
         <Icon as={ChevronDown} size={16} />
+      </Button>
+      <Button
+        variant={hasActiveFilters ? "default" : "outline"}
+        size="icon"
+        onPress={onFilterPress}
+      >
+        <Icon as={Settings2} size={20} />
       </Button>
     </View>
   );

@@ -60,10 +60,12 @@ export function MessageBubble({
 
   // For view-once messages that haven't been opened (from other user), show the "(1) Photo" placeholder
   const showViewOncePlaceholder = viewOnce && !viewOnceOpened && !isOutgoing;
-  // For view-once messages that have been opened, show "Photo opened"
+  // For view-once messages that have been opened (incoming), show "Photo" with opened icon
   const showViewOnceOpenedMessage = viewOnce && viewOnceOpened && !isOutgoing;
-  // For outgoing view-once messages, show "Photo" indicator (sender can't view their own)
-  const showOutgoingViewOnceIndicator = viewOnce && isOutgoing;
+  // For outgoing view-once messages that haven't been opened yet, show "(1) Photo"
+  const showOutgoingViewOnceIndicator = viewOnce && !viewOnceOpened && isOutgoing;
+  // For outgoing view-once messages that have been opened, show "Photo" with opened icon
+  const showOutgoingViewOnceOpened = viewOnce && viewOnceOpened && isOutgoing;
 
   const screenWidth = Dimensions.get("window").width;
   const maxImageWidth = screenWidth * 0.6; // 60% of screen width for images
@@ -75,9 +77,9 @@ export function MessageBubble({
   };
 
   // Render view-once photo placeholder (both for incoming unopened and outgoing)
-  if (showViewOncePlaceholder || showOutgoingViewOnceIndicator || showViewOnceOpenedMessage) {
-    const placeholderText = showViewOnceOpenedMessage ? "Photo" : "Photo";
-    const showOneIcon = !showViewOnceOpenedMessage;
+  if (showViewOncePlaceholder || showOutgoingViewOnceIndicator || showViewOnceOpenedMessage || showOutgoingViewOnceOpened) {
+    const isOpened = showViewOnceOpenedMessage || showOutgoingViewOnceOpened;
+    const showOneIcon = !isOpened;
     const isClickable = showViewOncePlaceholder && onViewOncePress;
 
     return (
@@ -97,13 +99,13 @@ export function MessageBubble({
           >
             <View className="flex-row items-center gap-1.5">
               {showOneIcon && <ViewOnceIcon isOutgoing={isOutgoing} />}
-              {showViewOnceOpenedMessage && <OpenedIcon isOutgoing={isOutgoing} />}
+              {isOpened && <OpenedIcon isOutgoing={isOutgoing} />}
               <Text
                 className={`text-sm leading-5 ${
                   isOutgoing ? "text-[#26272b]" : "text-[#d1d1d6]"
                 }`}
               >
-                {placeholderText}
+                Photo
               </Text>
             </View>
             <Text
@@ -161,7 +163,7 @@ export function MessageBubble({
 
             {/* Locked overlay for expired albums */}
             {isAlbumExpired && (
-              <View className="absolute inset-0 bg-black/60 items-center justify-center">
+              <View className="absolute inset-0 bg-black items-center justify-center">
                 <LockIcon />
                 <Text className="text-white text-sm font-medium mt-2">
                   Album expired

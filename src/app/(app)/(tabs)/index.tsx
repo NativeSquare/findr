@@ -261,11 +261,14 @@ export default function Home() {
       keyboardDismissMode="interactive"
     >
       <View className="w-full max-w-sm gap-4">
-        <HomeHeader user={user} searchLocation={searchLocation} />
-        <HomeFiltersRow
+        <HomeHeader
+          user={user}
+          searchLocation={searchLocation}
           hasActiveFilters={hasActiveFilters}
-          activeFilterLabels={activeFilterLabels}
           onFilterPress={() => router.push("/filters")}
+        />
+        <HomeFiltersRow
+          activeFilterLabels={activeFilterLabels}
           onClearAll={handleClearAll}
         />
         <View className="gap-1.5">

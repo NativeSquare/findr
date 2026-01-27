@@ -76,7 +76,7 @@ export default function ChatDetail() {
   const stopAlbumSharing = useMutation(api.messages.stopAlbumSharing);
 
   // Image upload hook
-  const { uploadImage, uploadImages, isUploading } = useUploadImage();
+  const { uploadImages, isUploading } = useUploadImage();
 
   // View-once photo viewer state
   const [viewOncePhotoState, setViewOncePhotoState] = useState<{
@@ -206,26 +206,6 @@ export default function ChatDetail() {
   const handleImagesSelected = (images: ImagePickerAsset[]) => {
     const newUris = images.map((img) => img.uri);
     setAttachedImageUris((prev) => [...prev, ...newUris]);
-  };
-
-  const handleCameraSend = async (imageUri: string, viewOnce?: boolean) => {
-    if (!otherUserId) return;
-
-    setError(null);
-    try {
-      // Upload image first
-      const uploadedImageUrl = await uploadImage(imageUri);
-
-      await sendMessage({
-        otherUserId,
-        text: "",
-        imageUrls: [uploadedImageUrl],
-        viewOnce: viewOnce ?? false,
-      });
-    } catch (error) {
-      setError(getConvexErrorMessage(error));
-      console.error("Error sending camera photo:", error);
-    }
   };
 
   const handleViewOncePress = async (messageId: Id<"messages">) => {
@@ -507,9 +487,6 @@ export default function ChatDetail() {
         onAlbumPress={handleAlbumPress}
         options={["camera", "gallery", "album"]}
         allowsMultipleSelection
-        showCameraConfirmation
-        onCameraSend={handleCameraSend}
-        showViewOnceOption
         cacheOnSelect
       />
 

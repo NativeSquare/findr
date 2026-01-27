@@ -1,16 +1,12 @@
 import { CachedPicturesGrid } from "@/components/app/settings/cached-pictures-grid";
 import { BottomSheetModal } from "@/components/custom/bottom-sheet";
-import {
-  CameraConfirmationModal,
-  type CapturedImage,
-} from "@/components/shared/camera-confirmation-modal";
 import { CameraModal } from "@/components/shared/camera-modal";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import {
-  type CachedPicture,
-  useCachedPictures,
+    type CachedPicture,
+    useCachedPictures,
 } from "@/hooks/use-cached-pictures";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import type { CameraCapturedPicture } from "expo-camera";
@@ -28,11 +24,6 @@ interface UploadMediaBottomSheetModalProps {
   allowsEditing?: boolean;
   allowsMultipleSelection?: boolean;
   aspect?: [number, number];
-  showCameraConfirmation?: boolean;
-  /** Called when user confirms a camera photo (only when showCameraConfirmation is true) */
-  onCameraSend?: (imageUri: string, viewOnce?: boolean) => void;
-  /** Show view-once toggle in camera confirmation modal */
-  showViewOnceOption?: boolean;
   /** Show cached pictures section (default: true) */
   showCachedPictures?: boolean;
   /** Cache images when they are selected (default: false) */
@@ -48,17 +39,10 @@ export function UploadMediaBottomSheetModal({
   allowsEditing = false,
   allowsMultipleSelection = false,
   aspect,
-  showCameraConfirmation = false,
-  onCameraSend,
-  showViewOnceOption = false,
   showCachedPictures = true,
   cacheOnSelect = false,
 }: UploadMediaBottomSheetModalProps) {
-  const [pendingCameraImage, setPendingCameraImage] =
-    React.useState<CapturedImage | null>(null);
   const [showCamera, setShowCamera] = React.useState(false);
-  const [showConfirmation, setShowConfirmation] = React.useState(false);
-  const [isViewOnce, setIsViewOnce] = React.useState(false);
 
   const { cachedPictures, addToCache } = useCachedPictures();
 
@@ -80,6 +64,24 @@ export function UploadMediaBottomSheetModal({
     bottomSheetModalRef.current?.dismiss();
   };
 
+  const handleCachedPicturesMultiSelect = (pictures: CachedPicture[]) => {
+    const imageAssets: ImagePicker.ImagePickerAsset[] = pictures.map((picture) => ({
+      uri: picture.localUri,
+      width: picture.width ?? 0,
+      height: picture.height ?? 0,
+      type: "image",
+      fileName: `cached_${picture.id}.jpg`,
+      assetId: null,
+      mimeType: "image/jpeg",
+    }));
+    if (onImagesSelected) {
+      onImagesSelected(imageAssets);
+    } else if (onImageSelected && imageAssets[0]) {
+      onImageSelected(imageAssets[0]);
+    }
+    bottomSheetModalRef.current?.dismiss();
+  };
+
   const cacheImage = async (uri: string, width?: number, height?: number) => {
     if (cacheOnSelect) {
       await addToCache({ uri, width, height });
@@ -94,82 +96,25 @@ export function UploadMediaBottomSheetModal({
   const handlePhotoTaken = async (photo: CameraCapturedPicture) => {
     setShowCamera(false);
 
-    if (showCameraConfirmation) {
-      // Show custom confirmation modal
-      setPendingCameraImage({
-        uri: photo.uri,
-        width: photo.width,
-        height: photo.height,
-      });
-      setShowConfirmation(true);
-    } else {
-      // Original behavior - immediately return the image
-      const imageAsset: ImagePicker.ImagePickerAsset = {
-        uri: photo.uri,
-        width: photo.width,
-        height: photo.height,
-        type: "image",
-        fileName: `photo_${Date.now()}.jpg`,
-        assetId: null,
-        mimeType: "image/jpeg",
-      };
-      await cacheImage(photo.uri, photo.width, photo.height);
-      if (onImagesSelected) {
-        onImagesSelected([imageAsset]);
-      } else if (onImageSelected) {
-        onImageSelected(imageAsset);
-      }
+    const imageAsset: ImagePicker.ImagePickerAsset = {
+      uri: photo.uri,
+      width: photo.width,
+      height: photo.height,
+      type: "image",
+      fileName: `photo_${Date.now()}.jpg`,
+      assetId: null,
+      mimeType: "image/jpeg",
+    };
+    await cacheImage(photo.uri, photo.width, photo.height);
+    if (onImagesSelected) {
+      onImagesSelected([imageAsset]);
+    } else if (onImageSelected) {
+      onImageSelected(imageAsset);
     }
   };
 
   const handleCameraClose = () => {
     setShowCamera(false);
-  };
-
-  const handleConfirmImage = async () => {
-    if (pendingCameraImage) {
-      await cacheImage(
-        pendingCameraImage.uri,
-        pendingCameraImage.width ?? undefined,
-        pendingCameraImage.height ?? undefined
-      );
-      // When camera confirmation is shown and onCameraSend is provided, send directly
-      if (onCameraSend) {
-        onCameraSend(pendingCameraImage.uri, isViewOnce);
-      } else {
-        // Fallback to adding to attachments
-        const imageAsset: ImagePicker.ImagePickerAsset = {
-          uri: pendingCameraImage.uri,
-          width: pendingCameraImage.width ?? 0,
-          height: pendingCameraImage.height ?? 0,
-          type: "image",
-          fileName: `photo_${Date.now()}.jpg`,
-          assetId: null,
-          mimeType: "image/jpeg",
-        };
-        if (onImagesSelected) {
-          onImagesSelected([imageAsset]);
-        } else if (onImageSelected) {
-          onImageSelected(imageAsset);
-        }
-      }
-    }
-    setShowConfirmation(false);
-    setPendingCameraImage(null);
-    setIsViewOnce(false); // Reset view-once state
-  };
-
-  const handleRetakeImage = () => {
-    setShowConfirmation(false);
-    setPendingCameraImage(null);
-    setIsViewOnce(false); // Reset view-once state
-    setShowCamera(true);
-  };
-
-  const handleCloseConfirmation = () => {
-    setShowConfirmation(false);
-    setPendingCameraImage(null);
-    setIsViewOnce(false); // Reset view-once state
   };
 
   const handlePickFromGallery = async () => {
@@ -294,6 +239,8 @@ export function UploadMediaBottomSheetModal({
               layout="horizontal"
               thumbnailSize={72}
               onSelect={handleCachedPictureSelect}
+              onMultiSelect={allowsMultipleSelection ? handleCachedPicturesMultiSelect : undefined}
+              allowMultiSelect={allowsMultipleSelection}
               showEmptyState={false}
             />
           </View>
@@ -304,17 +251,6 @@ export function UploadMediaBottomSheetModal({
         visible={showCamera}
         onClose={handleCameraClose}
         onPhotoTaken={handlePhotoTaken}
-      />
-
-      <CameraConfirmationModal
-        visible={showConfirmation}
-        image={pendingCameraImage}
-        onConfirm={handleConfirmImage}
-        onRetake={handleRetakeImage}
-        onClose={handleCloseConfirmation}
-        showViewOnce={showViewOnceOption}
-        isViewOnce={isViewOnce}
-        onToggleViewOnce={() => setIsViewOnce(!isViewOnce)}
       />
     </>
   );
