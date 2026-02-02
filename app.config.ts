@@ -107,7 +107,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     typedRoutes: true,
     reactCompiler: true,
   },
-  owner: "nativesquare-expo",
+  owner: "oomphh",
   extra: {
     router: {},
     eas: {

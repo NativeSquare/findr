@@ -1,15 +1,15 @@
 import { THEME } from "@/lib/theme";
 import {
-  BottomSheetBackdrop as GorhomBottomSheetBackdrop,
-  BottomSheetModal as GorhomBottomSheetModal,
-  BottomSheetView as GorhomBottomSheetView,
+    BottomSheetBackdrop as GorhomBottomSheetBackdrop,
+    BottomSheetModal as GorhomBottomSheetModal,
+    BottomSheetView as GorhomBottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useColorScheme } from "nativewind";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface BottomSheetModalProps {
-  ref: React.RefObject<GorhomBottomSheetModal | null>;
+  ref: React.ForwardedRef<GorhomBottomSheetModal>;
   children: React.ReactNode;
   enableBackdrop?: boolean;
   snapPoints?: (string | number)[];
