@@ -1,3 +1,4 @@
+import { LocationAutocompleteInput } from "@/components/app/events/location-autocomplete-input";
 import { SocialLinkInput } from "@/components/app/events/social-link-input";
 import { BottomSheetModal } from "@/components/custom/bottom-sheet";
 import { Button } from "@/components/ui/button";
@@ -200,8 +201,6 @@ export default function CreateEvent() {
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Enter your event title"
-                className="bg-[#131316] border-[#1a1a1e] h-12 rounded-lg px-3.5 text-base text-white"
-                placeholderClassName="text-[#70707b]"
                 editable={!isBusy}
               />
             </View>
@@ -211,12 +210,11 @@ export default function CreateEvent() {
               <Text className="text-sm font-medium text-[#d1d1d6]">
                 Location
               </Text>
-              <Input
+              <LocationAutocompleteInput
                 value={location}
                 onChangeText={setLocation}
-                placeholder="Enter your Location"
-                className="bg-[#131316] border-[#1a1a1e] h-12 rounded-lg px-3.5 text-base text-white"
-                placeholderClassName="text-[#70707b]"
+                onSelect={(place) => setLocation(place.description)}
+                placeholder="Search for a location"
                 editable={!isBusy}
               />
             </View>
@@ -232,12 +230,12 @@ export default function CreateEvent() {
                   }}
                   disabled={isBusy}
                 >
-                  <View className="bg-[#131316] border border-[#1a1a1e] h-12 rounded-lg px-3.5 justify-center">
+                  <View className="dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 justify-center shadow-sm shadow-black/5">
                     <Text
                       className={
                         date
-                          ? "text-base text-white"
-                          : "text-base text-[#70707b]"
+                          ? "text-base text-foreground"
+                          : "text-base text-muted-foreground/50"
                       }
                     >
                       {date ? formatDate(date) : "mm/dd/yyyy"}
@@ -254,12 +252,12 @@ export default function CreateEvent() {
                   }}
                   disabled={isBusy}
                 >
-                  <View className="bg-[#131316] border border-[#1a1a1e] h-12 rounded-lg px-3.5 justify-center">
+                  <View className="dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 justify-center shadow-sm shadow-black/5">
                     <Text
                       className={
                         time
-                          ? "text-base text-white"
-                          : "text-base text-[#70707b]"
+                          ? "text-base text-foreground"
+                          : "text-base text-muted-foreground/50"
                       }
                     >
                       {time ? formatTime(time) : "07:00"}
@@ -279,8 +277,6 @@ export default function CreateEvent() {
                 onChangeText={setMaxAttendees}
                 placeholder="Enter your max attendees"
                 keyboardType="numeric"
-                className="bg-[#131316] border-[#1a1a1e] h-12 rounded-lg px-3.5 text-base text-white"
-                placeholderClassName="text-[#70707b]"
                 editable={!isBusy}
               />
             </View>
@@ -292,18 +288,18 @@ export default function CreateEvent() {
               </Text>
               <Pressable
                 onPress={handlePickPhoto}
-                className="bg-[#131316] border border-[#1a1a1e] rounded-lg p-3 items-center gap-3 active:opacity-70"
+                className="dark:bg-input/30 bg-background border border-input rounded-md p-3 items-center gap-3 shadow-sm shadow-black/5 active:opacity-70"
                 disabled={isBusy}
               >
                 {photoUri ? (
                   <Image
                     source={{ uri: photoUri }}
-                    className="w-full h-32 rounded-lg"
+                    className="w-full h-32 rounded-md"
                     resizeMode="cover"
                   />
                 ) : (
                   <>
-                    <View className="bg-[#1a1a1e] border border-[#26272b] rounded-full size-10 items-center justify-center">
+                    <View className="bg-muted border border-border rounded-full size-10 items-center justify-center">
                       <Icon
                         as={CloudUpload}
                         size={22}
@@ -314,7 +310,7 @@ export default function CreateEvent() {
                       <Text className="text-sm font-semibold text-[#e56400]">
                         Click to upload
                       </Text>
-                      <Text className="text-xs text-[#61646c]">
+                      <Text className="text-xs text-muted-foreground">
                         or drag and drop
                       </Text>
                     </View>
@@ -343,18 +339,10 @@ export default function CreateEvent() {
         </View>
       </ScrollView>
 
-      {/* Footer Buttons */}
-      <View className="w-full max-w-md self-center flex-row gap-3 px-4 pb-4 mb-safe">
+      {/* Footer */}
+      <View className="w-full max-w-md self-center px-4 pb-4 mb-safe">
         <Button
-          variant="outline"
-          className="flex-1 border-destructive"
-          onPress={() => router.back()}
-          disabled={isBusy}
-        >
-          <Text className="text-base font-medium text-destructive">Cancel</Text>
-        </Button>
-        <Button
-          className="flex-1 bg-[#e56400]"
+          className="w-full bg-[#e56400]"
           disabled={!isFormValid || isBusy}
           onPress={handleCreate}
         >

@@ -55,7 +55,7 @@ export function SocialLinkInput({
   return (
     <View className="gap-3">
       <Text className="text-sm font-medium text-[#d1d1d6]">{config.label}</Text>
-      <View className="flex-row items-center bg-[#131316] border border-[#1a1a1e] rounded-lg px-3.5 py-3 gap-3">
+      <View className="flex-row items-center dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 gap-3 shadow-sm shadow-black/5">
         {config.lucideIcon ? (
           <Icon as={config.lucideIcon} size={20} color={config.color} />
         ) : config.ionIcon ? (
@@ -66,14 +66,16 @@ export function SocialLinkInput({
           />
         ) : null}
         {config.prefix ? (
-          <Text className="text-base text-[#70707b]">{config.prefix}</Text>
+          <Text className="text-base text-muted-foreground/50">
+            {config.prefix}
+          </Text>
         ) : null}
         <TextInput
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder || `Enter username`}
-          placeholderTextColor="#70707b"
-          className="flex-1 text-base text-white p-0"
+          placeholderTextColor={undefined}
+          className="flex-1 text-base text-foreground p-0 placeholder:text-muted-foreground/50"
           autoCapitalize="none"
           autoCorrect={false}
         />
