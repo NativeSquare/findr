@@ -44,7 +44,7 @@ function splitMainSecondary(description: string) {
 
 export default function LocationAutocomplete() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ callback?: string }>();
+  const params = useLocalSearchParams<{ callback?: string; storageKey?: string }>();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
@@ -166,6 +166,7 @@ export default function LocationAutocomplete() {
           selectedLng: String(lng),
           selectedAddress: formattedAddress,
           selectedName: name,
+          ...(params.storageKey ? { storageKey: params.storageKey } : {}),
         },
       });
     } catch (err: any) {
@@ -181,6 +182,7 @@ export default function LocationAutocomplete() {
       pathname: "/(app)/location-search",
       params: {
         useCurrentLocation: "true",
+        ...(params.storageKey ? { storageKey: params.storageKey } : {}),
       },
     });
   };

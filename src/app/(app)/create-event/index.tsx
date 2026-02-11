@@ -1,10 +1,12 @@
 import { LocationAutocompleteInput } from "@/components/app/events/location-autocomplete-input";
 import { SocialLinkInput } from "@/components/app/events/social-link-input";
+import { PreferenceSelectionSheet } from "@/components/app/edit-profile/preference-selection-sheet";
 import { BottomSheetModal } from "@/components/custom/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { EVENT_TYPES } from "@/constants/events";
 import { useUploadImage } from "@/hooks/use-upload-image";
 import { api } from "@convex/_generated/api";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
@@ -29,6 +31,7 @@ import {
 export default function CreateEvent() {
   const [title, setTitle] = React.useState("");
   const [location, setLocation] = React.useState("");
+  const [eventType, setEventType] = React.useState("");
   const [date, setDate] = React.useState<Date | null>(null);
   const [time, setTime] = React.useState<Date | null>(null);
   const [maxAttendees, setMaxAttendees] = React.useState("");
@@ -40,6 +43,7 @@ export default function CreateEvent() {
 
   const dateSheetRef = React.useRef<GorhomBottomSheetModal>(null);
   const timeSheetRef = React.useRef<GorhomBottomSheetModal>(null);
+  const eventTypeSheetRef = React.useRef<GorhomBottomSheetModal>(null);
 
   const [internalDate, setInternalDate] = React.useState(new Date());
   const [internalTime, setInternalTime] = React.useState(new Date());
@@ -157,6 +161,7 @@ export default function CreateEvent() {
         date: eventDate.getTime(),
         maxAttendees: maxAttendees ? parseInt(maxAttendees, 10) : undefined,
         imageUrl,
+        eventType: eventType || undefined,
         socialLinks,
       });
 
@@ -217,6 +222,32 @@ export default function CreateEvent() {
                 placeholder="Search for a location"
                 editable={!isBusy}
               />
+            </View>
+
+            {/* Event Category */}
+            <View className="gap-3">
+              <Text className="text-sm font-medium text-[#d1d1d6]">
+                Category
+              </Text>
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  eventTypeSheetRef.current?.present();
+                }}
+                disabled={isBusy}
+              >
+                <View className="dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 justify-center shadow-sm shadow-black/5">
+                  <Text
+                    className={
+                      eventType
+                        ? "text-base text-foreground"
+                        : "text-base text-muted-foreground/50"
+                    }
+                  >
+                    {eventType || "Select a category"}
+                  </Text>
+                </View>
+              </Pressable>
             </View>
 
             {/* Date & Time */}
@@ -355,6 +386,17 @@ export default function CreateEvent() {
           )}
         </Button>
       </View>
+
+      {/* Event Type Sheet */}
+      <PreferenceSelectionSheet
+        bottomSheetRef={eventTypeSheetRef}
+        title="Event Category"
+        options={[...EVENT_TYPES]}
+        selectedValues={eventType || undefined}
+        onSelect={(option) =>
+          setEventType(eventType === option ? "" : option)
+        }
+      />
 
       {/* Date Picker Sheet */}
       <BottomSheetModal ref={dateSheetRef} snapPoints={["50%"]}>

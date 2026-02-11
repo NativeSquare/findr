@@ -1,12 +1,23 @@
 import { EventCard } from "@/components/app/events/event-card";
 import { EventSection } from "@/components/app/events/event-section";
-import { EventsHeader } from "@/components/app/events/events-header";
+import {
+  EventsHeader,
+  SearchLocation,
+} from "@/components/app/events/events-header";
 import { Text } from "@/components/ui/text";
+import {
+  EVENT_FILTERS_STORAGE_KEY,
+  EVENT_SEARCH_LOCATION_STORAGE_KEY,
+} from "@/constants/events";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
+import React from "react";
 import { Alert, ScrollView, View } from "react-native";
+import { EventFilterData } from "../event-filters";
 
 function formatEventDate(timestamp: number): string {
   const date = new Date(timestamp);
@@ -28,8 +39,90 @@ function formatEventDate(timestamp: number): string {
   return `${dayName}, ${displayHours}:${displayMinutes} ${ampm}`;
 }
 
+const defaultFilters: EventFilterData = {
+  eventType: [],
+  dateRange: "",
+  distance: "",
+};
+
 export default function Events() {
-  const events = useQuery(api.events.getEvents);
+  const [filters, setFilters] = React.useState<EventFilterData>(defaultFilters);
+  const [searchLocation, setSearchLocation] =
+    React.useState<SearchLocation | null>(null);
+
+  const loadFilters = React.useCallback(async () => {
+    try {
+      const saved = await AsyncStorage.getItem(EVENT_FILTERS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setFilters({
+          eventType: parsed.eventType ?? [],
+          dateRange: parsed.dateRange ?? "",
+          distance: parsed.distance ?? "",
+        });
+      }
+    } catch (error) {
+      console.error("Error loading event filters:", error);
+    }
+  }, []);
+
+  const loadSearchLocation = React.useCallback(async () => {
+    try {
+      const saved = await AsyncStorage.getItem(
+        EVENT_SEARCH_LOCATION_STORAGE_KEY
+      );
+      if (saved) {
+        setSearchLocation(JSON.parse(saved));
+      } else {
+        setSearchLocation(null);
+      }
+    } catch (error) {
+      console.error("Error loading event search location:", error);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadFilters();
+    loadSearchLocation();
+  }, [loadFilters, loadSearchLocation]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadFilters();
+      loadSearchLocation();
+    }, [loadFilters, loadSearchLocation])
+  );
+
+  // Build query filters for the backend
+  const queryFilters: {
+    eventType?: string[];
+    dateRange?: string;
+    city?: string;
+  } = {};
+
+  if (filters.eventType.length > 0) {
+    queryFilters.eventType = filters.eventType;
+  }
+  if (filters.dateRange && filters.dateRange !== "Any Time") {
+    queryFilters.dateRange = filters.dateRange;
+  }
+  if (searchLocation?.name && searchLocation.name !== "My Location") {
+    queryFilters.city = searchLocation.name;
+  } else if (searchLocation?.address) {
+    // Extract city from address (first meaningful part)
+    const parts = searchLocation.address.split(",").map((s) => s.trim());
+    if (parts.length > 0) {
+      queryFilters.city = parts[0];
+    }
+  }
+
+  const hasActiveFilters =
+    filters.eventType.length > 0 ||
+    (filters.dateRange !== "" && filters.dateRange !== "Any Time") ||
+    filters.distance !== "" ||
+    searchLocation !== null;
+
+  const events = useQuery(api.events.getEvents, queryFilters);
   const joinEvent = useMutation(api.events.joinEvent);
   const leaveEvent = useMutation(api.events.leaveEvent);
 
@@ -63,6 +156,8 @@ export default function Events() {
     >
       <View className="w-full max-w-sm gap-5">
         <EventsHeader
+          searchLocation={searchLocation}
+          hasActiveFilters={hasActiveFilters}
           onFilterPress={() => router.push("/event-filters")}
           onCreatePress={() => router.push("/create-event")}
         />
@@ -73,7 +168,7 @@ export default function Events() {
           </View>
         ) : (
           <>
-            <EventSection title="Today's Events" onViewAll={() => {}}>
+            <EventSection title="Today's Events">
               {events.today.length === 0 ? (
                 <Text className="text-sm text-[#70707b]">
                   No events today
@@ -99,7 +194,7 @@ export default function Events() {
               )}
             </EventSection>
 
-            <EventSection title="Upcoming Events" onViewAll={() => {}}>
+            <EventSection title="Upcoming Events">
               {events.upcoming.length === 0 ? (
                 <Text className="text-sm text-[#70707b]">
                   No upcoming events
@@ -125,7 +220,7 @@ export default function Events() {
               )}
             </EventSection>
 
-            <EventSection title="Previous Events" onViewAll={() => {}}>
+            <EventSection title="Previous Events">
               {events.previous.length === 0 ? (
                 <Text className="text-sm text-[#70707b]">
                   No previous events

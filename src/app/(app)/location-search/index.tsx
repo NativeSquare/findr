@@ -23,7 +23,9 @@ export default function LocationSearch() {
     selectedAddress?: string;
     selectedName?: string;
     useCurrentLocation?: string;
+    storageKey?: string;
   }>();
+  const effectiveStorageKey = params.storageKey || SEARCH_LOCATION_STORAGE_KEY;
   const user = useQuery(api.users.currentUser);
   const mapRef = useRef<MapView>(null);
   const [region, setRegion] = useState({
@@ -126,8 +128,8 @@ export default function LocationSearch() {
 
     try {
       if (isCurrentLocation) {
-        // Clear stored location so home screen shows "My Location"
-        await AsyncStorage.removeItem(SEARCH_LOCATION_STORAGE_KEY);
+        // Clear stored location so the caller shows "My Location"
+        await AsyncStorage.removeItem(effectiveStorageKey);
       } else {
         const locationData = {
           latitude: selectedLocation.latitude,
@@ -136,14 +138,14 @@ export default function LocationSearch() {
           address: selectedLocation.address,
         };
         await AsyncStorage.setItem(
-          SEARCH_LOCATION_STORAGE_KEY,
+          effectiveStorageKey,
           JSON.stringify(locationData)
         );
       }
     } catch (error) {
       console.error("Error saving location:", error);
     }
-    // Use dismissAll to ensure we return to home, even if there are multiple
+    // Use dismissAll to ensure we return to the caller, even if there are multiple
     // location-search screens in the stack (e.g., after coming from autocomplete)
     router.dismissAll();
   };
@@ -210,7 +212,10 @@ export default function LocationSearch() {
   };
 
   const handleSearchPress = () => {
-    router.push("/(app)/location-search/autocomplete");
+    router.push({
+      pathname: "/(app)/location-search/autocomplete",
+      params: params.storageKey ? { storageKey: params.storageKey } : undefined,
+    });
   };
 
   const handleMapLongPress = async (event: {

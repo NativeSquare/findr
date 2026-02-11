@@ -4,8 +4,17 @@ import { PreferenceSelectionSheet } from "@/components/app/edit-profile/preferen
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import {
+  DATE_RANGES,
+  EVENT_FILTERS_STORAGE_KEY,
+  EVENT_TYPES,
+  IMPERIAL_DISTANCES,
+  METRIC_DISTANCES,
+} from "@/constants/events";
+import { api } from "@convex/_generated/api";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useQuery } from "convex/react";
 import { router } from "expo-router";
 import { Calendar, ChevronLeft, MapPin, Tag } from "lucide-react-native";
 import React from "react";
@@ -17,40 +26,14 @@ export type EventFilterData = {
   distance: string;
 };
 
-const EVENT_FILTERS_STORAGE_KEY = "event_filters";
-
-const EVENT_TYPES = [
-  "Party",
-  "Sports",
-  "Music",
-  "Gaming",
-  "Networking",
-  "Food & Drinks",
-  "Outdoor",
-  "Art & Culture",
-  "Fitness",
-  "Other",
-];
-
-const DATE_RANGES = [
-  "Today",
-  "Tomorrow",
-  "This Week",
-  "This Weekend",
-  "This Month",
-  "Any Time",
-];
-
-const DISTANCES = [
-  "1 mile",
-  "5 miles",
-  "10 miles",
-  "25 miles",
-  "50 miles",
-  "Any Distance",
-];
-
 export default function EventFilters() {
+  const user = useQuery(api.users.currentUser);
+  const measurementSystem = user?.measurementSystem ?? "imperial";
+  const distances =
+    measurementSystem === "metric"
+      ? [...METRIC_DISTANCES]
+      : [...IMPERIAL_DISTANCES];
+
   const defaultFilters: EventFilterData = {
     eventType: [],
     dateRange: "",
@@ -184,7 +167,7 @@ export default function EventFilters() {
       <PreferenceSelectionSheet
         bottomSheetRef={eventTypeSheetRef}
         title="Event Category"
-        options={EVENT_TYPES}
+        options={[...EVENT_TYPES]}
         selectedValues={filters.eventType}
         multiSelect
         onSelect={(option) =>
@@ -200,7 +183,7 @@ export default function EventFilters() {
       <PreferenceSelectionSheet
         bottomSheetRef={dateRangeSheetRef}
         title="Date Range"
-        options={DATE_RANGES}
+        options={[...DATE_RANGES]}
         selectedValues={filters.dateRange || undefined}
         onSelect={(option) =>
           setFilters({
@@ -213,7 +196,7 @@ export default function EventFilters() {
       <PreferenceSelectionSheet
         bottomSheetRef={distanceSheetRef}
         title="Distance"
-        options={DISTANCES}
+        options={distances}
         selectedValues={filters.distance || undefined}
         onSelect={(option) =>
           setFilters({

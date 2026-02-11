@@ -124,10 +124,15 @@ export const createEvent = mutation({
 
 /**
  * Get events grouped by today, upcoming, and previous.
+ * Supports optional filters for eventType, dateRange, and city.
  */
 export const getEvents = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    eventType: v.optional(v.array(v.string())),
+    dateRange: v.optional(v.string()),
+    city: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     const currentUserId = await getAuthUserId(ctx);
     if (!currentUserId) return { today: [], upcoming: [], previous: [] };
 
@@ -142,9 +147,98 @@ export const getEvents = query({
       .withIndex("date")
       .collect();
 
+    // Apply filters
+    let filteredEvents = allEvents;
+
+    // Filter by event type / category
+    if (args.eventType && args.eventType.length > 0) {
+      filteredEvents = filteredEvents.filter(
+        (e) => e.eventType && args.eventType!.includes(e.eventType)
+      );
+    }
+
+    // Filter by city (case-insensitive substring match on location)
+    if (args.city) {
+      const cityLower = args.city.toLowerCase();
+      filteredEvents = filteredEvents.filter((e) =>
+        e.location.toLowerCase().includes(cityLower)
+      );
+    }
+
+    // Filter by date range
+    if (args.dateRange) {
+      const tomorrow = new Date(startOfToday);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const endOfTomorrow = new Date(tomorrow);
+      endOfTomorrow.setHours(23, 59, 59, 999);
+
+      const dayOfWeek = startOfToday.getDay(); // 0 = Sunday
+      const endOfWeek = new Date(startOfToday);
+      endOfWeek.setDate(endOfWeek.getDate() + (7 - dayOfWeek));
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      // Saturday of this week
+      const startOfWeekend = new Date(startOfToday);
+      startOfWeekend.setDate(startOfWeekend.getDate() + (6 - dayOfWeek));
+      startOfWeekend.setHours(0, 0, 0, 0);
+      // Sunday end
+      const endOfWeekend = new Date(startOfWeekend);
+      endOfWeekend.setDate(endOfWeekend.getDate() + 1);
+      endOfWeekend.setHours(23, 59, 59, 999);
+
+      const endOfMonth = new Date(
+        startOfToday.getFullYear(),
+        startOfToday.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999
+      );
+
+      switch (args.dateRange) {
+        case "Today":
+          filteredEvents = filteredEvents.filter(
+            (e) =>
+              e.date >= startOfToday.getTime() &&
+              e.date <= endOfToday.getTime()
+          );
+          break;
+        case "Tomorrow":
+          filteredEvents = filteredEvents.filter(
+            (e) =>
+              e.date >= tomorrow.getTime() &&
+              e.date <= endOfTomorrow.getTime()
+          );
+          break;
+        case "This Week":
+          filteredEvents = filteredEvents.filter(
+            (e) =>
+              e.date >= startOfToday.getTime() &&
+              e.date <= endOfWeek.getTime()
+          );
+          break;
+        case "This Weekend":
+          filteredEvents = filteredEvents.filter(
+            (e) =>
+              e.date >= startOfWeekend.getTime() &&
+              e.date <= endOfWeekend.getTime()
+          );
+          break;
+        case "This Month":
+          filteredEvents = filteredEvents.filter(
+            (e) =>
+              e.date >= startOfToday.getTime() &&
+              e.date <= endOfMonth.getTime()
+          );
+          break;
+        // "Any Time" — no date filter applied
+      }
+    }
+
     // Enrich events with attendee info and organizer data
     const enrichedEvents = await Promise.all(
-      allEvents.map(async (event) => {
+      filteredEvents.map(async (event) => {
         const attendees = await ctx.db
           .query("eventAttendees")
           .withIndex("eventId", (q) => q.eq("eventId", event._id))
