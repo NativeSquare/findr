@@ -1,37 +1,109 @@
+import { AttendeeAvatars } from "@/components/app/events/attendee-avatars";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { api } from "@convex/_generated/api";
+import { Id } from "@convex/_generated/dataModel";
 import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQuery } from "convex/react";
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Clock, MapPin } from "lucide-react-native";
-import { Image, Pressable, ScrollView, View } from "react-native";
+import React from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Mock data - replace with Convex query
-const MOCK_EVENT = {
-  id: "1",
-  title: "Beach Party",
-  date: "Tuesday, 6:00 PM",
-  location: "Santa Monica Beach",
-  imageUri:
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop",
-  description:
-    "Join us for a sunset beach party with music, good vibes, and great people. Relax, dance, and make unforgettable memories by the sea.",
-  organizer: {
-    name: "Phoenix Baker",
-    avatarUri:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=faces",
-  },
-  mapImageUri:
-    "https://maps.googleapis.com/maps/api/staticmap?center=Santa+Monica+Beach&zoom=14&size=700x250&maptype=roadmap&key=placeholder",
-};
+function formatEventDate(timestamp: number): string {
+  const date = new Date(timestamp);
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const dayName = days[date.getDay()];
+  const monthName = months[date.getMonth()];
+  const dayOfMonth = date.getDate();
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 || 12;
+  const displayMinutes = String(minutes).padStart(2, "0");
+  return `${dayName}, ${monthName} ${dayOfMonth} · ${displayHours}:${displayMinutes} ${ampm}`;
+}
 
 export default function EventDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const [isJoining, setIsJoining] = React.useState(false);
 
-  // TODO: Replace with real Convex query using id
-  const event = MOCK_EVENT;
+  const event = useQuery(
+    api.events.getEvent,
+    id ? { eventId: id as Id<"events"> } : "skip"
+  );
+  const joinEvent = useMutation(api.events.joinEvent);
+  const leaveEvent = useMutation(api.events.leaveEvent);
+
+  const handleJoinLeave = async () => {
+    if (!event || !id) return;
+
+    setIsJoining(true);
+    try {
+      if (event.hasJoined) {
+        await leaveEvent({ eventId: id as Id<"events"> });
+      } else {
+        await joinEvent({ eventId: id as Id<"events"> });
+      }
+    } catch (error: any) {
+      Alert.alert("Error", error.message ?? "Something went wrong");
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  if (event === undefined) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator size="large" color="#e56400" />
+      </View>
+    );
+  }
+
+  if (event === null) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center px-5">
+        <Text className="text-base text-[#70707b]">Event not found</Text>
+        <Button className="mt-4" onPress={() => router.back()}>
+          <Text className="text-base font-medium text-primary-foreground">
+            Go Back
+          </Text>
+        </Button>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-background">
@@ -41,11 +113,17 @@ export default function EventDetail() {
       >
         {/* Hero Image */}
         <View className="relative h-[280px]">
-          <Image
-            source={{ uri: event.imageUri }}
-            className="w-full h-full rounded-b-2xl"
-            resizeMode="cover"
-          />
+          {event.imageUrl ? (
+            <Image
+              source={{ uri: event.imageUrl }}
+              className="w-full h-full rounded-b-2xl"
+              resizeMode="cover"
+            />
+          ) : (
+            <View className="w-full h-full rounded-b-2xl bg-[#1a1a1e] items-center justify-center">
+              <Ionicons name="image-outline" size={48} color="#70707b" />
+            </View>
+          )}
           <Pressable
             onPress={() => router.back()}
             className="absolute bg-black/30 rounded-full size-9 items-center justify-center active:opacity-70"
@@ -65,7 +143,9 @@ export default function EventDetail() {
             <View className="gap-1.5">
               <View className="flex-row items-center gap-1.5">
                 <Icon as={Clock} size={22} className="text-[#d1d1d6]" />
-                <Text className="text-base text-[#d1d1d6]">{event.date}</Text>
+                <Text className="text-base text-[#d1d1d6]">
+                  {formatEventDate(event.date)}
+                </Text>
               </View>
               <View className="flex-row items-center gap-1.5">
                 <Icon as={MapPin} size={22} className="text-[#d1d1d6]" />
@@ -76,15 +156,31 @@ export default function EventDetail() {
             </View>
           </View>
 
+          {/* Attendees */}
+          {event.totalAttendees > 0 && (
+            <View className="gap-2">
+              <Text className="text-base font-semibold text-white">
+                Attendees ({event.totalAttendees}
+                {event.maxAttendees ? `/${event.maxAttendees}` : ""})
+              </Text>
+              <AttendeeAvatars
+                avatars={event.attendeeAvatars}
+                totalCount={event.totalAttendees}
+              />
+            </View>
+          )}
+
           {/* About Event */}
-          <View className="gap-2">
-            <Text className="text-base font-semibold text-white">
-              About Event
-            </Text>
-            <Text className="text-sm text-[#d1d1d6] leading-5">
-              {event.description}
-            </Text>
-          </View>
+          {event.description && (
+            <View className="gap-2">
+              <Text className="text-base font-semibold text-white">
+                About Event
+              </Text>
+              <Text className="text-sm text-[#d1d1d6] leading-5">
+                {event.description}
+              </Text>
+            </View>
+          )}
 
           {/* Organizer */}
           <View className="gap-2">
@@ -92,12 +188,18 @@ export default function EventDetail() {
               Organizer
             </Text>
             <View className="flex-row items-center gap-2">
-              <Image
-                source={{ uri: event.organizer.avatarUri }}
-                className="size-10 rounded-full"
-              />
+              {event.organizerAvatarUrl ? (
+                <Image
+                  source={{ uri: event.organizerAvatarUrl }}
+                  className="size-10 rounded-full"
+                />
+              ) : (
+                <View className="size-10 rounded-full bg-[#1a1a1e] items-center justify-center">
+                  <Ionicons name="person" size={20} color="#70707b" />
+                </View>
+              )}
               <Text className="text-sm text-[#d1d1d6]">
-                {event.organizer.name}
+                {event.organizerName}
               </Text>
             </View>
           </View>
@@ -115,16 +217,37 @@ export default function EventDetail() {
         </View>
       </ScrollView>
 
-      {/* Bottom Join Button */}
+      {/* Bottom Join/Leave Button */}
       <View
         className="absolute bottom-0 left-0 right-0 px-5 pb-2 bg-background"
         style={{ paddingBottom: insets.bottom + 8 }}
       >
-        <Button className="w-full py-3 bg-[#e56400]" onPress={() => {}}>
-          <Text className="text-base font-medium text-black text-center">
-            Join
-          </Text>
-        </Button>
+        {event.isOrganizer ? (
+          <Button className="w-full py-3 bg-[#1a1a1e]" disabled>
+            <Text className="text-base font-medium text-[#70707b] text-center">
+              You're the organizer
+            </Text>
+          </Button>
+        ) : (
+          <Button
+            className={`w-full py-3 ${event.hasJoined ? "bg-[#1a1a1e] border border-[#e56400]" : "bg-[#e56400]"}`}
+            onPress={handleJoinLeave}
+            disabled={isJoining}
+          >
+            {isJoining ? (
+              <ActivityIndicator
+                size="small"
+                color={event.hasJoined ? "#e56400" : "#000"}
+              />
+            ) : (
+              <Text
+                className={`text-base font-medium text-center ${event.hasJoined ? "text-[#e56400]" : "text-black"}`}
+              >
+                {event.hasJoined ? "Leave Event" : "Join"}
+              </Text>
+            )}
+          </Button>
+        )}
       </View>
     </View>
   );

@@ -2,6 +2,7 @@ import { authTables } from "@convex-dev/auth/server";
 import { defineSchema } from "convex/server";
 import { albums, albumPhotos } from "./albums";
 import { conversations } from "./conversations";
+import { events, eventAttendees } from "./events";
 import { messages } from "./messages";
 import { taps } from "./taps";
 import { users } from "./users";
@@ -16,4 +17,6 @@ export default defineSchema({
   messages,
   albums,
   albumPhotos,
+  events,
+  eventAttendees,
 });

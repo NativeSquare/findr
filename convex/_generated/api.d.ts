@@ -13,6 +13,7 @@ import type * as ResendOTPPasswordReset from "../ResendOTPPasswordReset.js";
 import type * as albums from "../albums.js";
 import type * as auth from "../auth.js";
 import type * as conversations from "../conversations.js";
+import type * as events from "../events.js";
 import type * as feedback from "../feedback.js";
 import type * as geospatial from "../geospatial.js";
 import type * as http from "../http.js";
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   albums: typeof albums;
   auth: typeof auth;
   conversations: typeof conversations;
+  events: typeof events;
   feedback: typeof feedback;
   geospatial: typeof geospatial;
   http: typeof http;

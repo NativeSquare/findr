@@ -4,13 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { useUploadImage } from "@/hooks/use-upload-image";
+import { api } from "@convex/_generated/api";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useMutation } from "convex/react";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { ArrowLeft, CloudUpload } from "lucide-react-native";
 import React from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Keyboard,
@@ -31,12 +35,16 @@ export default function CreateEvent() {
   const [instagram, setInstagram] = React.useState("");
   const [tiktok, setTiktok] = React.useState("");
   const [facebook, setFacebook] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const dateSheetRef = React.useRef<GorhomBottomSheetModal>(null);
   const timeSheetRef = React.useRef<GorhomBottomSheetModal>(null);
 
   const [internalDate, setInternalDate] = React.useState(new Date());
   const [internalTime, setInternalTime] = React.useState(new Date());
+
+  const createEvent = useMutation(api.events.createEvent);
+  const { uploadImage, isUploading } = useUploadImage();
 
   const handlePickPhoto = async () => {
     try {
@@ -116,10 +124,51 @@ export default function CreateEvent() {
 
   const isFormValid = title.trim() && location.trim() && date && time;
 
-  const handleCreate = () => {
-    // TODO: Submit to Convex backend
-    router.back();
+  const handleCreate = async () => {
+    if (!isFormValid || !date || !time) return;
+
+    setIsSubmitting(true);
+    try {
+      // Combine date and time into a single timestamp
+      const eventDate = new Date(date);
+      eventDate.setHours(time.getHours(), time.getMinutes(), 0, 0);
+
+      // Upload image if selected
+      let imageUrl: string | undefined;
+      if (photoUri) {
+        imageUrl = await uploadImage(photoUri, { width: 1200 });
+      }
+
+      // Build social links (only include non-empty values)
+      const hasSocialLinks =
+        instagram.trim() || tiktok.trim() || facebook.trim();
+      const socialLinks = hasSocialLinks
+        ? {
+            ...(instagram.trim() ? { instagram: instagram.trim() } : {}),
+            ...(tiktok.trim() ? { tiktok: tiktok.trim() } : {}),
+            ...(facebook.trim() ? { facebook: facebook.trim() } : {}),
+          }
+        : undefined;
+
+      await createEvent({
+        title: title.trim(),
+        location: location.trim(),
+        date: eventDate.getTime(),
+        maxAttendees: maxAttendees ? parseInt(maxAttendees, 10) : undefined,
+        imageUrl,
+        socialLinks,
+      });
+
+      router.back();
+    } catch (error: any) {
+      console.error("Error creating event:", error);
+      Alert.alert("Error", error.message ?? "Failed to create event.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const isBusy = isSubmitting || isUploading;
 
   return (
     <View className="flex-1 bg-background mt-safe">
@@ -153,6 +202,7 @@ export default function CreateEvent() {
                 placeholder="Enter your event title"
                 className="bg-[#131316] border-[#1a1a1e] h-12 rounded-lg px-3.5 text-base text-white"
                 placeholderClassName="text-[#70707b]"
+                editable={!isBusy}
               />
             </View>
 
@@ -167,6 +217,7 @@ export default function CreateEvent() {
                 placeholder="Enter your Location"
                 className="bg-[#131316] border-[#1a1a1e] h-12 rounded-lg px-3.5 text-base text-white"
                 placeholderClassName="text-[#70707b]"
+                editable={!isBusy}
               />
             </View>
 
@@ -179,6 +230,7 @@ export default function CreateEvent() {
                     Keyboard.dismiss();
                     dateSheetRef.current?.present();
                   }}
+                  disabled={isBusy}
                 >
                   <View className="bg-[#131316] border border-[#1a1a1e] h-12 rounded-lg px-3.5 justify-center">
                     <Text
@@ -200,6 +252,7 @@ export default function CreateEvent() {
                     Keyboard.dismiss();
                     timeSheetRef.current?.present();
                   }}
+                  disabled={isBusy}
                 >
                   <View className="bg-[#131316] border border-[#1a1a1e] h-12 rounded-lg px-3.5 justify-center">
                     <Text
@@ -228,6 +281,7 @@ export default function CreateEvent() {
                 keyboardType="numeric"
                 className="bg-[#131316] border-[#1a1a1e] h-12 rounded-lg px-3.5 text-base text-white"
                 placeholderClassName="text-[#70707b]"
+                editable={!isBusy}
               />
             </View>
 
@@ -239,6 +293,7 @@ export default function CreateEvent() {
               <Pressable
                 onPress={handlePickPhoto}
                 className="bg-[#131316] border border-[#1a1a1e] rounded-lg p-3 items-center gap-3 active:opacity-70"
+                disabled={isBusy}
               >
                 {photoUri ? (
                   <Image
@@ -294,15 +349,22 @@ export default function CreateEvent() {
           variant="outline"
           className="flex-1 border-destructive"
           onPress={() => router.back()}
+          disabled={isBusy}
         >
           <Text className="text-base font-medium text-destructive">Cancel</Text>
         </Button>
         <Button
           className="flex-1 bg-[#e56400]"
-          disabled={!isFormValid}
+          disabled={!isFormValid || isBusy}
           onPress={handleCreate}
         >
-          <Text className="text-base font-medium text-black">Create Event</Text>
+          {isBusy ? (
+            <ActivityIndicator size="small" color="#000" />
+          ) : (
+            <Text className="text-base font-medium text-black">
+              Create Event
+            </Text>
+          )}
         </Button>
       </View>
 

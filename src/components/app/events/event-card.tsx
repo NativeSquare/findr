@@ -12,6 +12,7 @@ export type EventCardProps = {
   imageUri: string;
   attendeeAvatars: string[];
   totalAttendees: number;
+  hasJoined?: boolean;
   onPress?: () => void;
   onJoinPress?: () => void;
 };
@@ -23,6 +24,7 @@ export function EventCard({
   imageUri,
   attendeeAvatars,
   totalAttendees,
+  hasJoined,
   onPress,
   onJoinPress,
 }: EventCardProps) {
@@ -62,9 +64,19 @@ export function EventCard({
         />
         <Pressable
           onPress={onJoinPress}
-          className="border border-[#e56400] rounded-full px-5 py-1.5 active:opacity-70"
+          className={`rounded-full px-5 py-1.5 active:opacity-70 ${
+            hasJoined
+              ? "bg-[#e56400] border border-[#e56400]"
+              : "border border-[#e56400]"
+          }`}
         >
-          <Text className="text-sm font-medium text-[#e56400]">Join</Text>
+          <Text
+            className={`text-sm font-medium ${
+              hasJoined ? "text-black" : "text-[#e56400]"
+            }`}
+          >
+            {hasJoined ? "Joined" : "Join"}
+          </Text>
         </Pressable>
       </View>
     </Pressable>
