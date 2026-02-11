@@ -5,7 +5,13 @@ import { THEME } from "@/lib/theme";
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Tabs } from "expo-router";
-import { Flame, House, MessageCircle, User } from "lucide-react-native";
+import {
+  CalendarDays,
+  Flame,
+  House,
+  MessageCircle,
+  User,
+} from "lucide-react-native";
 import { useColorScheme } from "nativewind";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,6 +44,15 @@ export default function TabsLayout() {
         },
       }}
     >
+      <Tabs.Screen
+        name="events"
+        options={{
+          title: "Events",
+          tabBarIcon: ({ color }) => (
+            <Icon as={CalendarDays} color={color} size={28} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="taps"
         options={{
