@@ -1,5 +1,4 @@
 import { EventCard } from "@/components/app/events/event-card";
-import { EventSection } from "@/components/app/events/event-section";
 import {
   EventsHeader,
   SearchLocation,
@@ -69,7 +68,7 @@ export default function Events() {
   const loadSearchLocation = React.useCallback(async () => {
     try {
       const saved = await AsyncStorage.getItem(
-        EVENT_SEARCH_LOCATION_STORAGE_KEY
+        EVENT_SEARCH_LOCATION_STORAGE_KEY,
       );
       if (saved) {
         setSearchLocation(JSON.parse(saved));
@@ -90,7 +89,7 @@ export default function Events() {
     React.useCallback(() => {
       loadFilters();
       loadSearchLocation();
-    }, [loadFilters, loadSearchLocation])
+    }, [loadFilters, loadSearchLocation]),
   );
 
   // Build query filters for the backend
@@ -130,10 +129,7 @@ export default function Events() {
     router.push({ pathname: "/event-detail", params: { id: eventId } });
   };
 
-  const handleJoinPress = async (
-    eventId: Id<"events">,
-    hasJoined: boolean
-  ) => {
+  const handleJoinPress = async (eventId: Id<"events">, hasJoined: boolean) => {
     try {
       if (hasJoined) {
         await leaveEvent({ eventId });
@@ -166,86 +162,28 @@ export default function Events() {
           <View className="items-center py-10">
             <Text className="text-sm text-[#70707b]">Loading events...</Text>
           </View>
+        ) : events.length === 0 ? (
+          <View className="items-center py-10">
+            <Text className="text-sm text-[#70707b]">No events found</Text>
+          </View>
         ) : (
-          <>
-            <EventSection title="Today's Events">
-              {events.today.length === 0 ? (
-                <Text className="text-sm text-[#70707b]">
-                  No events today
-                </Text>
-              ) : (
-                events.today.map((event) => (
-                  <EventCard
-                    key={event._id}
-                    id={event._id}
-                    title={event.title}
-                    date={formatEventDate(event.date)}
-                    location={event.location}
-                    imageUri={event.imageUrl ?? ""}
-                    attendeeAvatars={event.attendeeAvatars}
-                    totalAttendees={event.totalAttendees}
-                    hasJoined={event.hasJoined}
-                    onPress={() => handleEventPress(event._id)}
-                    onJoinPress={() =>
-                      handleJoinPress(event._id, event.hasJoined)
-                    }
-                  />
-                ))
-              )}
-            </EventSection>
-
-            <EventSection title="Upcoming Events">
-              {events.upcoming.length === 0 ? (
-                <Text className="text-sm text-[#70707b]">
-                  No upcoming events
-                </Text>
-              ) : (
-                events.upcoming.map((event) => (
-                  <EventCard
-                    key={event._id}
-                    id={event._id}
-                    title={event.title}
-                    date={formatEventDate(event.date)}
-                    location={event.location}
-                    imageUri={event.imageUrl ?? ""}
-                    attendeeAvatars={event.attendeeAvatars}
-                    totalAttendees={event.totalAttendees}
-                    hasJoined={event.hasJoined}
-                    onPress={() => handleEventPress(event._id)}
-                    onJoinPress={() =>
-                      handleJoinPress(event._id, event.hasJoined)
-                    }
-                  />
-                ))
-              )}
-            </EventSection>
-
-            <EventSection title="Previous Events">
-              {events.previous.length === 0 ? (
-                <Text className="text-sm text-[#70707b]">
-                  No previous events
-                </Text>
-              ) : (
-                events.previous.map((event) => (
-                  <EventCard
-                    key={event._id}
-                    id={event._id}
-                    title={event.title}
-                    date={formatEventDate(event.date)}
-                    location={event.location}
-                    imageUri={event.imageUrl ?? ""}
-                    attendeeAvatars={event.attendeeAvatars}
-                    totalAttendees={event.totalAttendees}
-                    hasJoined={event.hasJoined}
-                    onPress={() => handleEventPress(event._id)}
-                    onJoinPress={() =>
-                      handleJoinPress(event._id, event.hasJoined)
-                    }
-                  />
-                ))
-              )}
-            </EventSection>
-          </>
+          <View className="gap-4">
+            {events.map((event) => (
+              <EventCard
+                key={event._id}
+                id={event._id}
+                title={event.title}
+                date={formatEventDate(event.date)}
+                location={event.location}
+                imageUri={event.imageUrl ?? ""}
+                attendeeAvatars={event.attendeeAvatars}
+                totalAttendees={event.totalAttendees}
+                hasJoined={event.hasJoined}
+                onPress={() => handleEventPress(event._id)}
+                onJoinPress={() => handleJoinPress(event._id, event.hasJoined)}
+              />
+            ))}
+          </View>
         )}
       </View>
     </ScrollView>

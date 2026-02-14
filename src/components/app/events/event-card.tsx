@@ -1,6 +1,6 @@
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { Clock, MapPin } from "lucide-react-native";
+import { CalendarDays, Clock, MapPin } from "lucide-react-native";
 import { Image, Pressable, View } from "react-native";
 import { AttendeeAvatars } from "./attendee-avatars";
 
@@ -34,12 +34,21 @@ export function EventCard({
       className="bg-[#131316] border border-[#1a1a1e] rounded-xl p-3 gap-4 active:opacity-80"
     >
       <View className="flex-row gap-3">
-        <Image
-          source={{ uri: imageUri }}
-          className="w-[75px] rounded-lg"
-          style={{ aspectRatio: 75 / 85 }}
-          resizeMode="cover"
-        />
+        {imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            className="w-[75px] rounded-lg"
+            style={{ aspectRatio: 75 / 85 }}
+            resizeMode="cover"
+          />
+        ) : (
+          <View
+            className="w-[75px] rounded-lg bg-[#1a1a1e] items-center justify-center"
+            style={{ aspectRatio: 75 / 85 }}
+          >
+            <Icon as={CalendarDays} size={28} className="text-[#70707b]" />
+          </View>
+        )}
         <View className="flex-1 gap-2">
           <Text className="text-base font-medium text-white">{title}</Text>
           <View className="gap-1">
@@ -49,7 +58,7 @@ export function EventCard({
             </View>
             <View className="flex-row items-center gap-1">
               <Icon as={MapPin} size={18} className="text-[#d1d1d6]" />
-              <Text className="text-xs text-[#d1d1d6]" numberOfLines={1}>
+              <Text className="flex-1 text-xs text-[#d1d1d6]" numberOfLines={1}>
                 {location}
               </Text>
             </View>

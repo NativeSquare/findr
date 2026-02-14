@@ -9,11 +9,12 @@ import { Text } from "@/components/ui/text";
 import { EVENT_TYPES } from "@/constants/events";
 import { useUploadImage } from "@/hooks/use-upload-image";
 import { api } from "@convex/_generated/api";
+import { Id } from "@convex/_generated/dataModel";
 import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useAction, useMutation } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import * as ImagePicker from "expo-image-picker";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, CloudUpload, Globe } from "lucide-react-native";
 import React from "react";
 import {
@@ -28,7 +29,14 @@ import {
   View,
 } from "react-native";
 
-export default function CreateEvent() {
+export default function EditEvent() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const event = useQuery(
+    api.events.getEvent,
+    id ? { eventId: id as Id<"events"> } : "skip"
+  );
+
+  const [initialized, setInitialized] = React.useState(false);
   const [title, setTitle] = React.useState("");
   const [location, setLocation] = React.useState("");
   const [eventType, setEventType] = React.useState("");
@@ -36,6 +44,9 @@ export default function CreateEvent() {
   const [time, setTime] = React.useState<Date | null>(null);
   const [maxAttendees, setMaxAttendees] = React.useState("");
   const [photoUri, setPhotoUri] = React.useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = React.useState<string | null>(
+    null
+  );
   const [website, setWebsite] = React.useState("");
   const [instagram, setInstagram] = React.useState("");
   const [tiktok, setTiktok] = React.useState("");
@@ -51,9 +62,34 @@ export default function CreateEvent() {
   const [internalDate, setInternalDate] = React.useState(new Date());
   const [internalTime, setInternalTime] = React.useState(new Date());
 
-  const createEvent = useMutation(api.events.createEvent);
+  const updateEvent = useMutation(api.events.updateEvent);
   const getPlaceDetails = useAction(api.places.details);
   const { uploadImage, isUploading } = useUploadImage();
+
+  // Pre-fill form when event data loads
+  React.useEffect(() => {
+    if (event && !initialized) {
+      setTitle(event.title);
+      setLocation(event.location);
+      setEventType(event.eventType ?? "");
+      setMaxAttendees(event.maxAttendees ? String(event.maxAttendees) : "");
+      setExistingImageUrl(event.imageUrl ?? null);
+      setLatitude(event.latitude);
+      setLongitude(event.longitude);
+      setWebsite(event.website ?? "");
+      setInstagram(event.socialLinks?.instagram ?? "");
+      setTiktok(event.socialLinks?.tiktok ?? "");
+      setFacebook(event.socialLinks?.facebook ?? "");
+
+      const eventDate = new Date(event.date);
+      setDate(eventDate);
+      setTime(eventDate);
+      setInternalDate(eventDate);
+      setInternalTime(eventDate);
+
+      setInitialized(true);
+    }
+  }, [event, initialized]);
 
   const handlePickPhoto = async () => {
     try {
@@ -66,7 +102,7 @@ export default function CreateEvent() {
           [
             { text: "Cancel", style: "cancel" },
             { text: "Open Settings", onPress: () => Linking.openSettings() },
-          ],
+          ]
         );
         return;
       }
@@ -149,22 +185,20 @@ export default function CreateEvent() {
 
   const isFormValid = title.trim() && location.trim() && date && time;
 
-  const handleCreate = async () => {
-    if (!isFormValid || !date || !time) return;
+  const handleSave = async () => {
+    if (!isFormValid || !date || !time || !id) return;
 
     setIsSubmitting(true);
     try {
-      // Combine date and time into a single timestamp
       const eventDate = new Date(date);
       eventDate.setHours(time.getHours(), time.getMinutes(), 0, 0);
 
-      // Upload image if selected
-      let imageUrl: string | undefined;
+      // Upload new image if user picked one, otherwise keep the existing URL
+      let imageUrl: string | undefined = existingImageUrl ?? undefined;
       if (photoUri) {
         imageUrl = await uploadImage(photoUri, { width: 1200 });
       }
 
-      // Build social links (only include non-empty values)
       const hasSocialLinks =
         instagram.trim() || tiktok.trim() || facebook.trim();
       const socialLinks = hasSocialLinks
@@ -175,7 +209,8 @@ export default function CreateEvent() {
           }
         : undefined;
 
-      await createEvent({
+      await updateEvent({
+        eventId: id as Id<"events">,
         title: title.trim(),
         location: location.trim(),
         latitude,
@@ -188,16 +223,40 @@ export default function CreateEvent() {
         socialLinks,
       });
 
-      router.replace("/(app)/(tabs)/events");
+      router.back();
     } catch (error: any) {
-      console.error("Error creating event:", error);
-      Alert.alert("Error", error.message ?? "Failed to create event.");
+      console.error("Error updating event:", error);
+      Alert.alert("Error", error.message ?? "Failed to update event.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const isBusy = isSubmitting || isUploading;
+
+  // Loading state
+  if (event === undefined) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator size="large" color="#e56400" />
+      </View>
+    );
+  }
+
+  if (event === null) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center px-5">
+        <Text className="text-base text-[#70707b]">Event not found</Text>
+        <Button className="mt-4" onPress={() => router.back()}>
+          <Text className="text-base font-medium text-primary-foreground">
+            Go Back
+          </Text>
+        </Button>
+      </View>
+    );
+  }
+
+  const displayImageUri = photoUri ?? existingImageUrl;
 
   return (
     <View className="flex-1 bg-background mt-safe">
@@ -211,13 +270,10 @@ export default function CreateEvent() {
         <View className="w-full max-w-md self-center flex-1">
           {/* Header */}
           <View className="flex-row items-center justify-between px-1 py-6">
-            <Pressable
-              onPress={() => router.replace("/(app)/(tabs)/events")}
-              className="size-6"
-            >
+            <Pressable onPress={() => router.back()} className="size-6">
               <Icon as={ArrowLeft} size={24} className="text-white" />
             </Pressable>
-            <Text className="text-xl font-medium text-white">Create Event</Text>
+            <Text className="text-xl font-medium text-white">Edit Event</Text>
             <View className="size-6" />
           </View>
 
@@ -245,7 +301,6 @@ export default function CreateEvent() {
                 value={location}
                 onChangeText={(text) => {
                   setLocation(text);
-                  // Clear coordinates when user manually types (location changed)
                   setLatitude(undefined);
                   setLongitude(undefined);
                 }}
@@ -350,16 +405,16 @@ export default function CreateEvent() {
             {/* Add Photo */}
             <View className="gap-3">
               <Text className="text-sm font-medium text-[#d1d1d6]">
-                Add Photo
+                Photo
               </Text>
               <Pressable
                 onPress={handlePickPhoto}
                 className="dark:bg-input/30 bg-background border border-input rounded-md p-3 items-center gap-3 shadow-sm shadow-black/5 active:opacity-70"
                 disabled={isBusy}
               >
-                {photoUri ? (
+                {displayImageUri ? (
                   <Image
-                    source={{ uri: photoUri }}
+                    source={{ uri: displayImageUri }}
                     className="w-full h-32 rounded-md"
                     resizeMode="cover"
                   />
@@ -430,13 +485,13 @@ export default function CreateEvent() {
         <Button
           className="w-full bg-[#e56400]"
           disabled={!isFormValid || isBusy}
-          onPress={handleCreate}
+          onPress={handleSave}
         >
           {isBusy ? (
             <ActivityIndicator size="small" color="#000" />
           ) : (
             <Text className="text-base font-medium text-black">
-              Create Event
+              Save Changes
             </Text>
           )}
         </Button>

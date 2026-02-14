@@ -27,11 +27,14 @@ const documentSchema = {
   organizerId: v.id("users"),
   title: v.string(),
   location: v.string(),
+  latitude: v.optional(v.number()),
+  longitude: v.optional(v.number()),
   date: v.number(), // Unix timestamp (ms) combining date + time
   description: v.optional(v.string()),
   maxAttendees: v.optional(v.number()),
   imageUrl: v.optional(v.string()),
   eventType: v.optional(v.string()),
+  website: v.optional(v.string()),
   socialLinks: v.optional(
     v.object({
       instagram: v.optional(v.string()),
@@ -74,11 +77,14 @@ export const createEvent = mutation({
   args: {
     title: v.string(),
     location: v.string(),
+    latitude: v.optional(v.number()),
+    longitude: v.optional(v.number()),
     date: v.number(),
     description: v.optional(v.string()),
     maxAttendees: v.optional(v.number()),
     imageUrl: v.optional(v.string()),
     eventType: v.optional(v.string()),
+    website: v.optional(v.string()),
     socialLinks: v.optional(
       v.object({
         instagram: v.optional(v.string()),
@@ -104,11 +110,14 @@ export const createEvent = mutation({
       organizerId: currentUserId,
       title: args.title.trim(),
       location: args.location.trim(),
+      latitude: args.latitude,
+      longitude: args.longitude,
       date: args.date,
       description: args.description?.trim(),
       maxAttendees: args.maxAttendees,
       imageUrl: args.imageUrl,
       eventType: args.eventType,
+      website: args.website?.trim() || undefined,
       socialLinks: args.socialLinks,
     });
 
@@ -123,7 +132,7 @@ export const createEvent = mutation({
 });
 
 /**
- * Get events grouped by today, upcoming, and previous.
+ * Get non-past events as a flat list, sorted by soonest first.
  * Supports optional filters for eventType, dateRange, and city.
  */
 export const getEvents = query({
@@ -134,21 +143,21 @@ export const getEvents = query({
   },
   handler: async (ctx, args) => {
     const currentUserId = await getAuthUserId(ctx);
-    if (!currentUserId) return { today: [], upcoming: [], previous: [] };
+    if (!currentUserId) return [];
 
     const now = Date.now();
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
 
     const allEvents = await ctx.db
       .query("events")
       .withIndex("date")
       .collect();
 
-    // Apply filters
-    let filteredEvents = allEvents;
+    // Exclude past events (only keep events from today onward)
+    let filteredEvents = allEvents.filter(
+      (e) => e.date >= startOfToday.getTime()
+    );
 
     // Filter by event type / category
     if (args.eventType && args.eventType.length > 0) {
@@ -167,6 +176,9 @@ export const getEvents = query({
 
     // Filter by date range
     if (args.dateRange) {
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+
       const tomorrow = new Date(startOfToday);
       tomorrow.setDate(tomorrow.getDate() + 1);
       const endOfTomorrow = new Date(tomorrow);
@@ -266,6 +278,7 @@ export const getEvents = query({
           imageUrl: event.imageUrl,
           description: event.description,
           eventType: event.eventType,
+          website: event.website,
           maxAttendees: event.maxAttendees,
           socialLinks: event.socialLinks,
           organizerId: event.organizerId,
@@ -281,22 +294,8 @@ export const getEvents = query({
       })
     );
 
-    const today = enrichedEvents
-      .filter(
-        (e) =>
-          e.date >= startOfToday.getTime() && e.date <= endOfToday.getTime()
-      )
-      .sort((a, b) => a.date - b.date);
-
-    const upcoming = enrichedEvents
-      .filter((e) => e.date > endOfToday.getTime())
-      .sort((a, b) => a.date - b.date);
-
-    const previous = enrichedEvents
-      .filter((e) => e.date < startOfToday.getTime())
-      .sort((a, b) => b.date - a.date);
-
-    return { today, upcoming, previous };
+    // Sort by soonest first
+    return enrichedEvents.sort((a, b) => a.date - b.date);
   },
 });
 
@@ -431,6 +430,119 @@ export const leaveEvent = mutation({
     }
 
     await ctx.db.delete(existing._id);
+  },
+});
+
+/**
+ * Update an existing event (organizer only).
+ */
+export const updateEvent = mutation({
+  args: {
+    eventId: v.id("events"),
+    title: v.string(),
+    location: v.string(),
+    latitude: v.optional(v.number()),
+    longitude: v.optional(v.number()),
+    date: v.number(),
+    description: v.optional(v.string()),
+    maxAttendees: v.optional(v.number()),
+    imageUrl: v.optional(v.string()),
+    eventType: v.optional(v.string()),
+    website: v.optional(v.string()),
+    socialLinks: v.optional(
+      v.object({
+        instagram: v.optional(v.string()),
+        tiktok: v.optional(v.string()),
+        facebook: v.optional(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) {
+      throw new Error("Not authenticated");
+    }
+
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    if (event.organizerId !== currentUserId) {
+      throw new Error("Only the organizer can edit this event");
+    }
+
+    if (!args.title.trim()) {
+      throw new Error("Event title is required");
+    }
+    if (!args.location.trim()) {
+      throw new Error("Event location is required");
+    }
+
+    await ctx.db.patch(args.eventId, {
+      title: args.title.trim(),
+      location: args.location.trim(),
+      latitude: args.latitude,
+      longitude: args.longitude,
+      date: args.date,
+      description: args.description?.trim(),
+      maxAttendees: args.maxAttendees,
+      imageUrl: args.imageUrl,
+      eventType: args.eventType,
+      website: args.website?.trim() || undefined,
+      socialLinks: args.socialLinks,
+    });
+
+    return args.eventId;
+  },
+});
+
+/**
+ * Get events organized by the current user, sorted by soonest first.
+ */
+export const getMyOrganizedEvents = query({
+  args: {},
+  handler: async (ctx) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) return [];
+
+    const events = await ctx.db
+      .query("events")
+      .withIndex("organizerId", (q) => q.eq("organizerId", currentUserId))
+      .collect();
+
+    const enrichedEvents = await Promise.all(
+      events.map(async (event) => {
+        const attendees = await ctx.db
+          .query("eventAttendees")
+          .withIndex("eventId", (q) => q.eq("eventId", event._id))
+          .collect();
+
+        const attendeeUsers = await Promise.all(
+          attendees.slice(0, 5).map(async (a) => {
+            const user = await ctx.db.get(a.userId);
+            if (!user?.profilePictures?.length) return null;
+            return ctx.storage.getUrl(user.profilePictures[0]);
+          })
+        );
+
+        return {
+          _id: event._id,
+          title: event.title,
+          date: event.date,
+          location: event.location,
+          imageUrl: event.imageUrl,
+          eventType: event.eventType,
+          attendeeAvatars: attendeeUsers.filter(Boolean) as string[],
+          totalAttendees: attendees.length,
+          hasJoined: true, // organizer is always joined
+          _creationTime: event._creationTime,
+        };
+      })
+    );
+
+    // Sort by soonest first
+    return enrichedEvents.sort((a, b) => a.date - b.date);
   },
 });
 

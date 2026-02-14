@@ -1,4 +1,5 @@
 import { AttendeeAvatars } from "@/components/app/events/attendee-avatars";
+import { EventLocationMap } from "@/components/app/events/event-location-map";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -7,7 +8,7 @@ import { Id } from "@convex/_generated/dataModel";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery } from "convex/react";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Clock, MapPin } from "lucide-react-native";
+import { ArrowLeft, Clock, MapPin, Pencil } from "lucide-react-native";
 import React from "react";
 import {
   ActivityIndicator,
@@ -62,7 +63,7 @@ export default function EventDetail() {
 
   const event = useQuery(
     api.events.getEvent,
-    id ? { eventId: id as Id<"events"> } : "skip"
+    id ? { eventId: id as Id<"events"> } : "skip",
   );
   const joinEvent = useMutation(api.events.joinEvent);
   const leaveEvent = useMutation(api.events.leaveEvent);
@@ -125,12 +126,26 @@ export default function EventDetail() {
             </View>
           )}
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => router.replace("/(app)/(tabs)/events")}
             className="absolute bg-black/30 rounded-full size-9 items-center justify-center active:opacity-70"
             style={{ top: insets.top + 20, left: 20 }}
           >
             <Icon as={ArrowLeft} size={22} className="text-white" />
           </Pressable>
+          {event.isOrganizer && (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/edit-event",
+                  params: { id: event._id },
+                })
+              }
+              className="absolute bg-black/30 rounded-full size-9 items-center justify-center active:opacity-70"
+              style={{ top: insets.top + 20, right: 20 }}
+            >
+              <Icon as={Pencil} size={18} className="text-white" />
+            </Pressable>
+          )}
         </View>
 
         {/* Content */}
@@ -207,12 +222,11 @@ export default function EventDetail() {
           {/* Location Map */}
           <View className="gap-2">
             <Text className="text-base font-semibold text-white">Location</Text>
-            <View className="h-[124px] rounded-[10px] bg-[#1a1a1e] overflow-hidden items-center justify-center">
-              <Ionicons name="map-outline" size={40} color="#70707b" />
-              <Text className="text-xs text-[#70707b] mt-2">
-                Map view available soon
-              </Text>
-            </View>
+            <EventLocationMap
+              latitude={event.latitude}
+              longitude={event.longitude}
+              location={event.location}
+            />
           </View>
         </View>
       </ScrollView>
@@ -223,14 +237,14 @@ export default function EventDetail() {
         style={{ paddingBottom: insets.bottom + 8 }}
       >
         {event.isOrganizer ? (
-          <Button className="w-full py-3 bg-[#1a1a1e]" disabled>
+          <Button className="w-full bg-input" disabled>
             <Text className="text-base font-medium text-[#70707b] text-center">
               You're the organizer
             </Text>
           </Button>
         ) : (
           <Button
-            className={`w-full py-3 ${event.hasJoined ? "bg-[#1a1a1e] border border-[#e56400]" : "bg-[#e56400]"}`}
+            className={`w-full ${event.hasJoined ? "bg-[#1a1a1e] border border-[#e56400]" : "bg-[#e56400]"}`}
             onPress={handleJoinLeave}
             disabled={isJoining}
           >

@@ -145,9 +145,7 @@ export default function LocationSearch() {
     } catch (error) {
       console.error("Error saving location:", error);
     }
-    // Use dismissAll to ensure we return to the caller, even if there are multiple
-    // location-search screens in the stack (e.g., after coming from autocomplete)
-    router.dismissAll();
+    router.back();
   };
 
   const handleCurrentLocation = async () => {

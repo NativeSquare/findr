@@ -14,6 +14,7 @@ import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet
 import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
 import {
+    CalendarDays,
     File,
     FileText,
     Images,
@@ -84,6 +85,11 @@ export default function Profile() {
       label: "Edit Profile",
       icon: Pencil,
       onPress: () => router.push("/edit-profile"),
+    },
+    {
+      label: "My Events",
+      icon: CalendarDays,
+      onPress: () => router.push("/my-events"),
     },
     {
       label: "Cached Pictures",
