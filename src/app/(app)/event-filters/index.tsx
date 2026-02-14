@@ -82,7 +82,7 @@ export default function EventFilters() {
     } catch (error) {
       console.error("Error saving event filters:", error);
     }
-    router.back();
+    router.navigate("/(app)/(tabs)/events");
   };
 
   return (
