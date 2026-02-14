@@ -170,9 +170,9 @@ function calculateDistance(
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -271,5 +271,105 @@ export const getNearestUsers = query({
     );
 
     return resolvedUsers.filter((user) => user !== null);
+  },
+});
+
+/**
+ * Get nearby stories grouped by author.
+ * Uses the geospatial index to find nearby users, then fetches their active stories.
+ */
+export const getNearbyStories = query({
+  args: {
+    userId: v.id("users"),
+    customLocation: v.optional(
+      v.object({
+        latitude: v.number(),
+        longitude: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Determine search location
+    let searchPoint: { latitude: number; longitude: number };
+
+    if (args.customLocation) {
+      searchPoint = args.customLocation;
+    } else {
+      const geo = await geospatial.get(ctx, args.userId);
+      if (!geo) return [];
+      searchPoint = geo.coordinates;
+    }
+
+    // Get nearby users from the geospatial index
+    const nearbyResults = await geospatial.nearest(ctx, {
+      point: searchPoint,
+      limit: 500,
+      maxDistance: 5000000, // 5000km
+    });
+
+    // Include self + nearby users
+    const nearbyUserIds = nearbyResults.map((item) => item.key);
+
+    // Fetch active stories for all nearby users (including self)
+    const storyGroups: {
+      authorId: Id<"users">;
+      authorName: string;
+      authorAvatarUrl: string | null;
+      stories: {
+        _id: Id<"stories">;
+        imageUrl: string | null;
+        expiresAt: number;
+        _creationTime: number;
+      }[];
+    }[] = [];
+
+    for (const userId of nearbyUserIds) {
+      const userStories = await ctx.db
+        .query("stories")
+        .withIndex("by_authorId", (q) => q.eq("authorId", userId))
+        .filter((q) => q.gt(q.field("expiresAt"), now))
+        .collect();
+
+      if (userStories.length === 0) continue;
+
+      const author = await ctx.db.get(userId);
+      if (!author) continue;
+
+      // Get author avatar URL
+      const avatarUrl = author.profilePictures?.length
+        ? await ctx.storage.getUrl(author.profilePictures[0])
+        : null;
+
+      // Get image URLs for each story
+      const enrichedStories = await Promise.all(
+        userStories.map(async (story) => ({
+          _id: story._id,
+          imageUrl: await ctx.storage.getUrl(story.imageStorageId),
+          expiresAt: story.expiresAt,
+          _creationTime: story._creationTime,
+        }))
+      );
+
+      // Sort stories by creation time (oldest first)
+      enrichedStories.sort((a, b) => a._creationTime - b._creationTime);
+
+      storyGroups.push({
+        authorId: userId,
+        authorName: author.name ?? "Unknown",
+        authorAvatarUrl: avatarUrl,
+        stories: enrichedStories,
+      });
+    }
+
+    // Put the current user's stories first if they have any
+    storyGroups.sort((a, b) => {
+      if (a.authorId === args.userId) return -1;
+      if (b.authorId === args.userId) return 1;
+      return 0;
+    });
+
+    return storyGroups;
   },
 });

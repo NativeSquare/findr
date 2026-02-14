@@ -34,17 +34,29 @@ export default function Chat() {
   // Fetch conversations from backend
   const conversations = useQuery(api.conversations.getConversations);
 
+  // Fetch event group chats
+  const eventChats = useQuery(api.eventMessages.getEventChats);
+
   // Fetch albums from backend
   const albums = useQuery(api.albums.getAlbums);
 
   // Mutations
   const deleteAlbum = useMutation(api.albums.deleteAlbum);
 
-  // Transform conversations data for the UI
-  const chats = useMemo(() => {
-    if (!conversations) return [];
+  // Merge DM conversations and event group chats into a unified list
+  type ChatItem = {
+    id: string;
+    name: string;
+    avatarUri?: string | null;
+    lastMessage?: string;
+    timestamp?: string;
+    unreadCount: number;
+    sortTime: number;
+    type: "dm" | "event";
+  };
 
-    return conversations.map((conv) => ({
+  const allChats = useMemo(() => {
+    const dmItems: ChatItem[] = (conversations ?? []).map((conv) => ({
       id: conv.otherUser._id,
       name: conv.otherUser.name || "Unknown",
       avatarUri: conv.otherUser.image,
@@ -53,17 +65,32 @@ export default function Chat() {
         ? formatChatListTimestamp(conv.lastMessageTime)
         : undefined,
       unreadCount: conv.unreadCount || 0,
+      sortTime: conv.lastMessageTime || 0,
+      type: "dm" as const,
     }));
-  }, [conversations]);
+
+    const eventItems: ChatItem[] = (eventChats ?? []).map((chat) => ({
+      id: chat.eventId,
+      name: chat.eventTitle,
+      avatarUri: chat.eventImageUrl,
+      lastMessage: chat.lastMessage,
+      timestamp: formatChatListTimestamp(chat.lastMessageTime),
+      unreadCount: 0,
+      sortTime: chat.lastMessageTime,
+      type: "event" as const,
+    }));
+
+    return [...dmItems, ...eventItems].sort((a, b) => b.sortTime - a.sortTime);
+  }, [conversations, eventChats]);
 
   const filteredChats = useMemo(
     () =>
-      chats.filter(
+      allChats.filter(
         (chat) =>
           chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           chat.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase())
       ),
-    [chats, searchQuery]
+    [allChats, searchQuery]
   );
 
   const filteredAlbums = useMemo(
@@ -196,14 +223,21 @@ export default function Chat() {
             {filteredChats.length > 0 ? (
               filteredChats.map((chat) => (
                 <ChatListItem
-                  key={chat.id}
+                  key={`${chat.type}-${chat.id}`}
                   id={chat.id}
                   name={chat.name}
                   avatarUri={chat.avatarUri || undefined}
                   lastMessage={chat.lastMessage}
                   timestamp={chat.timestamp}
                   unreadCount={chat.unreadCount}
-                  onPress={() => router.push(`/chat/${chat.id}`)}
+                  onPress={() =>
+                    chat.type === "event"
+                      ? router.push({
+                          pathname: "/event-chat/[id]",
+                          params: { id: chat.id },
+                        })
+                      : router.push(`/chat/${chat.id}`)
+                  }
                 />
               ))
             ) : (

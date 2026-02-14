@@ -2,6 +2,7 @@ import { HomeFiltersRow } from "@/components/app/home/home-filters-row";
 import { HomeHeader } from "@/components/app/home/home-header";
 import { NearestUsersGridItem } from "@/components/app/home/nearest-users-grid-item";
 import { NearestUsersGridItemSkeleton } from "@/components/app/home/nearest-users-grid-item-skeleton";
+import { StoryTray } from "@/components/app/stories/story-tray";
 import { cmToFeetInches, kgToLbs } from "@/utils/measurements";
 import { usePresence } from "@convex-dev/presence/react-native";
 import { api } from "@convex/_generated/api";
@@ -77,7 +78,7 @@ export default function Home() {
   const loadSearchLocation = React.useCallback(async () => {
     try {
       const savedLocation = await AsyncStorage.getItem(
-        SEARCH_LOCATION_STORAGE_KEY
+        SEARCH_LOCATION_STORAGE_KEY,
       );
       if (savedLocation) {
         const parsed = JSON.parse(savedLocation);
@@ -98,7 +99,7 @@ export default function Home() {
     React.useCallback(() => {
       loadFilters();
       loadSearchLocation();
-    }, [loadFilters, loadSearchLocation])
+    }, [loadFilters, loadSearchLocation]),
   );
 
   // Check if filters are active (non-default)
@@ -140,7 +141,9 @@ export default function Home() {
       if (measurementSystem === "imperial") {
         const minFt = cmToFeetInches(minH);
         const maxFt = cmToFeetInches(maxH);
-        labels.push(`${minFt.feet}'${minFt.inches}"-${maxFt.feet}'${maxFt.inches}"`);
+        labels.push(
+          `${minFt.feet}'${minFt.inches}"-${maxFt.feet}'${maxFt.inches}"`,
+        );
       } else {
         labels.push(`${minH}-${maxH}cm`);
       }
@@ -191,7 +194,7 @@ export default function Home() {
     try {
       await AsyncStorage.setItem(
         FILTERS_STORAGE_KEY,
-        JSON.stringify(defaultFilters)
+        JSON.stringify(defaultFilters),
       );
     } catch (error) {
       console.error("Error clearing filters:", error);
@@ -270,6 +273,17 @@ export default function Home() {
         <HomeFiltersRow
           activeFilterLabels={activeFilterLabels}
           onClearAll={handleClearAll}
+        />
+        <StoryTray
+          user={user}
+          searchLocation={
+            searchLocation
+              ? {
+                  latitude: searchLocation.latitude,
+                  longitude: searchLocation.longitude,
+                }
+              : null
+          }
         />
         <View className="gap-1.5">
           {nearestUsers === undefined

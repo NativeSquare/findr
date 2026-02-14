@@ -8,7 +8,13 @@ import { Id } from "@convex/_generated/dataModel";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery } from "convex/react";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Clock, MapPin, Pencil } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Clock,
+  MapPin,
+  MessageCircle,
+  Pencil,
+} from "lucide-react-native";
 import React from "react";
 import {
   ActivityIndicator,
@@ -132,20 +138,38 @@ export default function EventDetail() {
           >
             <Icon as={ArrowLeft} size={22} className="text-white" />
           </Pressable>
-          {event.isOrganizer && (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/edit-event",
-                  params: { id: event._id },
-                })
-              }
-              className="absolute bg-black/30 rounded-full size-9 items-center justify-center active:opacity-70"
-              style={{ top: insets.top + 20, right: 20 }}
-            >
-              <Icon as={Pencil} size={18} className="text-white" />
-            </Pressable>
-          )}
+          {/* Right-side action buttons */}
+          <View
+            className="absolute flex-row gap-2"
+            style={{ top: insets.top + 20, right: 20 }}
+          >
+            {(event.hasJoined || event.isOrganizer) && (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/event-chat/[id]",
+                    params: { id: event._id },
+                  })
+                }
+                className="bg-black/30 rounded-full size-9 items-center justify-center active:opacity-70"
+              >
+                <Icon as={MessageCircle} size={18} className="text-white" />
+              </Pressable>
+            )}
+            {event.isOrganizer && (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/edit-event",
+                    params: { id: event._id },
+                  })
+                }
+                className="bg-black/30 rounded-full size-9 items-center justify-center active:opacity-70"
+              >
+                <Icon as={Pencil} size={18} className="text-white" />
+              </Pressable>
+            )}
+          </View>
         </View>
 
         {/* Content */}
