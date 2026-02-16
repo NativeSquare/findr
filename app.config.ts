@@ -42,7 +42,7 @@ export const getGoogleServicesJson = () => {
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   name: getAppName(),
-  slug: APP_NAME,
+  slug: APP_SLUG,
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
@@ -111,13 +111,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     router: {},
     eas: {
-      projectId: "89896b4e-c988-4370-9739-febb9b531de6",
+      projectId: "2b7baddb-1ffe-4fb8-ad20-71c7c6257c88",
     },
   },
   runtimeVersion: {
     policy: "appVersion",
   },
   updates: {
-    url: "https://u.expo.dev/89896b4e-c988-4370-9739-febb9b531de6",
+    url: "https://u.expo.dev/2b7baddb-1ffe-4fb8-ad20-71c7c6257c88",
   },
 });
