@@ -19,6 +19,7 @@ export type EditProfileFormData = Partial<
     | "name"
     | "bio"
     | "birthDate"
+    | "birthLocation"
     | "height"
     | "weight"
     | "position"
@@ -41,6 +42,7 @@ export default function EditProfile() {
     name: user?.name,
     bio: user?.bio,
     birthDate: user?.birthDate,
+    birthLocation: user?.birthLocation,
     height: user?.height,
     weight: user?.weight,
     position: user?.position,
@@ -62,7 +64,10 @@ export default function EditProfile() {
           <Icon as={ChevronLeft} size={24} className="text-white" />
         </Pressable>
         <Text className="text-xl font-medium text-white">Edit Profile</Text>
-        <Pressable onPress={() => router.push("/my-profile")} className="size-6">
+        <Pressable
+          onPress={() => router.push("/my-profile")}
+          className="size-6"
+        >
           <Icon as={Eye} size={24} className="text-white" />
         </Pressable>
       </View>

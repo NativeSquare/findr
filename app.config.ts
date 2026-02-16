@@ -53,6 +53,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     userInterfaceStyle: "dark",
     bundleIdentifier: getUniqueIdentifier(),
+    icon: "./assets/images/oomphh-ios.png",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
@@ -83,8 +84,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundler: "metro",
   },
   plugins: [
-    "@logrocket/react-native",
-    "expo-build-properties",
     "expo-camera",
     "expo-image-picker",
     "expo-media-library",

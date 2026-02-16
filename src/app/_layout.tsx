@@ -3,12 +3,10 @@ import { fetchUpdatesAsync } from "@/utils/fetch-updates-async";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { api } from "@convex/_generated/api";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import LogRocket from "@logrocket/react-native";
 import { PortalHost } from "@rn-primitives/portal";
 import { ConvexReactClient, useConvexAuth, useQuery } from "convex/react";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import * as Updates from "expo-updates";
 import { useColorScheme } from "nativewind";
 import * as React from "react";
 import { useEffect } from "react";
@@ -31,12 +29,6 @@ export default function RootLayout() {
   const { setColorScheme } = useColorScheme();
   useEffect(() => {
     setColorScheme("dark");
-  }, []);
-  useEffect(() => {
-    LogRocket.init("avuge9/findr", {
-      updateId: Updates.isEmbeddedLaunch ? null : Updates.updateId,
-      expoChannel: Updates.channel,
-    });
   }, []);
   useEffect(() => {
     if (!__DEV__) {

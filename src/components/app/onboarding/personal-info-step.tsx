@@ -4,6 +4,7 @@ import type { MeasurementSystem } from "@/utils/measurements";
 import * as React from "react";
 import { View } from "react-native";
 import { BirthDateField } from "../profile/birth-date-field";
+import { BirthLocationField } from "../profile/birth-location-field";
 import { HeightField } from "../profile/height-field";
 import { WeightField } from "../profile/weight-field";
 
@@ -42,6 +43,11 @@ export function PersonalInfoStep({
         errorMessage={errorMessage}
         minAge={MIN_AGE}
         required
+      />
+
+      <BirthLocationField
+        value={formData.birthLocation}
+        onChange={(value) => setFormData({ ...formData, birthLocation: value })}
       />
 
       <HeightField

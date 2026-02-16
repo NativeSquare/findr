@@ -43,6 +43,7 @@ const documentSchema = {
   // other "users" fields...
   bio: v.optional(v.string()),
   birthDate: v.optional(v.string()), // ISO8601 string (e.g., "2000-01-15T00:00:00Z")
+  birthLocation: v.optional(v.string()), // City/Place name (e.g., "Paris, France")
   height: v.optional(
     v.object({
       value: v.number(),

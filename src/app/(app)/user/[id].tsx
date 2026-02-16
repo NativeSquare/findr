@@ -3,12 +3,16 @@ import { BottomSheetModal } from "@/components/custom/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Text } from "@/components/ui/text";
-import { formatDistance, formatHeight, formatWeight } from "@/utils/measurements";
+import {
+  formatDistance,
+  formatHeight,
+  formatWeight,
+} from "@/utils/measurements";
 import { usePresence } from "@convex-dev/presence/react-native";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
@@ -17,18 +21,18 @@ import { useMutation, useQuery } from "convex/react";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import {
-    Cake,
-    ChevronLeft,
-    Dumbbell,
-    Globe,
-    Heart,
-    MapPin,
-    MessageCircle,
-    Repeat,
-    Ruler,
-    Scale,
-    Smile,
-    Users,
+  Cake,
+  ChevronLeft,
+  Dumbbell,
+  Globe,
+  Heart,
+  MapPin,
+  MessageCircle,
+  Repeat,
+  Ruler,
+  Scale,
+  Smile,
+  Users,
 } from "lucide-react-native";
 import React, { useEffect, useRef } from "react";
 import { Pressable, View } from "react-native";
@@ -71,16 +75,16 @@ export default function UserProfile() {
           currentUserId: currentUser._id,
           targetUserId: id as any,
         }
-      : "skip"
+      : "skip",
   );
   const presenceState = usePresence(
     api.presence,
     "public",
-    currentUser?._id ?? ""
+    currentUser?._id ?? "",
   );
 
   const userPresenceState = (presenceState || []).find(
-    (state) => state.userId === id
+    (state) => state.userId === id,
   );
   const isOnline =
     user?.privacy?.hideOnlineStatus === true
@@ -100,7 +104,7 @@ export default function UserProfile() {
   const toggleFavorite = useMutation(api.users.toggleFavorite);
   const isFavorite = useQuery(
     api.users.isFavorite,
-    currentUser?._id && id ? { userId: id } : "skip"
+    currentUser?._id && id ? { userId: id } : "skip",
   );
   const recordView = useMutation(api.views.recordView);
   const sendTap = useMutation(api.taps.sendTap);
@@ -108,7 +112,7 @@ export default function UserProfile() {
     api.taps.getTap,
     currentUser?._id && id
       ? { fromUserId: currentUser._id, toUserId: id }
-      : "skip"
+      : "skip",
   );
 
   // Record view when profile is viewed
@@ -310,7 +314,10 @@ export default function UserProfile() {
           )}
 
           {/* USER INFOS Section */}
-          {(shouldShowAge || user.height || user.weight) && (
+          {(shouldShowAge ||
+            user.birthLocation ||
+            user.height ||
+            user.weight) && (
             <View className="gap-2">
               <Text className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 User Infos
@@ -324,11 +331,23 @@ export default function UserProfile() {
                     </Text>
                   </View>
                 )}
+                {user.birthLocation && (
+                  <View className="flex-row items-center gap-2">
+                    <Icon as={MapPin} size={20} className="text-foreground" />
+                    <Text className="text-base text-foreground">
+                      {user.birthLocation}
+                    </Text>
+                  </View>
+                )}
                 {user.height && (
                   <View className="flex-row items-center gap-2">
                     <Icon as={Ruler} size={20} className="text-foreground" />
                     <Text className="text-base text-foreground">
-                      {formatHeight(user.height.value, user.height.unit, measurementSystem)}
+                      {formatHeight(
+                        user.height.value,
+                        user.height.unit,
+                        measurementSystem,
+                      )}
                     </Text>
                   </View>
                 )}
@@ -336,7 +355,11 @@ export default function UserProfile() {
                   <View className="flex-row items-center gap-2">
                     <Icon as={Scale} size={20} className="text-foreground" />
                     <Text className="text-base text-foreground">
-                      {formatWeight(user.weight.value, user.weight.unit, measurementSystem)}
+                      {formatWeight(
+                        user.weight.value,
+                        user.weight.unit,
+                        measurementSystem,
+                      )}
                     </Text>
                   </View>
                 )}

@@ -33,6 +33,34 @@ export const autocomplete = action({
   },
 });
 
+export const autocompleteCities = action({
+  args: { input: v.string(), sessionToken: v.string() },
+  handler: async (_ctx, { input, sessionToken }) => {
+    const res = await fetch(
+      "https://places.googleapis.com/v1/places:autocomplete",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": process.env.GOOGLE_PLACES_API_KEY!,
+          "X-Goog-FieldMask":
+            "suggestions.placePrediction.placeId,suggestions.placePrediction.text",
+        },
+        body: JSON.stringify({
+          input,
+          sessionToken,
+          includedPrimaryTypes: ["(cities)"],
+        }),
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data?.error?.message ?? "Places autocomplete failed");
+    return data;
+  },
+});
+
 export const details = action({
   args: { placeId: v.string() },
   handler: async (_ctx, { placeId }) => {

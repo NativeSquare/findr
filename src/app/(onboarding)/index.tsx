@@ -1,5 +1,6 @@
 import { AddMorePhotosStep } from "@/components/app/onboarding/add-more-photos-step";
 import { BasicInfoStep } from "@/components/app/onboarding/basic-info-step";
+import { MetricsStep } from "@/components/app/onboarding/metrics-step";
 import { PersonalInfoStep } from "@/components/app/onboarding/personal-info-step";
 import { PreferencesInfoStep } from "@/components/app/onboarding/preferences-info-step";
 import { PrivacyInfoStep } from "@/components/app/onboarding/privacy-info-step";
@@ -24,6 +25,7 @@ export type OnboardingFormData = Partial<
     | "name"
     | "bio"
     | "birthDate"
+    | "birthLocation"
     | "height"
     | "weight"
     | "bodyTypes"
@@ -34,6 +36,7 @@ export type OnboardingFormData = Partial<
     | "lookingFor"
     | "privacy"
     | "profilePictures"
+    | "measurementSystem"
   >
 >;
 
@@ -46,6 +49,7 @@ export default function Onboarding() {
     name: user?.name,
     bio: user?.bio,
     birthDate: user?.birthDate,
+    birthLocation: user?.birthLocation,
     height: user?.height,
     weight: user?.weight,
     bodyTypes: user?.bodyTypes,
@@ -56,11 +60,13 @@ export default function Onboarding() {
     lookingFor: user?.lookingFor,
     privacy: user?.privacy,
     profilePictures: user?.profilePictures,
+    measurementSystem: user?.measurementSystem,
   });
   const patchUser = useMutation(api.users.patch);
 
   const steps = [
     { component: BasicInfoStep, id: "basic", canSkip: true },
+    { component: MetricsStep, id: "metrics", canSkip: true },
     { component: PersonalInfoStep, id: "personal", canSkip: true },
     { component: PreferencesInfoStep, id: "preferences", canSkip: true },
     { component: PrivacyInfoStep, id: "privacy", canSkip: true },
@@ -180,6 +186,7 @@ export default function Onboarding() {
                 }
               }}
               showErrors={showErrors}
+              measurementSystem={formData.measurementSystem ?? "metric"}
             />
           </View>
         </View>

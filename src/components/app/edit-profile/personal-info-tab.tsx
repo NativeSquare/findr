@@ -6,6 +6,7 @@ import React from "react";
 import { View } from "react-native";
 import { BioField } from "../profile/bio-field";
 import { BirthDateField } from "../profile/birth-date-field";
+import { BirthLocationField } from "../profile/birth-location-field";
 import { HeightField } from "../profile/height-field";
 import { NameField } from "../profile/name-field";
 import { WeightField } from "../profile/weight-field";
@@ -18,7 +19,8 @@ export function PersonalInfoTab({
   setFormData: (data: EditProfileFormData) => void;
 }) {
   const user = useQuery(api.users.currentUser);
-  const measurementSystem: MeasurementSystem = user?.measurementSystem ?? "metric";
+  const measurementSystem: MeasurementSystem =
+    user?.measurementSystem ?? "metric";
   return (
     <View className="gap-5">
       <NameField
@@ -34,6 +36,11 @@ export function PersonalInfoTab({
       <BirthDateField
         value={formData.birthDate}
         onChange={(value) => setFormData({ ...formData, birthDate: value })}
+      />
+
+      <BirthLocationField
+        value={formData.birthLocation}
+        onChange={(value) => setFormData({ ...formData, birthLocation: value })}
       />
 
       <HeightField

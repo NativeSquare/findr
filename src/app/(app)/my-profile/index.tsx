@@ -9,16 +9,17 @@ import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet
 import { useQuery } from "convex/react";
 import { router } from "expo-router";
 import {
-    Cake,
-    ChevronLeft,
-    Dumbbell,
-    Globe,
-    Heart,
-    Pencil,
-    Repeat,
-    Ruler,
-    Scale,
-    Users,
+  Cake,
+  ChevronLeft,
+  Dumbbell,
+  Globe,
+  Heart,
+  MapPin,
+  Pencil,
+  Repeat,
+  Ruler,
+  Scale,
+  Users,
 } from "lucide-react-native";
 import React, { useEffect, useRef } from "react";
 import { Pressable, View } from "react-native";
@@ -144,7 +145,10 @@ export default function MyProfile() {
           )}
 
           {/* USER INFOS Section */}
-          {(shouldShowAge || user.height || user.weight) && (
+          {(shouldShowAge ||
+            user.birthLocation ||
+            user.height ||
+            user.weight) && (
             <View className="gap-2">
               <Text className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 User Infos
@@ -158,11 +162,23 @@ export default function MyProfile() {
                     </Text>
                   </View>
                 )}
+                {user.birthLocation && (
+                  <View className="flex-row items-center gap-2">
+                    <Icon as={MapPin} size={20} className="text-foreground" />
+                    <Text className="text-base text-foreground">
+                      {user.birthLocation}
+                    </Text>
+                  </View>
+                )}
                 {user.height && (
                   <View className="flex-row items-center gap-2">
                     <Icon as={Ruler} size={20} className="text-foreground" />
                     <Text className="text-base text-foreground">
-                      {formatHeight(user.height.value, user.height.unit, measurementSystem)}
+                      {formatHeight(
+                        user.height.value,
+                        user.height.unit,
+                        measurementSystem,
+                      )}
                     </Text>
                   </View>
                 )}
@@ -170,7 +186,11 @@ export default function MyProfile() {
                   <View className="flex-row items-center gap-2">
                     <Icon as={Scale} size={20} className="text-foreground" />
                     <Text className="text-base text-foreground">
-                      {formatWeight(user.weight.value, user.weight.unit, measurementSystem)}
+                      {formatWeight(
+                        user.weight.value,
+                        user.weight.unit,
+                        measurementSystem,
+                      )}
                     </Text>
                   </View>
                 )}
