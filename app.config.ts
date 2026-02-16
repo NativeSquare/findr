@@ -83,6 +83,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundler: "metro",
   },
   plugins: [
+    "@logrocket/react-native",
+    "expo-build-properties",
     "expo-camera",
     "expo-image-picker",
     "expo-media-library",
