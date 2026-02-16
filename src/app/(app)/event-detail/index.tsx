@@ -11,6 +11,10 @@ import { router, useLocalSearchParams } from "expo-router";
 import {
   ArrowLeft,
   Clock,
+  ExternalLink,
+  Facebook,
+  Globe,
+  Instagram,
   MapPin,
   MessageCircle,
   Pencil,
@@ -20,6 +24,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   Pressable,
   ScrollView,
   View,
@@ -218,6 +223,102 @@ export default function EventDetail() {
               <Text className="text-sm text-[#d1d1d6] leading-5">
                 {event.description}
               </Text>
+            </View>
+          )}
+
+          {/* Links */}
+          {(event.website ||
+            event.socialLinks?.instagram ||
+            event.socialLinks?.tiktok ||
+            event.socialLinks?.facebook) && (
+            <View className="gap-3">
+              <Text className="text-base font-semibold text-white">Links</Text>
+              <View className="gap-2">
+                {event.website && (
+                  <Pressable
+                    onPress={() => {
+                      const url = event.website!.startsWith("http")
+                        ? event.website!
+                        : `https://${event.website}`;
+                      Linking.openURL(url);
+                    }}
+                    className="flex-row items-center gap-3 py-2.5 px-3 rounded-xl bg-secondary/30 active:opacity-70"
+                  >
+                    <Icon as={Globe} size={20} className="text-[#d1d1d6]" />
+                    <Text
+                      className="text-sm text-[#d1d1d6] flex-1"
+                      numberOfLines={1}
+                    >
+                      {event.website}
+                    </Text>
+                    <Icon
+                      as={ExternalLink}
+                      size={16}
+                      className="text-[#70707b]"
+                    />
+                  </Pressable>
+                )}
+                {event.socialLinks?.instagram && (
+                  <Pressable
+                    onPress={() =>
+                      Linking.openURL(
+                        `https://instagram.com/${event.socialLinks!.instagram}`,
+                      )
+                    }
+                    className="flex-row items-center gap-3 py-2.5 px-3 rounded-xl bg-secondary/30 active:opacity-70"
+                  >
+                    <Icon as={Instagram} size={20} color="#E1306C" />
+                    <Text className="text-sm text-[#d1d1d6] flex-1">
+                      @{event.socialLinks.instagram}
+                    </Text>
+                    <Icon
+                      as={ExternalLink}
+                      size={16}
+                      className="text-[#70707b]"
+                    />
+                  </Pressable>
+                )}
+                {event.socialLinks?.tiktok && (
+                  <Pressable
+                    onPress={() =>
+                      Linking.openURL(
+                        `https://tiktok.com/@${event.socialLinks!.tiktok}`,
+                      )
+                    }
+                    className="flex-row items-center gap-3 py-2.5 px-3 rounded-xl bg-secondary/30 active:opacity-70"
+                  >
+                    <Ionicons name="logo-tiktok" size={20} color="#ffffff" />
+                    <Text className="text-sm text-[#d1d1d6] flex-1">
+                      @{event.socialLinks.tiktok}
+                    </Text>
+                    <Icon
+                      as={ExternalLink}
+                      size={16}
+                      className="text-[#70707b]"
+                    />
+                  </Pressable>
+                )}
+                {event.socialLinks?.facebook && (
+                  <Pressable
+                    onPress={() =>
+                      Linking.openURL(
+                        `https://facebook.com/${event.socialLinks!.facebook}`,
+                      )
+                    }
+                    className="flex-row items-center gap-3 py-2.5 px-3 rounded-xl bg-secondary/30 active:opacity-70"
+                  >
+                    <Icon as={Facebook} size={20} color="#1877F2" />
+                    <Text className="text-sm text-[#d1d1d6] flex-1">
+                      {event.socialLinks.facebook}
+                    </Text>
+                    <Icon
+                      as={ExternalLink}
+                      size={16}
+                      className="text-[#70707b]"
+                    />
+                  </Pressable>
+                )}
+              </View>
             </View>
           )}
 

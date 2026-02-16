@@ -32,9 +32,14 @@ export function HeightField({
 }: HeightFieldProps) {
   const [feet, setFeet] = React.useState("");
   const [inches, setInches] = React.useState("");
+  const isLocalChangeRef = React.useRef(false);
 
-  // Sync imperial fields when value changes (for metric to imperial conversion)
+  // Sync imperial fields when value changes externally (e.g. metric to imperial switch)
   React.useEffect(() => {
+    if (isLocalChangeRef.current) {
+      isLocalChangeRef.current = false;
+      return;
+    }
     if (measurementSystem === "imperial" && value && unit === "cm") {
       const numValue = Number(value);
       if (!isNaN(numValue) && numValue > 0) {
@@ -50,6 +55,7 @@ export function HeightField({
     const f = Number(newFeet) || 0;
     const i = Number(inches) || 0;
     const cm = feetInchesToCm(f, i);
+    isLocalChangeRef.current = true;
     onChangeHeight?.(cm.toString());
   };
 
@@ -58,6 +64,7 @@ export function HeightField({
     const f = Number(feet) || 0;
     const i = Number(newInches) || 0;
     const cm = feetInchesToCm(f, i);
+    isLocalChangeRef.current = true;
     onChangeHeight?.(cm.toString());
   };
 
