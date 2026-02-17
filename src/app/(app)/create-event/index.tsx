@@ -21,10 +21,12 @@ import {
   Alert,
   Image,
   Keyboard,
+  KeyboardAvoidingView,
   Linking,
   Platform,
   Pressable,
   ScrollView,
+  TextInput,
   View,
 } from "react-native";
 
@@ -200,301 +202,316 @@ export default function CreateEvent() {
   const isBusy = isSubmitting || isUploading;
 
   return (
-    <View className="flex-1 bg-background mt-safe">
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1 }}
-        contentContainerClassName="px-4 pb-6"
-      >
-        <View className="w-full max-w-md self-center flex-1">
-          {/* Header */}
-          <View className="flex-row items-center justify-between px-1 py-6">
-            <Pressable
-              onPress={() => router.replace("/(app)/(tabs)/events")}
-              className="size-6"
-            >
-              <Icon as={ArrowLeft} size={24} className="text-white" />
-            </Pressable>
-            <Text className="text-xl font-medium text-white">Create Event</Text>
-            <View className="size-6" />
-          </View>
-
-          {/* Form Fields */}
-          <View className="gap-3">
-            {/* Event Title */}
-            <View className="gap-3">
-              <Text className="text-sm font-medium text-[#d1d1d6]">
-                Event Title <Text className="text-red-500">*</Text>
-              </Text>
-              <Input
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Enter your event title"
-                editable={!isBusy}
-              />
-            </View>
-
-            {/* Location */}
-            <View className="gap-3">
-              <Text className="text-sm font-medium text-[#d1d1d6]">
-                Location <Text className="text-red-500">*</Text>
-              </Text>
-              <LocationAutocompleteInput
-                value={location}
-                onChangeText={(text) => {
-                  setLocation(text);
-                  // Clear coordinates when user manually types (location changed)
-                  setLatitude(undefined);
-                  setLongitude(undefined);
-                }}
-                onSelect={handleLocationSelect}
-                placeholder="Search for a location"
-                editable={!isBusy}
-              />
-            </View>
-
-            {/* Event Category */}
-            <View className="gap-3">
-              <Text className="text-sm font-medium text-[#d1d1d6]">
-                Category
-              </Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
+      <View className="flex-1 bg-background mt-safe">
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerClassName="px-4 pb-6"
+        >
+          <View className="w-full max-w-md self-center flex-1">
+            {/* Header */}
+            <View className="flex-row items-center justify-between px-1 py-6">
               <Pressable
-                onPress={() => {
-                  Keyboard.dismiss();
-                  eventTypeSheetRef.current?.present();
-                }}
-                disabled={isBusy}
+                onPress={() => router.replace("/(app)/(tabs)/events")}
+                className="size-6"
               >
-                <View className="dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 justify-center shadow-sm shadow-black/5">
-                  <Text
-                    className={
-                      eventType
-                        ? "text-base text-foreground"
-                        : "text-base text-muted-foreground/50"
-                    }
-                  >
-                    {eventType || "Select a category"}
-                  </Text>
-                </View>
+                <Icon as={ArrowLeft} size={24} className="text-white" />
               </Pressable>
+              <Text className="text-xl font-medium text-white">
+                Create Event
+              </Text>
+              <View className="size-6" />
             </View>
 
-            {/* Date & Time */}
-            <View className="flex-row gap-3">
-              <View className="flex-1 gap-3">
+            {/* Form Fields */}
+            <View className="gap-3">
+              {/* Event Title */}
+              <View className="gap-3">
                 <Text className="text-sm font-medium text-[#d1d1d6]">
-                  Date <Text className="text-red-500">*</Text>
+                  Event Title <Text className="text-red-500">*</Text>
                 </Text>
-                <Pressable
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    dateSheetRef.current?.present();
-                  }}
-                  disabled={isBusy}
-                >
-                  <View className="dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 justify-center shadow-sm shadow-black/5">
-                    <Text
-                      className={
-                        date
-                          ? "text-base text-foreground"
-                          : "text-base text-muted-foreground/50"
-                      }
-                    >
-                      {date ? formatDate(date) : "mm/dd/yyyy"}
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
-              <View className="flex-1 gap-3">
-                <Text className="text-sm font-medium text-[#d1d1d6]">
-                  Time <Text className="text-red-500">*</Text>
-                </Text>
-                <Pressable
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    timeSheetRef.current?.present();
-                  }}
-                  disabled={isBusy}
-                >
-                  <View className="dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 justify-center shadow-sm shadow-black/5">
-                    <Text
-                      className={
-                        time
-                          ? "text-base text-foreground"
-                          : "text-base text-muted-foreground/50"
-                      }
-                    >
-                      {time ? formatTime(time) : "07:00"}
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Max Attendees */}
-            <View className="gap-3">
-              <Text className="text-sm font-medium text-[#d1d1d6]">
-                Max Attendees
-              </Text>
-              <Input
-                value={maxAttendees}
-                onChangeText={setMaxAttendees}
-                placeholder="Enter your max attendees"
-                keyboardType="numeric"
-                editable={!isBusy}
-              />
-            </View>
-
-            {/* Add Photo */}
-            <View className="gap-3">
-              <Text className="text-sm font-medium text-[#d1d1d6]">
-                Add Photo
-              </Text>
-              <Pressable
-                onPress={handlePickPhoto}
-                className="dark:bg-input/30 bg-background border border-input rounded-md p-3 items-center gap-3 shadow-sm shadow-black/5 active:opacity-70"
-                disabled={isBusy}
-              >
-                {photoUri ? (
-                  <Image
-                    source={{ uri: photoUri }}
-                    className="w-full h-32 rounded-md"
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <>
-                    <View className="bg-muted border border-border rounded-full size-10 items-center justify-center">
-                      <Icon
-                        as={CloudUpload}
-                        size={22}
-                        className="text-[#e56400]"
-                      />
-                    </View>
-                    <View className="flex-row items-center gap-1">
-                      <Text className="text-sm font-semibold text-[#e56400]">
-                        Click to upload
-                      </Text>
-                      <Text className="text-xs text-muted-foreground">
-                        or drag and drop
-                      </Text>
-                    </View>
-                  </>
-                )}
-              </Pressable>
-            </View>
-
-            {/* Website */}
-            <View className="gap-3">
-              <Text className="text-sm font-medium text-[#d1d1d6]">
-                Website
-              </Text>
-              <View className="flex-row items-center dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 gap-3 shadow-sm shadow-black/5">
-                <Icon as={Globe} size={20} className="text-muted-foreground" />
                 <Input
-                  value={website}
-                  onChangeText={setWebsite}
-                  placeholder="https://example.com"
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="Enter your event title"
                   editable={!isBusy}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="url"
-                  className="flex-1 border-0 p-0 h-auto shadow-none bg-transparent"
                 />
               </View>
+
+              {/* Location */}
+              <View className="gap-3">
+                <Text className="text-sm font-medium text-[#d1d1d6]">
+                  Location <Text className="text-red-500">*</Text>
+                </Text>
+                <LocationAutocompleteInput
+                  value={location}
+                  onChangeText={(text) => {
+                    setLocation(text);
+                    // Clear coordinates when user manually types (location changed)
+                    setLatitude(undefined);
+                    setLongitude(undefined);
+                  }}
+                  onSelect={handleLocationSelect}
+                  placeholder="Search for a location"
+                  editable={!isBusy}
+                />
+              </View>
+
+              {/* Event Category */}
+              <View className="gap-3">
+                <Text className="text-sm font-medium text-[#d1d1d6]">
+                  Category
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    eventTypeSheetRef.current?.present();
+                  }}
+                  disabled={isBusy}
+                >
+                  <View className="dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 justify-center shadow-sm shadow-black/5">
+                    <Text
+                      className={
+                        eventType
+                          ? "text-base text-foreground"
+                          : "text-base text-muted-foreground/50"
+                      }
+                    >
+                      {eventType || "Select a category"}
+                    </Text>
+                  </View>
+                </Pressable>
+              </View>
+
+              {/* Date & Time */}
+              <View className="flex-row gap-3">
+                <View className="flex-1 gap-3">
+                  <Text className="text-sm font-medium text-[#d1d1d6]">
+                    Date <Text className="text-red-500">*</Text>
+                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      dateSheetRef.current?.present();
+                    }}
+                    disabled={isBusy}
+                  >
+                    <View className="dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 justify-center shadow-sm shadow-black/5">
+                      <Text
+                        className={
+                          date
+                            ? "text-base text-foreground"
+                            : "text-base text-muted-foreground/50"
+                        }
+                      >
+                        {date ? formatDate(date) : "mm/dd/yyyy"}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
+                <View className="flex-1 gap-3">
+                  <Text className="text-sm font-medium text-[#d1d1d6]">
+                    Time <Text className="text-red-500">*</Text>
+                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      timeSheetRef.current?.present();
+                    }}
+                    disabled={isBusy}
+                  >
+                    <View className="dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 justify-center shadow-sm shadow-black/5">
+                      <Text
+                        className={
+                          time
+                            ? "text-base text-foreground"
+                            : "text-base text-muted-foreground/50"
+                        }
+                      >
+                        {time ? formatTime(time) : "07:00"}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Max Attendees */}
+              <View className="gap-3">
+                <Text className="text-sm font-medium text-[#d1d1d6]">
+                  Max Attendees
+                </Text>
+                <Input
+                  value={maxAttendees}
+                  onChangeText={setMaxAttendees}
+                  placeholder="Enter your max attendees"
+                  keyboardType="numeric"
+                  editable={!isBusy}
+                />
+              </View>
+
+              {/* Add Photo */}
+              <View className="gap-3">
+                <Text className="text-sm font-medium text-[#d1d1d6]">
+                  Add Photo
+                </Text>
+                <Pressable
+                  onPress={handlePickPhoto}
+                  className="dark:bg-input/30 bg-background border border-input rounded-md p-3 items-center gap-3 shadow-sm shadow-black/5 active:opacity-70"
+                  disabled={isBusy}
+                >
+                  {photoUri ? (
+                    <Image
+                      source={{ uri: photoUri }}
+                      className="w-full h-32 rounded-md"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <>
+                      <View className="bg-muted border border-border rounded-full size-10 items-center justify-center">
+                        <Icon
+                          as={CloudUpload}
+                          size={22}
+                          className="text-[#e56400]"
+                        />
+                      </View>
+                      <View className="flex-row items-center gap-1">
+                        <Text className="text-sm font-semibold text-[#e56400]">
+                          Click to upload
+                        </Text>
+                        <Text className="text-xs text-muted-foreground">
+                          or drag and drop
+                        </Text>
+                      </View>
+                    </>
+                  )}
+                </Pressable>
+              </View>
+
+              {/* Website */}
+              <View className="gap-3">
+                <Text className="text-sm font-medium text-[#d1d1d6]">
+                  Website
+                </Text>
+                <View className="flex-row items-center dark:bg-input/30 bg-background border border-input h-10 rounded-md px-3 gap-3 shadow-sm shadow-black/5">
+                  <Icon
+                    as={Globe}
+                    size={20}
+                    className="text-muted-foreground"
+                  />
+                  <TextInput
+                    value={website}
+                    onChangeText={setWebsite}
+                    placeholder="https://example.com"
+                    placeholderTextColor={undefined}
+                    editable={!isBusy}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="url"
+                    className="flex-1 text-base text-foreground p-0 placeholder:text-muted-foreground/50"
+                  />
+                </View>
+              </View>
+
+              {/* Social Links */}
+              <SocialLinkInput
+                platform="instagram"
+                value={instagram}
+                onChangeText={setInstagram}
+              />
+              <SocialLinkInput
+                platform="tiktok"
+                value={tiktok}
+                onChangeText={setTiktok}
+              />
+              <SocialLinkInput
+                platform="facebook"
+                value={facebook}
+                onChangeText={setFacebook}
+              />
             </View>
-
-            {/* Social Links */}
-            <SocialLinkInput
-              platform="instagram"
-              value={instagram}
-              onChangeText={setInstagram}
-            />
-            <SocialLinkInput
-              platform="tiktok"
-              value={tiktok}
-              onChangeText={setTiktok}
-            />
-            <SocialLinkInput
-              platform="facebook"
-              value={facebook}
-              onChangeText={setFacebook}
-            />
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
 
-      {/* Footer */}
-      <View className="w-full max-w-md self-center px-4 pb-4 mb-safe">
-        <Button
-          className="w-full bg-[#e56400]"
-          disabled={!isFormValid || isBusy}
-          onPress={handleCreate}
-        >
-          {isBusy ? (
-            <ActivityIndicator size="small" color="#000" />
-          ) : (
-            <Text className="text-base font-medium text-black">
-              Create Event
+        {/* Footer */}
+        <View className="w-full max-w-md self-center px-4 pb-4 mb-safe">
+          <Button
+            className="w-full bg-[#e56400]"
+            disabled={!isFormValid || isBusy}
+            onPress={handleCreate}
+          >
+            {isBusy ? (
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <Text className="text-base font-medium text-black">
+                Create Event
+              </Text>
+            )}
+          </Button>
+        </View>
+
+        {/* Event Type Sheet */}
+        <PreferenceSelectionSheet
+          bottomSheetRef={eventTypeSheetRef}
+          title="Event Category"
+          options={[...EVENT_TYPES]}
+          selectedValues={eventType || undefined}
+          onSelect={(option) =>
+            setEventType(eventType === option ? "" : option)
+          }
+        />
+
+        {/* Date Picker Sheet */}
+        <BottomSheetModal ref={dateSheetRef} snapPoints={["50%"]}>
+          <View className="px-4 pb-6 gap-6">
+            <Text className="text-xl font-semibold text-foreground">
+              Select Date
             </Text>
-          )}
-        </Button>
+            <View className="items-center">
+              <DateTimePicker
+                value={internalDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={handleDateChange}
+                minimumDate={new Date()}
+              />
+            </View>
+            <Button onPress={handleDateDone}>
+              <Text className="text-base font-medium text-primary-foreground">
+                Done
+              </Text>
+            </Button>
+          </View>
+        </BottomSheetModal>
+
+        {/* Time Picker Sheet */}
+        <BottomSheetModal ref={timeSheetRef} snapPoints={["50%"]}>
+          <View className="px-4 pb-6 gap-6">
+            <Text className="text-xl font-semibold text-foreground">
+              Select Time
+            </Text>
+            <View className="items-center">
+              <DateTimePicker
+                value={internalTime}
+                mode="time"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={handleTimeChange}
+              />
+            </View>
+            <Button onPress={handleTimeDone}>
+              <Text className="text-base font-medium text-primary-foreground">
+                Done
+              </Text>
+            </Button>
+          </View>
+        </BottomSheetModal>
       </View>
-
-      {/* Event Type Sheet */}
-      <PreferenceSelectionSheet
-        bottomSheetRef={eventTypeSheetRef}
-        title="Event Category"
-        options={[...EVENT_TYPES]}
-        selectedValues={eventType || undefined}
-        onSelect={(option) => setEventType(eventType === option ? "" : option)}
-      />
-
-      {/* Date Picker Sheet */}
-      <BottomSheetModal ref={dateSheetRef} snapPoints={["50%"]}>
-        <View className="px-4 pb-6 gap-6">
-          <Text className="text-xl font-semibold text-foreground">
-            Select Date
-          </Text>
-          <View className="items-center">
-            <DateTimePicker
-              value={internalDate}
-              mode="date"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleDateChange}
-              minimumDate={new Date()}
-            />
-          </View>
-          <Button onPress={handleDateDone}>
-            <Text className="text-base font-medium text-primary-foreground">
-              Done
-            </Text>
-          </Button>
-        </View>
-      </BottomSheetModal>
-
-      {/* Time Picker Sheet */}
-      <BottomSheetModal ref={timeSheetRef} snapPoints={["50%"]}>
-        <View className="px-4 pb-6 gap-6">
-          <Text className="text-xl font-semibold text-foreground">
-            Select Time
-          </Text>
-          <View className="items-center">
-            <DateTimePicker
-              value={internalTime}
-              mode="time"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleTimeChange}
-            />
-          </View>
-          <Button onPress={handleTimeDone}>
-            <Text className="text-base font-medium text-primary-foreground">
-              Done
-            </Text>
-          </Button>
-        </View>
-      </BottomSheetModal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

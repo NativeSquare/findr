@@ -27,6 +27,7 @@ import type * as places from "../places.js";
 import type * as presence from "../presence.js";
 import type * as storage from "../storage.js";
 import type * as stories from "../stories.js";
+import type * as storyLikes from "../storyLikes.js";
 import type * as taps from "../taps.js";
 import type * as users from "../users.js";
 import type * as views from "../views.js";
@@ -57,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   presence: typeof presence;
   storage: typeof storage;
   stories: typeof stories;
+  storyLikes: typeof storyLikes;
   taps: typeof taps;
   users: typeof users;
   views: typeof views;

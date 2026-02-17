@@ -7,7 +7,7 @@ import { Doc } from "@convex/_generated/dataModel";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
-import { ChevronDown, MapPin, Settings2 } from "lucide-react-native";
+import { ChevronDown, Heart, MapPin, Settings2 } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 export type SearchLocation = {
@@ -22,6 +22,8 @@ export type HomeHeaderProps = {
   searchLocation?: SearchLocation | null;
   hasActiveFilters?: boolean;
   onFilterPress?: () => void;
+  showFavoritesOnly?: boolean;
+  onFavoritesToggle?: () => void;
 };
 
 export function HomeHeader({
@@ -29,11 +31,13 @@ export function HomeHeader({
   searchLocation,
   hasActiveFilters,
   onFilterPress,
+  showFavoritesOnly,
+  onFavoritesToggle,
 }: HomeHeaderProps) {
   const router = useRouter();
   const imageUrl = useQuery(
     api.storage.getImageUrl,
-    user.profilePictures?.[0] ? { storageId: user.profilePictures[0] } : "skip"
+    user.profilePictures?.[0] ? { storageId: user.profilePictures[0] } : "skip",
   );
 
   const handleLocationPress = () => {
@@ -81,6 +85,18 @@ export function HomeHeader({
           </Text>
         </View>
         <Icon as={ChevronDown} size={16} />
+      </Button>
+      <Button
+        variant={showFavoritesOnly ? "default" : "outline"}
+        size="icon"
+        onPress={onFavoritesToggle}
+        className={showFavoritesOnly ? "bg-[#e56400]" : ""}
+      >
+        <Heart
+          size={20}
+          color={showFavoritesOnly ? "#000" : undefined}
+          fill={showFavoritesOnly ? "#000" : "transparent"}
+        />
       </Button>
       <Button
         variant={hasActiveFilters ? "default" : "outline"}

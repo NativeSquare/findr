@@ -6,6 +6,7 @@ import { eventMessages } from "./eventMessages";
 import { eventAttendees, events } from "./events";
 import { messages } from "./messages";
 import { stories } from "./stories";
+import { storyLikes } from "./storyLikes";
 import { taps } from "./taps";
 import { users } from "./users";
 import { views } from "./views";
@@ -23,4 +24,5 @@ export default defineSchema({
   eventAttendees,
   eventMessages,
   stories,
+  storyLikes,
 });

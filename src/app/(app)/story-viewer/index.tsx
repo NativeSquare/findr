@@ -7,13 +7,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
+import { Heart, Send } from "lucide-react-native";
 import React from "react";
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Keyboard,
+  Platform,
   Pressable,
   StatusBar,
+  TextInput,
   View,
 } from "react-native";
 import {
@@ -58,13 +62,41 @@ export default function StoryViewer() {
   const progress = useSharedValue(0);
   const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const isPausedRef = React.useRef(false);
+  const pauseStartRef = React.useRef<number | null>(null);
+  const totalPausedRef = React.useRef(0);
 
   // Current author ID
   const currentAuthorId = authorIds[userIndex];
 
+  // Message state for the reply input
+  const [messageText, setMessageText] = React.useState("");
+  const [isSending, setIsSending] = React.useState(false);
+  const [sentFeedback, setSentFeedback] = React.useState(false);
+  const inputRef = React.useRef<TextInput>(null);
+
+  // Track keyboard height for keyboard avoidance
+  const [keyboardHeight, setKeyboardHeight] = React.useState(0);
+  React.useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, (e) =>
+      setKeyboardHeight(e.endCoordinates.height),
+    );
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   // Fetch current user info
   const currentUser = useQuery(api.users.currentUser);
   const deleteStory = useMutation(api.stories.deleteStory);
+  const toggleStoryLike = useMutation(api.storyLikes.toggleStoryLike);
+  const sendMessage = useMutation(api.messages.sendMessage);
 
   // Fetch stories for the current author
   const storyGroups = useQuery(
@@ -84,24 +116,44 @@ export default function StoryViewer() {
   const currentStories = currentGroup?.stories ?? [];
   const currentStory = currentStories[storyIndex];
 
+  // Pause / resume helpers that properly track paused time
+  const pauseTimer = React.useCallback(() => {
+    if (!isPausedRef.current) {
+      isPausedRef.current = true;
+      pauseStartRef.current = Date.now();
+    }
+  }, []);
+
+  const resumeTimer = React.useCallback(() => {
+    if (isPausedRef.current) {
+      if (pauseStartRef.current !== null) {
+        totalPausedRef.current += Date.now() - pauseStartRef.current;
+        pauseStartRef.current = null;
+      }
+      isPausedRef.current = false;
+    }
+  }, []);
+
   // Start / restart the auto-advance timer
   const startTimer = React.useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
     progress.value = 0;
+    totalPausedRef.current = 0;
+    pauseStartRef.current = null;
+    isPausedRef.current = false;
     const startTime = Date.now();
 
     timerRef.current = setInterval(() => {
       if (isPausedRef.current) return;
 
-      const elapsed = Date.now() - startTime;
+      const elapsed = Date.now() - startTime - totalPausedRef.current;
       const newProgress = Math.min(elapsed / STORY_DURATION, 1);
       progress.value = newProgress;
 
       if (newProgress >= 1) {
         if (timerRef.current) clearInterval(timerRef.current);
-        // Auto-advance to next story
         advanceStory();
       }
     }, PROGRESS_INTERVAL);
@@ -138,12 +190,60 @@ export default function StoryViewer() {
   // Whether the current story belongs to the logged-in user
   const isOwnStory = currentUser?._id === currentAuthorId;
 
+  // Check if the current story is liked by the logged-in user
+  const isLiked = useQuery(
+    api.storyLikes.isStoryLiked,
+    currentStory?._id ? { storyId: currentStory._id as Id<"stories"> } : "skip",
+  );
+
+  const handleLikeStory = React.useCallback(async () => {
+    if (!currentStory) return;
+    pauseTimer();
+    try {
+      await toggleStoryLike({ storyId: currentStory._id as Id<"stories"> });
+    } catch (error: any) {
+      Alert.alert("Error", error.message ?? "Failed to like story");
+    } finally {
+      resumeTimer();
+    }
+  }, [currentStory, toggleStoryLike, pauseTimer, resumeTimer]);
+
+  const handleSendMessage = React.useCallback(async () => {
+    const text = messageText.trim();
+    if (!text || !currentAuthorId || isSending) return;
+
+    setIsSending(true);
+    pauseTimer();
+    Keyboard.dismiss();
+
+    try {
+      await sendMessage({ otherUserId: currentAuthorId, text });
+      setMessageText("");
+      setSentFeedback(true);
+      setTimeout(() => {
+        setSentFeedback(false);
+        resumeTimer();
+      }, 1500);
+    } catch (error: any) {
+      Alert.alert("Error", error.message ?? "Failed to send message");
+      resumeTimer();
+    } finally {
+      setIsSending(false);
+    }
+  }, [
+    messageText,
+    currentAuthorId,
+    isSending,
+    sendMessage,
+    pauseTimer,
+    resumeTimer,
+  ]);
+
   // Delete the currently displayed story photo
   const handleDeleteStory = React.useCallback(() => {
     if (!currentStory) return;
 
-    // Pause the timer while the alert is visible
-    isPausedRef.current = true;
+    pauseTimer();
 
     Alert.alert(
       "Delete Story",
@@ -153,7 +253,7 @@ export default function StoryViewer() {
           text: "Cancel",
           style: "cancel",
           onPress: () => {
-            isPausedRef.current = false;
+            resumeTimer();
           },
         },
         {
@@ -180,7 +280,7 @@ export default function StoryViewer() {
             } catch (error: any) {
               Alert.alert("Error", error.message ?? "Failed to delete story");
             } finally {
-              isPausedRef.current = false;
+              resumeTimer();
             }
           },
         },
@@ -193,6 +293,8 @@ export default function StoryViewer() {
     userIndex,
     authorIds.length,
     deleteStory,
+    pauseTimer,
+    resumeTimer,
   ]);
 
   // When storyIndex is -1 (sentinel for "go to last story of previous user"), fix it
@@ -225,10 +327,10 @@ export default function StoryViewer() {
   const longPressGesture = Gesture.LongPress()
     .minDuration(200)
     .onStart(() => {
-      isPausedRef.current = true;
+      runOnJS(pauseTimer)();
     })
     .onEnd(() => {
-      isPausedRef.current = false;
+      runOnJS(resumeTimer)();
     });
 
   // Horizontal pan to switch users
@@ -273,6 +375,7 @@ export default function StoryViewer() {
       <View className="flex-1 bg-black">
         <StatusBar barStyle="light-content" />
 
+        {/* Gesture layer for tap/pan/long-press navigation */}
         <GestureDetector gesture={composedGesture}>
           <Animated.View style={{ flex: 1 }}>
             {/* Story image */}
@@ -282,55 +385,129 @@ export default function StoryViewer() {
               contentFit="contain"
               transition={200}
             />
-
-            {/* Top overlay */}
-            <View
-              className="absolute left-0 right-0"
-              style={{ top: insets.top }}
-            >
-              {/* Progress bar */}
-              <StoryProgressBar
-                total={currentStories.length}
-                currentIndex={storyIndex}
-                progress={progress}
-              />
-
-              {/* User info + close button */}
-              <View className="flex-row items-center px-3 py-2">
-                <Avatar className="size-8" alt={currentGroup.authorName}>
-                  {currentGroup.authorAvatarUrl ? (
-                    <AvatarImage
-                      source={{ uri: currentGroup.authorAvatarUrl }}
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-secondary">
-                      <Ionicons name="person" size={16} color="#a1a1aa" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <Text className="ml-2 flex-1 text-sm font-semibold text-white">
-                  {currentGroup.authorName}
-                </Text>
-                {isOwnStory && (
-                  <Pressable
-                    onPress={handleDeleteStory}
-                    hitSlop={16}
-                    className="rounded-full p-1"
-                  >
-                    <Ionicons name="trash-outline" size={22} color="#fff" />
-                  </Pressable>
-                )}
-                <Pressable
-                  onPress={() => router.back()}
-                  hitSlop={16}
-                  className="ml-2 rounded-full p-1"
-                >
-                  <Ionicons name="close" size={24} color="#fff" />
-                </Pressable>
-              </View>
-            </View>
           </Animated.View>
         </GestureDetector>
+
+        {/* Top overlay — outside GestureDetector so buttons receive touches */}
+        <View
+          className="absolute left-0 right-0"
+          style={{ top: insets.top, zIndex: 10 }}
+          pointerEvents="box-none"
+        >
+          {/* Progress bar */}
+          <StoryProgressBar
+            total={currentStories.length}
+            currentIndex={storyIndex}
+            progress={progress}
+          />
+
+          {/* User info + close button */}
+          <View
+            className="flex-row items-center px-3 py-2"
+            pointerEvents="box-none"
+          >
+            <Avatar className="size-8" alt={currentGroup.authorName}>
+              {currentGroup.authorAvatarUrl ? (
+                <AvatarImage source={{ uri: currentGroup.authorAvatarUrl }} />
+              ) : (
+                <AvatarFallback className="bg-secondary">
+                  <Ionicons name="person" size={16} color="#a1a1aa" />
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <Text className="ml-2 flex-1 text-sm font-semibold text-white">
+              {currentGroup.authorName}
+            </Text>
+            {isOwnStory && (
+              <Pressable
+                onPress={handleDeleteStory}
+                hitSlop={32}
+                className="rounded-full bg-black/30 p-2.5"
+              >
+                <Ionicons name="trash-outline" size={24} color="#fff" />
+              </Pressable>
+            )}
+            <Pressable
+              onPress={() =>
+                router.replace({
+                  pathname: "/(app)/(tabs)/taps",
+                  params: { tab: "Stories" },
+                })
+              }
+              hitSlop={16}
+              className="ml-2 rounded-full p-1"
+            >
+              <Ionicons name="close" size={24} color="#fff" />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Bottom action bar — outside GestureDetector */}
+        {!isOwnStory && (
+          <View
+            className="absolute bottom-0 left-0 right-0 flex-row items-center gap-3 px-4"
+            style={{
+              paddingBottom:
+                (keyboardHeight > 0 ? keyboardHeight : insets.bottom) + 16,
+              zIndex: 10,
+            }}
+            pointerEvents="box-none"
+          >
+            {sentFeedback ? (
+              <View className="flex-1 flex-row items-center justify-center rounded-full border border-white/30 bg-black/40 px-4 py-3">
+                <Text className="text-sm font-medium text-white">
+                  Message sent!
+                </Text>
+              </View>
+            ) : (
+              <View className="flex-1 flex-row items-center rounded-full border border-white/30 bg-black/40 px-4">
+                <TextInput
+                  ref={inputRef}
+                  value={messageText}
+                  onChangeText={setMessageText}
+                  placeholder={`Message ${currentGroup.authorName}...`}
+                  placeholderTextColor="rgba(255,255,255,0.4)"
+                  onFocus={pauseTimer}
+                  onBlur={() => {
+                    if (!isSending) {
+                      resumeTimer();
+                    }
+                  }}
+                  className="flex-1 py-3 text-sm text-white"
+                  returnKeyType="send"
+                  onSubmitEditing={handleSendMessage}
+                  editable={!isSending}
+                />
+                {messageText.trim().length > 0 && (
+                  <Pressable
+                    onPress={handleSendMessage}
+                    hitSlop={8}
+                    disabled={isSending}
+                    className="ml-2 rounded-full bg-[#e56400] p-1.5"
+                  >
+                    {isSending ? (
+                      <ActivityIndicator size={16} color="#fff" />
+                    ) : (
+                      <Send size={16} color="#fff" />
+                    )}
+                  </Pressable>
+                )}
+              </View>
+            )}
+            <Pressable
+              onPress={handleLikeStory}
+              hitSlop={12}
+              className="rounded-full bg-black/40 p-3"
+            >
+              <Heart
+                size={26}
+                color="#fff"
+                fill={isLiked ? "#e56400" : "transparent"}
+                strokeWidth={isLiked ? 0 : 2}
+              />
+            </Pressable>
+          </View>
+        )}
       </View>
     </GestureHandlerRootView>
   );

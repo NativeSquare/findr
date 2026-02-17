@@ -1,3 +1,4 @@
+import { StoriesGrid } from "@/components/app/taps/stories-grid";
 import { SearchInput } from "@/components/custom/search-input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Icon } from "@/components/ui/icon";
@@ -5,21 +6,33 @@ import { Text } from "@/components/ui/text";
 import { formatRelativeTime } from "@/utils/formatRelativeTime";
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
-import { router } from "expo-router";
-import { Eye } from "lucide-react-native";
+import { Image } from "expo-image";
+import { router, useLocalSearchParams } from "expo-router";
+import { Eye, Heart } from "lucide-react-native";
 import React, { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type TabType = "Taps" | "Views" | "Favorites";
+type TabType = "Taps" | "Views" | "Stories" | "Story Likes";
+
+const VALID_TABS: TabType[] = ["Taps", "Views", "Stories", "Story Likes"];
 
 export default function Taps() {
   const insets = useSafeAreaInsets();
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
   const [activeTab, setActiveTab] = useState<TabType>("Taps");
+
+  // Sync the tab search param to the active tab state
+  React.useEffect(() => {
+    if (tab && VALID_TABS.includes(tab as TabType)) {
+      setActiveTab(tab as TabType);
+    }
+  }, [tab]);
   const [searchQuery, setSearchQuery] = useState("");
   const taps = useQuery(api.taps.getTapsForUser);
   const views = useQuery(api.views.getViewsForUser);
-  const favorites = useQuery(api.users.getFavorites);
+  const storyLikes = useQuery(api.storyLikes.getStoryLikesForUser);
+  const currentUser = useQuery(api.users.currentUser);
 
   const filteredTaps = React.useMemo(() => {
     if (!taps) return [];
@@ -29,7 +42,7 @@ export default function Taps() {
     return taps.filter(
       (tap) =>
         tap.fromUser?.name?.toLowerCase().includes(query) ||
-        tap.emoji.includes(query)
+        tap.emoji.includes(query),
     );
   }, [taps, searchQuery]);
 
@@ -39,21 +52,30 @@ export default function Taps() {
 
     const query = searchQuery.toLowerCase();
     return views.filter((view) =>
-      view.fromUser?.name?.toLowerCase().includes(query)
+      view.fromUser?.name?.toLowerCase().includes(query),
     );
   }, [views, searchQuery]);
 
-  const filteredFavorites = React.useMemo(() => {
-    if (!favorites) return [];
-    if (!searchQuery.trim()) return favorites;
+  const filteredStoryLikes = React.useMemo(() => {
+    if (!storyLikes) return [];
+    if (!searchQuery.trim()) return storyLikes;
 
     const query = searchQuery.toLowerCase();
-    return favorites.filter((favorite) =>
-      favorite.name?.toLowerCase().includes(query)
+    return storyLikes.filter((like) =>
+      like.fromUser?.name?.toLowerCase().includes(query),
     );
-  }, [favorites, searchQuery]);
+  }, [storyLikes, searchQuery]);
 
-  const tabs: TabType[] = ["Taps", "Views", "Favorites"];
+  const tabs: TabType[] = ["Taps", "Views", "Stories", "Story Likes"];
+
+  const searchPlaceholder =
+    activeTab === "Stories"
+      ? "Search stories"
+      : activeTab === "Story Likes"
+        ? "Search story likes"
+        : activeTab === "Views"
+          ? "Search views"
+          : "Search taps";
 
   return (
     <View className="flex-1 bg-background">
@@ -76,11 +98,12 @@ export default function Taps() {
                 onPress={() => setActiveTab(tab)}
                 className="flex-1 items-center justify-center rounded-md"
               >
-                <View className="py-3 px-4">
+                <View className="py-3 px-2">
                   <Text
                     className={`text-sm font-medium leading-5 ${
                       activeTab === tab ? "text-[#e56400]" : "text-[#70707b]"
                     }`}
+                    numberOfLines={1}
                   >
                     {tab}
                   </Text>
@@ -94,21 +117,17 @@ export default function Taps() {
             ))}
           </View>
 
-          {/* Search Bar */}
-          <View className="mb-5">
-            <SearchInput
-              placeholder={
-                activeTab === "Favorites"
-                  ? "Search Favorites"
-                  : activeTab === "Views"
-                    ? "Search views"
-                    : "Search taps"
-              }
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              className="bg-[#131316] border-[#1a1a1e] h-10 rounded-full"
-            />
-          </View>
+          {/* Search Bar (not shown for Stories tab) */}
+          {activeTab !== "Stories" && (
+            <View className="mb-5">
+              <SearchInput
+                placeholder={searchPlaceholder}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                className="bg-[#131316] border-[#1a1a1e] h-10 rounded-full"
+              />
+            </View>
+          )}
 
           {/* Taps List */}
           {activeTab === "Taps" && (
@@ -181,6 +200,7 @@ export default function Taps() {
             </View>
           )}
 
+          {/* Views List */}
           {activeTab === "Views" && (
             <View className="gap-0">
               {filteredViews.length === 0 ? (
@@ -255,22 +275,28 @@ export default function Taps() {
             </View>
           )}
 
-          {activeTab === "Favorites" && (
+          {/* Stories Grid */}
+          {activeTab === "Stories" && currentUser && (
+            <StoriesGrid user={currentUser} />
+          )}
+
+          {/* Story Likes List */}
+          {activeTab === "Story Likes" && (
             <View className="gap-0">
-              {filteredFavorites.length === 0 ? (
+              {filteredStoryLikes.length === 0 ? (
                 <View className="py-8 items-center">
                   <Text className="text-muted-foreground">
-                    {favorites === undefined
+                    {storyLikes === undefined
                       ? "Loading..."
                       : searchQuery
-                        ? "No favorites found"
-                        : "No favorites yet"}
+                        ? "No story likes found"
+                        : "No story likes yet"}
                   </Text>
                 </View>
               ) : (
-                filteredFavorites.map((favorite, index) => {
+                filteredStoryLikes.map((like, index) => {
                   const isFirst = index === 0;
-                  const isLast = index === filteredFavorites.length - 1;
+                  const isLast = index === filteredStoryLikes.length - 1;
                   const borderRadius = {
                     ...(isFirst && {
                       borderTopLeftRadius: 16,
@@ -284,37 +310,60 @@ export default function Taps() {
 
                   return (
                     <Pressable
-                      key={favorite._id}
-                      onPress={() => router.push(`/user/${favorite._id}`)}
-                      className="bg-card border border-border flex-row gap-3 items-start p-4 active:opacity-80"
+                      key={like._id}
+                      onPress={() => router.push(`/user/${like.fromUser?._id}`)}
+                      className="bg-card border border-border flex-row gap-3 items-center p-4 active:opacity-80"
                       style={borderRadius}
                     >
                       <Avatar
                         className="size-10 rounded-full shrink-0"
-                        alt={favorite.name ?? "Unknown User"}
+                        alt={like.fromUser?.name ?? "Unknown User"}
                       >
                         <AvatarImage
-                          source={{ uri: favorite.image ?? undefined }}
+                          source={{ uri: like.fromUser?.image ?? undefined }}
                         />
                         <AvatarFallback className="bg-secondary rounded-full">
                           <Text className="text-muted-foreground">
-                            {favorite.name?.[0]?.toUpperCase() ?? "?"}
+                            {like.fromUser?.name?.[0]?.toUpperCase() ?? "?"}
                           </Text>
                         </AvatarFallback>
                       </Avatar>
                       <View className="flex-1 gap-0.5">
                         <Text className="text-sm font-medium text-white">
-                          {favorite.name ?? "Unknown User"}
+                          {like.fromUser?.name ?? "Unknown User"}
                         </Text>
                         <Text className="text-xs leading-[18px] text-card-foreground">
-                          in your favorites list
+                          liked your story
+                        </Text>
+                        <Text className="text-xs leading-[18px] text-muted-foreground">
+                          {formatRelativeTime(like._creationTime)}
                         </Text>
                       </View>
-                      <View className="items-end gap-1 shrink-0">
-                        <View className="size-6 items-center justify-center">
-                          <Text className="text-base">❤️</Text>
+                      {like.storyImageUrl ? (
+                        <View className="size-12 shrink-0 overflow-hidden rounded-lg border border-border">
+                          <Image
+                            source={{ uri: like.storyImageUrl }}
+                            style={{ width: "100%", height: "100%" }}
+                            contentFit="cover"
+                            transition={200}
+                          />
+                          <View className="absolute bottom-0.5 right-0.5">
+                            <Icon
+                              as={Heart}
+                              size={12}
+                              className="text-[#e56400]"
+                            />
+                          </View>
                         </View>
-                      </View>
+                      ) : (
+                        <View className="size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-secondary">
+                          <Icon
+                            as={Heart}
+                            size={16}
+                            className="text-[#e56400]"
+                          />
+                        </View>
+                      )}
                     </Pressable>
                   );
                 })

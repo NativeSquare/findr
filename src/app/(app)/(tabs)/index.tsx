@@ -2,7 +2,6 @@ import { HomeFiltersRow } from "@/components/app/home/home-filters-row";
 import { HomeHeader } from "@/components/app/home/home-header";
 import { NearestUsersGridItem } from "@/components/app/home/nearest-users-grid-item";
 import { NearestUsersGridItemSkeleton } from "@/components/app/home/nearest-users-grid-item-skeleton";
-import { StoryTray } from "@/components/app/stories/story-tray";
 import { cmToFeetInches, kgToLbs } from "@/utils/measurements";
 import { usePresence } from "@convex-dev/presence/react-native";
 import { api } from "@convex/_generated/api";
@@ -47,8 +46,10 @@ export default function Home() {
     relationshipStatus: "",
   };
   const [filters, setFilters] = React.useState<FilterData>(defaultFilters);
+  const [showFavoritesOnly, setShowFavoritesOnly] = React.useState(false);
   const [searchLocation, setSearchLocation] =
     React.useState<SearchLocation | null>(null);
+  const favorites = useQuery(api.users.getFavorites);
 
   const loadFilters = React.useCallback(async () => {
     try {
@@ -120,6 +121,11 @@ export default function Home() {
     );
   }, [filters]);
 
+  const favoriteIds = useMemo(() => {
+    if (!favorites) return new Set<string>();
+    return new Set(favorites.map((f) => f._id));
+  }, [favorites]);
+
   // Get active filter labels
   const measurementSystem = user?.measurementSystem ?? "metric";
   const activeFilterLabels = useMemo(() => {
@@ -186,11 +192,16 @@ export default function Home() {
       labels.push(filters.relationshipStatus);
     }
 
+    if (showFavoritesOnly) {
+      labels.push("Favorites");
+    }
+
     return labels;
-  }, [filters, measurementSystem]);
+  }, [filters, measurementSystem, showFavoritesOnly]);
 
   const handleClearAll = async () => {
     setFilters(defaultFilters);
+    setShowFavoritesOnly(false);
     try {
       await AsyncStorage.setItem(
         FILTERS_STORAGE_KEY,
@@ -239,15 +250,21 @@ export default function Home() {
       : undefined,
   });
 
+  const displayUsers = useMemo(() => {
+    if (!nearestUsers) return undefined;
+    if (!showFavoritesOnly) return nearestUsers;
+    return nearestUsers.filter((u) => favoriteIds.has(u._id));
+  }, [nearestUsers, showFavoritesOnly, favoriteIds]);
+
   const userRows = useMemo(() => {
-    if (!nearestUsers) return [];
-    const rows: (typeof nearestUsers)[] = [];
+    if (!displayUsers) return [];
+    const rows: (typeof displayUsers)[] = [];
     const columnsPerRow = 3;
-    for (let i = 0; i < nearestUsers.length; i += columnsPerRow) {
-      rows.push(nearestUsers.slice(i, i + columnsPerRow));
+    for (let i = 0; i < displayUsers.length; i += columnsPerRow) {
+      rows.push(displayUsers.slice(i, i + columnsPerRow));
     }
     return rows;
-  }, [nearestUsers]);
+  }, [displayUsers]);
 
   const screenWidth = Dimensions.get("window").width;
   const maxWidth = 384; // max-w-sm (384px)
@@ -269,24 +286,15 @@ export default function Home() {
           searchLocation={searchLocation}
           hasActiveFilters={hasActiveFilters}
           onFilterPress={() => router.push("/filters")}
+          showFavoritesOnly={showFavoritesOnly}
+          onFavoritesToggle={() => setShowFavoritesOnly((prev) => !prev)}
         />
         <HomeFiltersRow
           activeFilterLabels={activeFilterLabels}
           onClearAll={handleClearAll}
         />
-        <StoryTray
-          user={user}
-          searchLocation={
-            searchLocation
-              ? {
-                  latitude: searchLocation.latitude,
-                  longitude: searchLocation.longitude,
-                }
-              : null
-          }
-        />
         <View className="gap-1.5">
-          {nearestUsers === undefined
+          {displayUsers === undefined
             ? // Show skeleton loading state (3 rows, 3 items per row)
               Array.from({ length: 3 }).map((_, rowIndex) => (
                 <View key={rowIndex} className="flex-row gap-1.5">
